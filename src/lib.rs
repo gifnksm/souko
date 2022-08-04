@@ -1,8 +1,7 @@
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        let result = 2 + 2;
-        assert_eq!(result, 4);
-    }
-}
+mod query;
+mod repo;
+mod repo_index;
+mod template;
+mod walk_repo;
+
+pub use self::{query::*, repo::*, repo_index::*, template::*, walk_repo::*};
