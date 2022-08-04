@@ -4,7 +4,7 @@
 [![license: MIT OR APACHE-2.0](https://img.shields.io/crates/l/souko.svg)](#license)
 [![crates.io](https://img.shields.io/crates/v/souko.svg)](https://crates.io/crates/souko)
 [![docs.rs](https://docs.rs/souko/badge.svg)](https://docs.rs/souko/)
-[![rust 1.56.1+ badge](https://img.shields.io/badge/rust-1.56.1+-93450a.svg)](https://doc.rust-lang.org/cargo/reference/manifest.html#the-rust-version-field)
+[![rust 1.60.0+ badge](https://img.shields.io/badge/rust-1.60.0+-93450a.svg)](https://doc.rust-lang.org/cargo/reference/manifest.html#the-rust-version-field)
 [![Rust CI](https://github.com/gifnksm/souko/actions/workflows/ci.yml/badge.svg)](https://github.com/gifnksm/souko/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/gifnksm/souko/graph/badge.svg)](https://codecov.io/gh/gifnksm/souko)
 
@@ -20,7 +20,7 @@ Git repository manager
 
 ## Minimum supported Rust version (MSRV)
 
-The minimum supported Rust version is **Rust 1.56.1**.
+The minimum supported Rust version is **Rust 1.60.0**.
 At least the last 3 versions of stable Rust are supported at any given time.
 
 While a crate is pre-release status (0.x.x) it may have its MSRV bumped in a patch release.
