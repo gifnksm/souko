@@ -1,5 +1,5 @@
 use std::{
-    fs::File,
+    fs::{self, File},
     io::{self, BufReader, BufWriter, Read},
     path::PathBuf,
 };
@@ -99,6 +99,8 @@ impl<'a> OptionalParam<'a, PathBuf> {
         let dir = path
             .parent()
             .ok_or_else(|| eyre!("failed to get parent directory: {}", path.display()))?;
+        fs::create_dir_all(dir)
+            .wrap_err_with(|| format!("failed to create diretory: {}", dir.display()))?;
 
         let mut file = NamedTempFile::new_in(dir)
             .wrap_err_with(|| format!("failed to create temporary file in {}", dir.display(),))?;
