@@ -10,41 +10,31 @@ on:
 
 jobs:
   publish:
-    name: Publishing for ${{ matrix.job.os }}
+    name: Publishing for ${{ matrix.job.target }}
     runs-on: ${{ matrix.job.os }}
     strategy:
       matrix:
         rust: [stable]
         job:
           - os: macos-latest
-            os-name: macos
             target: x86_64-apple-darwin
-            architecture: x86_64
-            binary-postfix: ""
+            binary-suffix: ""
             use-cross: false
           - os: ubuntu-latest
-            os-name: linux
             target: x86_64-unknown-linux-gnu
-            architecture: x86_64
-            binary-postfix: ""
+            binary-suffix: ""
             use-cross: false
           - os: windows-latest
-            os-name: windows
             target: x86_64-pc-windows-msvc
-            architecture: x86_64
-            binary-postfix: ".exe"
+            binary-suffix: ".exe"
             use-cross: false
           - os: ubuntu-latest
-            os-name: linux
             target: aarch64-unknown-linux-gnu
-            architecture: arm64
-            binary-postfix: ""
+            binary-suffix: ""
             use-cross: true
           - os: ubuntu-latest
-            os-name: linux
             target: i686-unknown-linux-gnu
-            architecture: i686
-            binary-postfix: ""
+            binary-suffix: ""
             use-cross: true
 
     steps:
@@ -88,7 +78,7 @@ jobs:
         run: |
           cd target/${{ matrix.job.target }}/release
           ####### reduce binary size by removing debug symbols #######
-          BINARY_NAME=souko${{ matrix.job.binary-postfix }}
+          BINARY_NAME=souko${{ matrix.job.binary-suffix }}
           if [[ ${{ matrix.job.target }} == aarch64-unknown-linux-gnu ]]; then
             GCC_PREFIX="aarch64-linux-gnu-"
           else
@@ -96,7 +86,7 @@ jobs:
           fi
           "$GCC_PREFIX"strip $BINARY_NAME
           ########## create tar.gz ##########
-          RELEASE_NAME=souko-${RELEASE_REF_NAME}-${{ matrix.job.os-name }}-${{ matrix.job.architecture }}
+          RELEASE_NAME=souko-${RELEASE_REF_NAME}-${{ matrix.job.target }}
           tar czvf $RELEASE_NAME.tar.gz $BINARY_NAME
           ########## create sha256 ##########
           if [[ ${{ runner.os }} == 'Windows' ]]; then
