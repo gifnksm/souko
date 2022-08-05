@@ -1,4 +1,4 @@
-# souko
+# souko - a simple command line utility for managing your local git repository
 
 [![maintenance status: experimental](https://img.shields.io/badge/maintenance-experimental-yellowgreen.svg)](https://doc.rust-lang.org/cargo/reference/manifest.html#the-badges-section)
 [![license: MIT OR APACHE-2.0](https://img.shields.io/crates/l/souko.svg)](#license)
@@ -14,7 +14,7 @@ Git repository manager
 
 ### Cargo
 
-* Install the rust toolchain in order to have cargo installed by following
+* Install the rust toolchain to have cargo installed by following
   [this](https://www.rust-lang.org/tools/install) guide.
 * run `cargo install souko`
 
@@ -23,8 +23,8 @@ Git repository manager
 The minimum supported Rust version is **Rust 1.60.0**.
 At least the last 3 versions of stable Rust are supported at any given time.
 
-While a crate is pre-release status (0.x.x) it may have its MSRV bumped in a patch release.
-Once a crate has reached 1.x, any MSRV bump will be accompanied with a new minor version.
+While a crate is a pre-release status (0.x.x) it may have its MSRV bumped in a patch release.
+Once a crate has reached 1.x, any MSRV bump will be accompanied by a new minor version.
 
 ## License
 
