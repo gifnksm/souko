@@ -1,4 +1,4 @@
-# souko - a simple command line utility for managing your local git repository
+# souko
 
 [![maintenance status: experimental](https://img.shields.io/badge/maintenance-experimental-yellowgreen.svg)](https://doc.rust-lang.org/cargo/reference/manifest.html#the-badges-section)
 [![license: MIT OR APACHE-2.0](https://img.shields.io/crates/l/souko.svg)](#license)
@@ -8,15 +8,57 @@
 [![Rust CI](https://github.com/gifnksm/souko/actions/workflows/ci.yml/badge.svg)](https://github.com/gifnksm/souko/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/gifnksm/souko/graph/badge.svg)](https://codecov.io/gh/gifnksm/souko)
 
-Git repository manager
+souko is a simple command line utility that provides an easy way to organize clones of remote git repositories.
+
+When you clone a remote repository with souko, souko creates a directory under a specific root directory (`~/.local/share/souko/root` by default) containing the hostname and path of the remote repository's URL.
+
+```console
+$ souko clone https://github.com/gifnksm/souko
+# => creates local clone at ~/.local/share/souko/root/github.com/gifnksm/souko
+```
+
+You can also list all repositories that have been cloned.
+
+```console
+$ souko list
+# => list of absolute paths of all repositories cloned with souko
+```
+
+You can also import a cloned local repository into souko.
+Imported repositories are also listed by the list command.
+
+```console
+$ souko import -r ~/repos
+# => import all repositories under ~/repos into souko
+```
+
+By combining souko, fuzzy finder, and shell functions, you can easily jump between repositories (TODO: add shell script example).
 
 ## Installation
 
-### Cargo
+There are multiple ways to install souko.
+Choose any one of the methods below that best suits your needs.
 
-* Install the rust toolchain to have cargo installed by following
-  [this](https://www.rust-lang.org/tools/install) guide.
-* run `cargo install souko`
+### Pre-built binaries
+
+Executable binaries are available for download on the [GitHub Release page].
+
+[GitHub Release page]: https://github.com/gifnksm/souko/releases/
+
+### Build from source using Rust
+
+To build souko executable from the source, you must have the Rust toolchain installed.
+To install the rust toolchain, follow [this guide](https://www.rust-lang.org/tools/install).
+
+Once you have installed Rust, the following command can be used to build and install souko:
+
+```console
+# Install released version
+$ cargo install souko
+
+# Install latest version
+$ cargo install --git https://github.com/gifnksm/souko.git souko
+```
 
 ## Minimum supported Rust version (MSRV)
 
