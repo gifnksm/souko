@@ -56,11 +56,13 @@ jobs:
           override: true
 
       - name: Sets env vars for push
+        shell: bash
         run: |
           echo "RELEASE_REF_NAME=${{ github.ref_name }}" >> $GITHUB_ENV
         if: ${{ github.event_name == 'push' }}
 
       - name: Sets env vars for pull request
+        shell: bash
         run: |
           echo "RELEASE_REF_NAME=pr${{ github.event.pull_request.number }}" >> $GITHUB_ENV
         if: ${{ github.event_name == 'pull_request' }}
