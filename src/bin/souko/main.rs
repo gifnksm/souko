@@ -33,7 +33,9 @@ fn main() -> Result<()> {
         }
     }
 
-    tracing_subscriber::fmt::init();
+    tracing_subscriber::fmt()
+        .with_writer(std::io::stderr)
+        .init();
     color_eyre::install()?;
 
     let project_dirs = ProjectDirs::from("", "", env!("CARGO_PKG_NAME"))
