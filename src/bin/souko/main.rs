@@ -1,7 +1,10 @@
+use std::env;
+
 use clap::Parser;
 use color_eyre::eyre::{eyre, Result};
 use directories::ProjectDirs;
 use once_cell::sync::OnceCell;
+use tracing::Level;
 
 mod cli;
 mod command;
@@ -18,6 +21,18 @@ fn project_dirs() -> &'static ProjectDirs {
 }
 
 fn main() -> Result<()> {
+    let args = cli::Args::parse();
+    if env::var_os("RUST_LOG").is_none() {
+        match args.verbosity() {
+            Some(Level::ERROR) => env::set_var("RUST_LOG", "error"),
+            Some(Level::WARN) => env::set_var("RUST_LOG", "warn"),
+            Some(Level::INFO) => env::set_var("RUST_LOG", "info"),
+            Some(Level::DEBUG) => env::set_var("RUST_LOG", "debug"),
+            Some(Level::TRACE) => env::set_var("RUST_LOG", "trace"),
+            None => env::set_var("RUST_LOG", "off"),
+        }
+    }
+
     tracing_subscriber::fmt::init();
     color_eyre::install()?;
 
@@ -27,7 +42,6 @@ fn main() -> Result<()> {
         .set(project_dirs)
         .expect("BUG: faield to set project directories");
 
-    let args = cli::Args::parse();
     command::run(&args)?;
 
     Ok(())
