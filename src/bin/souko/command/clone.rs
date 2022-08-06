@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+};
 
 use color_eyre::eyre::{Result, WrapErr};
 use souko::{Query, Repo, RepoIndex};
@@ -21,6 +24,12 @@ pub(super) fn run(args: &Args, clone_args: &cli::Clone) -> Result<()> {
         Query::parse(query, &query_config).wrap_err_with(|| format!("invalid query: {}", query))?;
 
     let dest_path = make_dest_path(root_path.value(), query.url());
+    fs::create_dir_all(&dest_path).wrap_err_with(|| {
+        format!(
+            "failed to create destination directory: {}",
+            dest_path.display()
+        )
+    })?;
 
     tracing::debug!(query = %query.original_query(), url = %query.url(), dest = %dest_path.display());
 
@@ -64,7 +73,10 @@ fn make_dest_path(root_path: &Path, url: &Url) -> PathBuf {
     base_url.set_path("");
     let relative = base_url.make_relative(url);
     if let Some(relative) = relative {
-        dest_path.push(relative.trim_end_matches(".git"));
+        let relative = relative.trim_end_matches(".git");
+        for part in relative.split('/') {
+            dest_path.push(part);
+        }
     }
 
     dest_path
