@@ -15,7 +15,7 @@ pub(crate) struct Config {
 impl<'a> Config {
     pub(crate) fn default_root(&'a self) -> OptionalParam<'a, PathBuf> {
         OptionalParam::new("root", &self.default_root, || {
-            project_dirs().data_local_dir().join("root")
+            project_dirs::get().data_local_dir().join("root")
         })
     }
 

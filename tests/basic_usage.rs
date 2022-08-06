@@ -1,17 +1,38 @@
-use std::process::Command;
+use std::{path::Path, process::Command};
 
 use assert_cmd::prelude::*;
-use assert_fs::{prelude::*, TempDir};
+use assert_fs::{fixture::ChildPath, prelude::*, TempDir};
 use predicates::prelude::*;
+
+fn data_local_dir(home_dir: &impl PathChild) -> ChildPath {
+    if cfg!(target_os = "linux") {
+        return home_dir.child(".local/share/souko");
+    }
+    if cfg!(target_os = "macos") {
+        return home_dir.child("Library/Application Support/souko");
+    }
+    if cfg!(target_os = "windows") {
+        return home_dir.child(r"AppData\Local\souko\data");
+    }
+    panic!("unsupported platform");
+}
+
+fn souko_cmd(home_dir: &Path) -> Command {
+    let mut cmd = Command::cargo_bin("souko").unwrap();
+    cmd.envs([
+        ("HOME", home_dir.as_os_str()),
+        ("SOUKO_INTEGRATION_TEST", "true".as_ref()),
+    ]);
+    cmd
+}
 
 #[test]
 fn show_help_message() {
     let home = TempDir::new().unwrap();
 
-    let mut cmd = Command::cargo_bin("souko").unwrap();
-    cmd.env("HOME", home.path()).args(["--help"]);
-
-    cmd.assert()
+    souko_cmd(home.path())
+        .args(["--help"])
+        .assert()
         .success()
         .stdout(predicate::str::contains("USAGE"));
 }
@@ -20,22 +41,32 @@ fn show_help_message() {
 fn clone_and_list() {
     let home = TempDir::new().unwrap();
 
-    let mut cmd = Command::cargo_bin("souko").unwrap();
-    cmd.env("HOME", home.path())
-        .args(["clone", "gifnksm/souko"]);
-    cmd.assert().success().stdout(predicate::str::is_empty());
+    souko_cmd(home.path())
+        .args(["clone", "gifnksm/souko"])
+        .assert()
+        .success()
+        .stdout(predicate::str::is_empty());
 
-    home.child(".local/share/souko/root/github.com/gifnksm/souko/.git")
+    data_local_dir(&home)
+        .child("root/github.com/gifnksm/souko/.git")
         .assert(predicate::path::is_dir());
-    home.child(".local/share/souko/repo_index.json")
+    data_local_dir(&home)
+        .child("repo_index.json")
         .assert(predicate::path::is_file());
 
-    let mut cmd = Command::cargo_bin("souko").unwrap();
-    cmd.env("HOME", home.path()).args(["list"]);
-    cmd.assert().success().stdout(format!(
-        "{}/.local/share/souko/root/github.com/gifnksm/souko\n",
-        home.path().display()
-    ));
+    souko_cmd(home.path())
+        .args(["list"])
+        .assert()
+        .success()
+        .stdout(format!(
+            "{}\n",
+            data_local_dir(&home)
+                .child("root/github.com/gifnksm/souko")
+                .path()
+                .canonicalize()
+                .unwrap()
+                .display()
+        ));
 }
 
 #[test]
@@ -46,17 +77,22 @@ fn import_and_list() {
 
     let home = TempDir::new().unwrap();
 
-    let mut cmd = Command::cargo_bin("souko").unwrap();
-    cmd.env("HOME", home.path())
-        .args(["import", repo.path().display().to_string().as_str()]);
-    cmd.assert().success().stdout(predicate::str::is_empty());
+    souko_cmd(home.path())
+        .args(["import", repo.path().display().to_string().as_str()])
+        .assert()
+        .success()
+        .stdout(predicate::str::is_empty());
 
-    home.child(".local/share/souko/repo_index.json")
+    data_local_dir(&home)
+        .child("repo_index.json")
         .assert(predicate::path::is_file());
 
-    let mut cmd = Command::cargo_bin("souko").unwrap();
-    cmd.env("HOME", home.path()).args(["list"]);
-    cmd.assert()
+    souko_cmd(home.path())
+        .args(["list"])
+        .assert()
         .success()
-        .stdout(format!("{}\n", repo.path().display()));
+        .stdout(format!(
+            "{}\n",
+            repo.path().canonicalize().unwrap().display()
+        ));
 }

@@ -60,13 +60,13 @@ impl Args {
 
     pub(crate) fn config(&'_ self) -> OptionalParam<'_, PathBuf> {
         OptionalParam::new("config", &self.config, || {
-            project_dirs().config_dir().join("config.toml")
+            project_dirs::get().config_dir().join("config.toml")
         })
     }
 
     pub(crate) fn repo_index(&'_ self) -> OptionalParam<'_, PathBuf> {
         OptionalParam::new("repository index", &self.repo_index, || {
-            project_dirs().data_local_dir().join("repo_index.json")
+            project_dirs::get().data_local_dir().join("repo_index.json")
         })
     }
 
