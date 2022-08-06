@@ -1,6 +1,6 @@
 # souko
 
-[![maintenance status: experimental](https://img.shields.io/badge/maintenance-experimental-yellowgreen.svg)](https://doc.rust-lang.org/cargo/reference/manifest.html#the-badges-section)
+[![maintenance status: actively-developed](https://img.shields.io/badge/maintenance-actively--developed-brightgreen.svg)](https://doc.rust-lang.org/cargo/reference/manifest.html#the-badges-section)
 [![license: MIT OR APACHE-2.0](https://img.shields.io/crates/l/souko.svg)](#license)
 [![crates.io](https://img.shields.io/crates/v/souko.svg)](https://crates.io/crates/souko)
 [![docs.rs](https://docs.rs/souko/badge.svg)](https://docs.rs/souko/)
