@@ -30,7 +30,7 @@ mod walk_repo;
 
 use self::{
     args::Args, config::Config, optional_param::OptionalParam, project_dirs::ProjectDirs,
-    query::Query, repo::Repo, repo_index::RepoIndex, template::Template, walk_repo::*,
+    query::Query, repo::Repo, repo_index::RepoIndex, template::Template, walk_repo::WalkRepo,
 };
 
 pub fn main() -> Result<()> {
