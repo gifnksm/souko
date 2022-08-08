@@ -38,10 +38,39 @@ pub fn run(args: &Args) -> Result<()> {
     let metadata = MetadataCommand::new().exec()?;
     let root_package = &metadata.root_package().unwrap();
 
-    let artifacts_path = build(&metadata, root_package, use_cross, target)?;
+    let mut artifacts_path = vec![readme(&metadata)?];
+    for artifact in license(&metadata)? {
+        artifacts_path.push(artifact);
+    }
+    for artifact in build(&metadata, root_package, use_cross, target)? {
+        artifacts_path.push(artifact);
+    }
     create_archive(&metadata, root_package, target, &artifacts_path)?;
 
     Ok(())
+}
+
+fn readme(metadata: &Metadata) -> Result<Utf8PathBuf> {
+    let path = metadata.workspace_root.join("README.md");
+    ensure!(path.is_file(), "README.md is not a file: {path}");
+    Ok(path)
+}
+
+fn license(metadata: &Metadata) -> Result<Vec<Utf8PathBuf>> {
+    let mut artifacts = vec![];
+    for ent in fs::read_dir(&metadata.workspace_root)? {
+        let ent = ent?;
+        let path = ent.path();
+        let file_name = path.file_name().unwrap().to_str().unwrap();
+        if file_name.starts_with("LICENSE-")
+            || file_name.starts_with("LICENSE.")
+            || file_name == "LICENSE"
+        {
+            ensure!(path.is_file(), "LICENSE is not a file: {}", path.display());
+            artifacts.push(path.try_into()?);
+        }
+    }
+    Ok(artifacts)
 }
 
 fn build(
@@ -82,7 +111,7 @@ fn build(
                     exe.clone()
                 };
                 tracing::info!("Found artifact: {}", exe);
-                ensure!(exe.is_file(), "Artifact is not a file");
+                ensure!(exe.is_file(), "Artifact is not a file: {exe}");
                 artifacts.push(exe);
             }
         }
