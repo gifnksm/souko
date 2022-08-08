@@ -4,14 +4,14 @@ use clap::Parser;
 use color_eyre::eyre::Result;
 use tracing::Level;
 
-mod cli;
+mod args;
 mod command;
 mod config;
 mod project_dirs;
 mod util;
 
 fn main() -> Result<()> {
-    let args = cli::Args::parse();
+    let args = args::Args::parse();
     if env::var_os("RUST_LOG").is_none() {
         match args.verbosity() {
             Some(Level::ERROR) => env::set_var("RUST_LOG", "error"),

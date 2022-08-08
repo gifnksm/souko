@@ -8,11 +8,11 @@ use souko::{Query, Repo, RepoIndex};
 use url::Url;
 
 use crate::{
-    cli::{self, Args},
+    args::{self, Args},
     config::Config,
 };
 
-pub(super) fn run(args: &Args, clone_args: &cli::Clone) -> Result<()> {
+pub(super) fn run(args: &Args, clone_args: &args::Clone) -> Result<()> {
     let config_path = args.config();
     let config = config_path.load_toml::<Config>()?.unwrap_or_default();
 
