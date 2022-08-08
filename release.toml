@@ -5,8 +5,8 @@ pre-release-replacements = [
   {file = "CHANGELOG.md", search = "ReleaseDate", replace = "{{date}}"},
   {file = "CHANGELOG.md", search = "<!-- next-header -->", replace = "<!-- next-header -->\n\n## [Unreleased] - ReleaseDate", exactly = 1},
   {file = "CHANGELOG.md", search = "<!-- next-url -->", replace = "<!-- next-url -->\n[Unreleased]: https://github.com/gifnksm/souko/compare/{{tag_name}}...HEAD", exactly = 1},
-  {file = "src/lib.rs", search = "^//! souko = \"[0-9\\.]+\"", replace = "//! souko = \"{{version}}\""},
-  {file = "src/lib.rs", search = "^#!\\[doc\\(html_root_url = \"https://docs.rs/souko/[0-9\\.]+\"\\)\\]", replace = "#![doc(html_root_url = \"https://docs.rs/souko/{{version}}\")]"},
+  {file = "src/lib.rs", search = "^//! souko = \".*\"$", replace = "//! souko = \"{{version}}\"", exactly = 1},
+  {file = "src/lib.rs", search = "^#!\\[doc\\(html_root_url = \"https://docs.rs/souko/.*\"\\)\\]$", replace = "#![doc(html_root_url = \"https://docs.rs/souko/{{version}}\")]", exactly = 1},
 ]
 pre-release-hook = ["cargo", "test"]
 dev-version = true
