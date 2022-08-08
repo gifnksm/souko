@@ -4,13 +4,9 @@ use std::{
 };
 
 use color_eyre::eyre::{Result, WrapErr};
-use souko::{Query, Repo, RepoIndex};
 use url::Url;
 
-use crate::{
-    args::{self, Args},
-    config::Config,
-};
+use crate::{args, Args, Config, Query, Repo, RepoIndex};
 
 pub(super) fn run(args: &Args, clone_args: &args::Clone) -> Result<()> {
     let config_path = args.config();

@@ -8,20 +8,6 @@ use once_cell::sync::OnceCell;
 
 static PROJECT_DIRS: OnceCell<ProjectDirs> = OnceCell::new();
 
-pub(crate) fn init() -> Result<()> {
-    let project_dirs = ProjectDirs::new()?;
-    PROJECT_DIRS
-        .set(project_dirs)
-        .expect("BUG: faield to set project directories");
-    Ok(())
-}
-
-pub(crate) fn get() -> &'static ProjectDirs {
-    PROJECT_DIRS
-        .get()
-        .expect("BUG: project_dirs::get() called before project_dirs::init()")
-}
-
 #[derive(Debug, Clone)]
 pub(crate) struct ProjectDirs {
     config_dir: Option<PathBuf>,
@@ -30,6 +16,20 @@ pub(crate) struct ProjectDirs {
 }
 
 impl ProjectDirs {
+    pub(crate) fn init() -> Result<()> {
+        let project_dirs = ProjectDirs::new()?;
+        PROJECT_DIRS
+            .set(project_dirs)
+            .expect("BUG: faield to set project directories");
+        Ok(())
+    }
+
+    pub(crate) fn get() -> &'static Self {
+        PROJECT_DIRS
+            .get()
+            .expect("BUG: project_dirs::get() called before project_dirs::init()")
+    }
+
     fn new() -> Result<Self> {
         let integration_test = env::var_os("SOUKO_INTEGRATION_TEST").is_some();
         let inner = directories::ProjectDirs::from("", "", env!("CARGO_PKG_NAME"))

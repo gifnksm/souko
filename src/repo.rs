@@ -7,12 +7,12 @@ use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Repo {
+pub(crate) struct Repo {
     path: PathBuf,
 }
 
 #[derive(Debug, Error)]
-pub enum ReadRepoError {
+pub(crate) enum ReadError {
     #[error("`{path}` is not a git repository: {source}")]
     NotGitRepo { path: PathBuf, source: git2::Error },
     #[error("`{path}` is bare repository")]
@@ -22,13 +22,13 @@ pub enum ReadRepoError {
 }
 
 impl Repo {
-    pub fn path(&self) -> &Path {
+    pub(crate) fn path(&self) -> &Path {
         &self.path
     }
 
-    pub fn read(path: impl AsRef<Path>) -> Result<Repo, ReadRepoError> {
+    pub(crate) fn read(path: impl AsRef<Path>) -> Result<Repo, ReadError> {
         let path = path.as_ref();
-        let repo = git2::Repository::open(path).map_err(|e| ReadRepoError::NotGitRepo {
+        let repo = git2::Repository::open(path).map_err(|e| ReadError::NotGitRepo {
             path: path.to_owned(),
             source: e,
         })?;
@@ -37,16 +37,16 @@ impl Repo {
 }
 
 impl TryFrom<&git2::Repository> for Repo {
-    type Error = ReadRepoError;
+    type Error = ReadError;
 
     fn try_from(repo: &git2::Repository) -> Result<Self, Self::Error> {
-        let workdir = repo.workdir().ok_or_else(|| ReadRepoError::BareRepo {
+        let workdir = repo.workdir().ok_or_else(|| ReadError::BareRepo {
             path: repo.path().to_owned(),
         })?;
 
         let path = workdir
             .canonicalize()
-            .map_err(|e| ReadRepoError::GetAbsolutePath {
+            .map_err(|e| ReadError::GetAbsolutePath {
                 path: workdir.to_owned(),
                 source: e,
             })?;

@@ -1,10 +1,10 @@
 use thiserror::Error;
 use walkdir::WalkDir;
 
-use crate::{ReadRepoError, Repo};
+use crate::{repo, Repo};
 
 #[derive(Debug)]
-pub struct WalkRepo {
+pub(crate) struct WalkRepo {
     walk_dir: WalkDir,
     options: WalkRepoOptions,
 }
@@ -15,29 +15,29 @@ struct WalkRepoOptions {
 }
 
 impl WalkRepo {
-    pub fn new(walk_dir: WalkDir) -> Self {
+    pub(crate) fn new(walk_dir: WalkDir) -> Self {
         Self {
             walk_dir,
             options: WalkRepoOptions::default(),
         }
     }
 
-    pub fn include_hidden(mut self, yes: bool) -> Self {
+    pub(crate) fn include_hidden(mut self, yes: bool) -> Self {
         self.options.include_hidden = yes;
         self
     }
 }
 
 #[derive(Debug, Error)]
-pub enum WalkRepoError {
+pub(crate) enum Error {
     #[error(transparent)]
     WalkDir(#[from] walkdir::Error),
     #[error(transparent)]
-    ReadRepo(#[from] ReadRepoError),
+    ReadRepo(#[from] repo::ReadError),
 }
 
 impl IntoIterator for WalkRepo {
-    type Item = Result<Repo, WalkRepoError>;
+    type Item = Result<Repo, Error>;
     type IntoIter = IntoIter;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -58,13 +58,13 @@ macro_rules! itry {
 }
 
 #[derive(Debug)]
-pub struct IntoIter {
+pub(crate) struct IntoIter {
     iter: walkdir::IntoIter,
     options: WalkRepoOptions,
 }
 
 impl Iterator for IntoIter {
-    type Item = Result<Repo, WalkRepoError>;
+    type Item = Result<Repo, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {

@@ -1,7 +1,6 @@
 use color_eyre::eyre::Result;
-use souko::{Repo, RepoIndex, WalkRepo};
 
-use crate::args::{self, Args};
+use crate::{args, Args, Repo, RepoIndex, WalkRepo};
 
 pub(super) fn run(args: &Args, import_args: &args::Import) -> Result<()> {
     let repo_index_path = args.repo_index();

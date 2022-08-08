@@ -1,25 +1,25 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use crate::{project_dirs, util::OptionalParam};
+use crate::optional_param::OptionalParam;
+use crate::{query, ProjectDirs, Template};
 use serde::Deserialize;
-use souko::{QueryConfig, Scheme, Template};
 
 #[derive(Debug, Default, Deserialize)]
 pub(crate) struct Config {
     default_root: Option<PathBuf>,
-    default_scheme: Option<Scheme>,
-    scheme_alias: HashMap<Scheme, Scheme>,
-    custom_scheme: HashMap<Scheme, Template>,
+    default_scheme: Option<query::Scheme>,
+    scheme_alias: HashMap<query::Scheme, query::Scheme>,
+    custom_scheme: HashMap<query::Scheme, Template>,
 }
 
 impl<'a> Config {
     pub(crate) fn default_root(&'a self) -> OptionalParam<'a, PathBuf> {
         OptionalParam::new("root", &self.default_root, || {
-            project_dirs::get().data_local_dir().join("root")
+            ProjectDirs::get().data_local_dir().join("root")
         })
     }
 
-    pub(crate) fn query_config(&'a self) -> QueryConfig {
+    pub(crate) fn query_config(&'a self) -> query::Config {
         let default_scheme = self
             .default_scheme
             .clone()
@@ -45,7 +45,7 @@ impl<'a> Config {
             custom_scheme.entry(scheme).or_insert_with(|| template);
         }
 
-        QueryConfig {
+        query::Config {
             default_scheme,
             scheme_alias,
             custom_scheme,

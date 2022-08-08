@@ -12,12 +12,12 @@ use thiserror::Error;
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(try_from = "&str")]
-pub struct Template {
+pub(crate) struct Template {
     parts: Vec<Parts>,
 }
 
 impl Template {
-    pub fn expand<K, V>(&self, variables: &HashMap<K, V>) -> String
+    pub(crate) fn expand<K, V>(&self, variables: &HashMap<K, V>) -> String
     where
         K: Borrow<str> + Eq + Hash,
         V: Display,
@@ -53,7 +53,7 @@ impl Parts {
 }
 
 #[derive(Debug, Error)]
-pub enum ParseTemplateError {
+pub(crate) enum ParseError {
     #[error("unexpected character: {0:?}")]
     UnexpectedChar(char),
     #[error("no closing brace '}}' found")]
@@ -63,7 +63,7 @@ pub enum ParseTemplateError {
 }
 
 impl FromStr for Template {
-    type Err = ParseTemplateError;
+    type Err = ParseError;
 
     fn from_str(mut s: &str) -> Result<Self, Self::Err> {
         let mut parts = vec![];
@@ -83,18 +83,18 @@ impl FromStr for Template {
                 continue;
             }
             if s.starts_with('}') {
-                return Err(ParseTemplateError::UnexpectedChar('}'));
+                return Err(ParseError::UnexpectedChar('}'));
             }
             assert!(s.starts_with('{'));
             if let Some(end) = s.find('}') {
                 let variable = s[1..end].trim();
                 if !is_valid_variable(variable) {
-                    return Err(ParseTemplateError::InvalidVariable(variable.to_string()));
+                    return Err(ParseError::InvalidVariable(variable.to_string()));
                 }
                 s = &s[end + 1..];
                 parts.push(Parts::variable(variable));
             } else {
-                return Err(ParseTemplateError::NoClosingBrace);
+                return Err(ParseError::NoClosingBrace);
             }
         }
         push_str(&mut parts, s);
@@ -128,7 +128,7 @@ fn is_valid_variable(s: &str) -> bool {
 }
 
 impl TryFrom<String> for Template {
-    type Error = ParseTemplateError;
+    type Error = ParseError;
 
     fn try_from(s: String) -> Result<Self, Self::Error> {
         Self::from_str(s.as_str())
@@ -136,7 +136,7 @@ impl TryFrom<String> for Template {
 }
 
 impl TryFrom<&str> for Template {
-    type Error = ParseTemplateError;
+    type Error = ParseError;
 
     fn try_from(s: &str) -> Result<Self, Self::Error> {
         Self::from_str(s)
@@ -193,19 +193,19 @@ mod tests {
     fn test_from_str_err() {
         assert!(matches!(
             Template::from_str("{var").unwrap_err(),
-            ParseTemplateError::NoClosingBrace
+            ParseError::NoClosingBrace
         ));
         assert!(matches!(
             Template::from_str("{{var}").unwrap_err(),
-            ParseTemplateError::UnexpectedChar('}')
+            ParseError::UnexpectedChar('}')
         ));
         assert!(matches!(
             Template::from_str("{2var}").unwrap_err(),
-            ParseTemplateError::InvalidVariable(s) if s == "2var"
+            ParseError::InvalidVariable(s) if s == "2var"
         ));
         assert!(matches!(
             Template::from_str("{v ar}").unwrap_err(),
-            ParseTemplateError::InvalidVariable(s) if s == "v ar"
+            ParseError::InvalidVariable(s) if s == "v ar"
         ));
     }
 

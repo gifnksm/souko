@@ -1,6 +1,6 @@
 use color_eyre::eyre::Result;
 
-use crate::args::{Args, SubCommand};
+use crate::{args::SubCommand, Args};
 
 mod clone;
 mod import;

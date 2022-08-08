@@ -3,12 +3,12 @@ use std::path::PathBuf;
 use clap::Parser;
 use tracing::Level;
 
-use crate::{project_dirs, util::OptionalParam};
+use crate::{OptionalParam, ProjectDirs};
 
 mod clone;
 mod import;
 
-pub(crate) use self::{clone::*, import::*};
+pub(crate) use self::{clone::Clone, import::Import};
 
 #[derive(Debug, Parser)]
 #[clap(author, version, about)]
@@ -60,13 +60,13 @@ impl Args {
 
     pub(crate) fn config(&'_ self) -> OptionalParam<'_, PathBuf> {
         OptionalParam::new("config", &self.config, || {
-            project_dirs::get().config_dir().join("config.toml")
+            ProjectDirs::get().config_dir().join("config.toml")
         })
     }
 
     pub(crate) fn repo_index(&'_ self) -> OptionalParam<'_, PathBuf> {
         OptionalParam::new("repository index", &self.repo_index, || {
-            project_dirs::get().data_local_dir().join("repo_index.json")
+            ProjectDirs::get().data_local_dir().join("repo_index.json")
         })
     }
 

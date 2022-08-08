@@ -15,7 +15,7 @@ use crate::Template;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize)]
 #[serde(try_from = "&str")]
-pub struct Scheme(String);
+pub(crate) struct Scheme(String);
 
 impl Borrow<str> for Scheme {
     fn borrow(&self) -> &str {
@@ -30,7 +30,7 @@ impl Display for Scheme {
 }
 
 #[derive(Debug, Error)]
-pub enum SchemeParseError {
+pub(crate) enum SchemeParseError {
     #[error("invalid URL scheme `{scheme}`")]
     InvalidScheme { scheme: String },
 }
@@ -67,20 +67,20 @@ impl TryFrom<&str> for Scheme {
 }
 
 #[derive(Debug, Clone)]
-pub struct QueryConfig {
-    pub default_scheme: Option<Scheme>,
-    pub scheme_alias: HashMap<Scheme, Scheme>,
-    pub custom_scheme: HashMap<Scheme, Template>,
+pub(crate) struct Config {
+    pub(crate) default_scheme: Option<Scheme>,
+    pub(crate) scheme_alias: HashMap<Scheme, Scheme>,
+    pub(crate) custom_scheme: HashMap<Scheme, Template>,
 }
 
 #[derive(Debug, Clone)]
-pub struct Query {
+pub(crate) struct Query {
     original_query: String,
     url: Url,
 }
 
 #[derive(Debug, Error)]
-pub enum QueryError {
+pub(crate) enum QueryError {
     #[error("invalid URL {}: {source}", ErrorDisplayHelper { original_query, expanded_query })]
     InvalidUrl {
         original_query: String,
@@ -120,7 +120,7 @@ impl Display for ErrorDisplayHelper<'_> {
 }
 
 impl Query {
-    pub fn parse(query: &str, config: &QueryConfig) -> Result<Self, QueryError> {
+    pub(crate) fn parse(query: &str, config: &Config) -> Result<Self, QueryError> {
         let url_schemes = ["http://", "https://", "ssh://", "git://", "ftp://"];
         let mut visited_scheme = HashSet::new();
 
@@ -179,11 +179,11 @@ impl Query {
         }
     }
 
-    pub fn original_query(&self) -> &str {
+    pub(crate) fn original_query(&self) -> &str {
         &self.original_query
     }
 
-    pub fn url(&self) -> &Url {
+    pub(crate) fn url(&self) -> &Url {
         &self.url
     }
 }
@@ -203,7 +203,7 @@ mod tests {
 
     #[test]
     fn test_parse_with_empty_config() {
-        let config = QueryConfig {
+        let config = Config {
             default_scheme: None,
             scheme_alias: HashMap::new(),
             custom_scheme: HashMap::new(),
@@ -224,7 +224,7 @@ mod tests {
 
     #[test]
     fn test_parse_with_default_config() {
-        let config = QueryConfig {
+        let config = Config {
             default_scheme: Some("gh".parse().unwrap()),
             scheme_alias: HashMap::from_iter([
                 ("gh".parse().unwrap(), "github".parse().unwrap()),
@@ -263,7 +263,7 @@ mod tests {
 
     #[test]
     fn test_parse_with_cyclic_config() {
-        let config = QueryConfig {
+        let config = Config {
             default_scheme: Some("gh".parse().unwrap()),
             scheme_alias: HashMap::from_iter([
                 ("c1".parse().unwrap(), "c2".parse().unwrap()),
