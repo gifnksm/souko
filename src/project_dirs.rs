@@ -20,14 +20,14 @@ impl ProjectDirs {
         let project_dirs = ProjectDirs::new()?;
         PROJECT_DIRS
             .set(project_dirs)
-            .expect("BUG: faield to set project directories");
+            .expect("BUG: failed to set project directories");
         Ok(())
     }
 
     pub(crate) fn get() -> &'static Self {
         PROJECT_DIRS
             .get()
-            .expect("BUG: project_dirs::get() called before project_dirs::init()")
+            .expect("BUG: ProjectDirs::get() called before ProjectDirs::init()")
     }
 
     fn new() -> Result<Self> {

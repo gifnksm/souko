@@ -1,8 +1,8 @@
 use std::{collections::HashMap, path::PathBuf};
 
-use crate::optional_param::OptionalParam;
-use crate::{query, ProjectDirs, Template};
 use serde::Deserialize;
+
+use crate::{query, OptionalParam, ProjectDirs, Template};
 
 #[derive(Debug, Default, Deserialize)]
 pub(crate) struct Config {

@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
-use crate::{optional_param::OptionalParam, Config};
+use crate::{Config, OptionalParam};
 
 #[derive(Debug, Parser)]
 pub(crate) struct Clone {
