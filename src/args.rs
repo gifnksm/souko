@@ -12,7 +12,7 @@ pub(crate) use self::{clone::Clone, import::Import};
 
 #[derive(Debug, Parser)]
 #[clap(author, version, about)]
-pub(crate) struct Args {
+pub struct Args {
     /// More output per occurrence
     #[clap(long, short = 'v', parse(from_occurrences), global = true)]
     verbose: i8,
@@ -46,7 +46,7 @@ pub(crate) enum SubCommand {
 }
 
 impl Args {
-    pub(crate) fn verbosity(&self) -> Option<Level> {
+    pub fn verbosity(&self) -> Option<Level> {
         let level = self.verbose - self.quiet;
         match level {
             i8::MIN..=-3 => None,
