@@ -2,14 +2,14 @@ use std::{collections::HashMap, path::PathBuf};
 
 use serde::Deserialize;
 
-use crate::{query, OptionalParam, ProjectDirs, Template};
+use crate::{query, OptionalParam, ProjectDirs, Scheme, Template};
 
 #[derive(Debug, Default, Deserialize)]
 pub(crate) struct Config {
     default_root: Option<PathBuf>,
-    default_scheme: Option<query::Scheme>,
-    scheme_alias: HashMap<query::Scheme, query::Scheme>,
-    custom_scheme: HashMap<query::Scheme, Template>,
+    default_scheme: Option<Scheme>,
+    scheme_alias: HashMap<Scheme, Scheme>,
+    custom_scheme: HashMap<Scheme, Template>,
 }
 
 impl<'a> Config {

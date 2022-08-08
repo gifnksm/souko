@@ -25,12 +25,14 @@ mod project_dirs;
 mod query;
 mod repo;
 mod repo_index;
+mod scheme;
 mod template;
 mod walk_repo;
 
 use self::{
     args::Args, config::Config, optional_param::OptionalParam, project_dirs::ProjectDirs,
-    query::Query, repo::Repo, repo_index::RepoIndex, template::Template, walk_repo::WalkRepo,
+    query::Query, repo::Repo, repo_index::RepoIndex, scheme::Scheme, template::Template,
+    walk_repo::WalkRepo,
 };
 
 pub fn main() -> Result<()> {
