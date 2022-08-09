@@ -7,8 +7,9 @@ use crate::{OptionalParam, ProjectDirs};
 
 mod clone;
 mod import;
+mod list;
 
-pub(crate) use self::{clone::Clone, import::Import};
+pub(crate) use self::{clone::Clone, import::Import, list::List};
 
 #[derive(Debug, Parser)]
 #[clap(author, version, about)]
@@ -42,7 +43,7 @@ pub(crate) enum SubCommand {
     /// Import local repositories into souko
     Import(Import),
     /// List repositories in souko
-    List,
+    List(List),
 }
 
 impl Args {

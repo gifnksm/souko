@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use clap::Parser;
 
 #[derive(Debug, Parser)]
+#[clap(author, version, about)]
 pub(crate) struct Import {
     /// Recursively import any subdirectories found
     #[clap(short, long)]
