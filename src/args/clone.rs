@@ -5,6 +5,7 @@ use clap::Parser;
 use crate::{Config, OptionalParam};
 
 #[derive(Debug, Parser)]
+#[clap(author, version, about)]
 pub(crate) struct Clone {
     /// Path of the root directory under which the repository will be cloned
     #[clap(long)]
