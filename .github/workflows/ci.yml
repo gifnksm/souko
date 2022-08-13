@@ -144,16 +144,9 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           key: ${{ matrix.features }}
-      # - uses: taiki-e/install-action@v1
-      #   with:
-      #     tool: cargo-udeps
-      - uses: gifnksm/install-action@cargo-udeps
-        with:
-          tool: cargo-udeps
+      - uses: taiki-e/install-action@cargo-udeps
       - name: cargo udeps
-        run: |
-          cargo udeps --workspace --all-targets ${{ matrix.features }}
-        shell: bash
+        run: cargo udeps --workspace --all-targets ${{ matrix.features }}
 
   rustfmt:
     name: Rustfmt
