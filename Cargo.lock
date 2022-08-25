@@ -120,9 +120,9 @@ checksum = "ec8a7b6a70fde80372154c65702f00a0f56f3e1c36abbc6c440484be248856db"
 
 [[package]]
 name = "camino"
-version = "1.0.9"
+version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "869119e97797867fd90f5e22af7d0bd274bd4635ebb9eb68c04f3f513ae6c412"
+checksum = "88ad0e1e3e88dd237a156ab9f571021b8a158caa0ae44b1968a241efb5144c1e"
 dependencies = [
  "serde",
 ]
@@ -220,6 +220,28 @@ checksum = "937efe4451c32be4ccb3e19549cbb1ea5cb85197f39b87a9662ca1d7b1765d1d"
 dependencies = [
  "clap",
  "roff",
+]
+
+[[package]]
+name = "cli-xtask"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "115c25569d1640f7876e00cf0d64b36d9fc963f4e464651fe2f737f74d2d9cad"
+dependencies = [
+ "cargo_metadata",
+ "clap",
+ "clap_complete",
+ "clap_mangen",
+ "color-eyre",
+ "eyre",
+ "flate2",
+ "once_cell",
+ "regex",
+ "tar",
+ "time",
+ "tracing",
+ "tracing-subscriber",
+ "walkdir",
 ]
 
 [[package]]
@@ -1057,7 +1079,6 @@ version = "0.3.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c3f9a28b618c3a6b9251b6908e9c99e04b9e5c02e6581ccbb67d59c34ef7f9b"
 dependencies = [
- "itoa",
  "libc",
  "num_threads",
 ]
@@ -1325,16 +1346,6 @@ dependencies = [
 name = "xtask"
 version = "0.1.0"
 dependencies = [
- "cargo_metadata",
- "clap",
- "clap_complete",
- "clap_mangen",
- "color-eyre",
- "flate2",
- "once_cell",
+ "cli-xtask",
  "souko",
- "tar",
- "time",
- "tracing",
- "tracing-subscriber",
 ]
