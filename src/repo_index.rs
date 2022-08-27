@@ -10,7 +10,6 @@ pub(crate) struct RepoIndex {
 
 impl RepoIndex {
     pub(crate) fn repos(&self) -> &[Repo] {
-        // TODO: check whethe the repository is already in the index
         &self.repos
     }
 
