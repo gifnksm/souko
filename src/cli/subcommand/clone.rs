@@ -26,7 +26,7 @@ pub(crate) struct Args {
 impl Args {
     pub(crate) fn root_path(&self, config: &Config) -> OptionalParam<'_, PathBuf> {
         OptionalParam::new("root", &self.root_path, || {
-            config.default_root().path().to_owned()
+            config.root_map().default_root().path().to_owned()
         })
     }
 
