@@ -6,7 +6,7 @@ use std::{
 use color_eyre::eyre::{Result, WrapErr};
 use url::Url;
 
-use crate::{cli::subcommand::clone::Args, repo::Repo, App, Query};
+use crate::{cli::subcommand::clone::Args, App, Query};
 
 pub(super) fn run(app: &App, args: &Args) -> Result<()> {
     let config = app.config()?;
@@ -33,10 +33,9 @@ pub(super) fn run(app: &App, args: &Args) -> Result<()> {
         query.original_query(),
         dest_path.display()
     );
-    let repo = git2::Repository::clone(query.url().as_str(), &dest_path)
+    let _repo = git2::Repository::clone(query.url().as_str(), &dest_path)
         .wrap_err_with(|| format!("failed to clone git repository from {}", query.url()))?;
-    let repo = Repo::try_from(&repo).expect("BUG: failed to convert git2::Repository to Repo");
-    tracing::info!("Cloned {}", repo.path().display());
+    tracing::info!("Cloned {}", query.original_query());
 
     Ok(())
 }
