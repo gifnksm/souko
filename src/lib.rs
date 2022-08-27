@@ -13,7 +13,7 @@
 
 use color_eyre::eyre::Result;
 
-mod args;
+mod cli;
 mod command;
 mod config;
 mod optional_param;
@@ -25,14 +25,14 @@ mod scheme;
 mod template;
 mod walk_repo;
 
-pub use self::args::Args;
+pub use self::cli::app::App;
 use self::{
     config::Config, optional_param::OptionalParam, project_dirs::ProjectDirs, query::Query,
     repo::Repo, repo_index::RepoIndex, scheme::Scheme, template::Template, walk_repo::WalkRepo,
 };
 
-pub fn main(args: &Args) -> Result<()> {
+pub fn main(app: &App) -> Result<()> {
     ProjectDirs::init()?;
-    command::run(args)?;
+    command::run(app)?;
     Ok(())
 }

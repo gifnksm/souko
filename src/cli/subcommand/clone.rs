@@ -1,12 +1,9 @@
 use std::path::PathBuf;
 
-use clap::Parser;
-
 use crate::{Config, OptionalParam};
 
-#[derive(Debug, Parser)]
-#[clap(author, version, about)]
-pub(crate) struct Clone {
+#[derive(Debug, Clone, Default, clap::Args)]
+pub(crate) struct Args {
     /// Path of the root directory under which the repository will be cloned
     #[clap(long)]
     root: Option<PathBuf>,
@@ -26,7 +23,7 @@ pub(crate) struct Clone {
     query: String,
 }
 
-impl Clone {
+impl Args {
     pub(crate) fn root(&self, config: &Config) -> OptionalParam<'_, PathBuf> {
         OptionalParam::new("root", &self.root, || {
             config.default_root().value().to_owned()

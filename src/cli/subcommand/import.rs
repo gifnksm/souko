@@ -1,10 +1,7 @@
 use std::path::PathBuf;
 
-use clap::Parser;
-
-#[derive(Debug, Parser)]
-#[clap(author, version, about)]
-pub(crate) struct Import {
+#[derive(Debug, Clone, Default, clap::Args)]
+pub(crate) struct Args {
     /// Recursively import any subdirectories found
     #[clap(short, long)]
     recursive: bool,
@@ -19,7 +16,7 @@ pub(crate) struct Import {
     repos: Vec<PathBuf>,
 }
 
-impl Import {
+impl Args {
     pub(crate) fn recursive(&self) -> bool {
         self.recursive
     }

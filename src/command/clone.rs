@@ -6,14 +6,14 @@ use std::{
 use color_eyre::eyre::{Result, WrapErr};
 use url::Url;
 
-use crate::{args, Args, Config, Query, Repo, RepoIndex};
+use crate::{cli::subcommand::clone::Args, App, Config, Query, Repo, RepoIndex};
 
-pub(super) fn run(args: &Args, clone_args: &args::Clone) -> Result<()> {
-    let config_path = args.config();
+pub(super) fn run(app: &App, args: &Args) -> Result<()> {
+    let config_path = app.config();
     let config = config_path.load_toml::<Config>()?.unwrap_or_default();
 
-    let root_path = clone_args.root(&config);
-    let query = clone_args.query();
+    let root_path = args.root(&config);
+    let query = args.query();
 
     let query_config = config.query_config();
     let query =
@@ -39,7 +39,7 @@ pub(super) fn run(args: &Args, clone_args: &args::Clone) -> Result<()> {
         .wrap_err_with(|| format!("failed to clone git repository from {}", query.url()))?;
     let repo = Repo::try_from(&repo).expect("BUG: failed to convert git2::Repository to Repo");
 
-    let repo_index_path = args.repo_index();
+    let repo_index_path = app.repo_index();
     let mut repo_index = repo_index_path
         .load_json::<RepoIndex>()?
         .unwrap_or_default();
