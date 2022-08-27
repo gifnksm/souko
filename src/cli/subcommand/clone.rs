@@ -5,8 +5,8 @@ use crate::{Config, OptionalParam};
 #[derive(Debug, Clone, Default, clap::Args)]
 pub(crate) struct Args {
     /// Path of the root directory under which the repository will be cloned
-    #[clap(long)]
-    root: Option<PathBuf>,
+    #[clap(long = "root")]
+    root_path: Option<PathBuf>,
 
     /// Git repository to clone repository from
     ///
@@ -24,9 +24,9 @@ pub(crate) struct Args {
 }
 
 impl Args {
-    pub(crate) fn root(&self, config: &Config) -> OptionalParam<'_, PathBuf> {
-        OptionalParam::new("root", &self.root, || {
-            config.default_root().value().to_owned()
+    pub(crate) fn root_path(&self, config: &Config) -> OptionalParam<'_, PathBuf> {
+        OptionalParam::new("root", &self.root_path, || {
+            config.root_path().value().to_owned()
         })
     }
 

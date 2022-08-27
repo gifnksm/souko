@@ -1,12 +1,11 @@
 use std::{
-    fs::{self, File},
-    io::{self, BufReader, BufWriter, Read},
+    fs::File,
+    io::{self, Read},
     path::PathBuf,
 };
 
-use color_eyre::eyre::{eyre, Error, Result, WrapErr};
-use serde::{Deserialize, Serialize};
-use tempfile::NamedTempFile;
+use color_eyre::eyre::{Error, Result, WrapErr};
+use serde::Deserialize;
 use toml_edit::Document;
 
 #[derive(Debug)]
@@ -59,67 +58,67 @@ impl<'a, T> OptionalParam<'a, T> {
 }
 
 impl<'a> OptionalParam<'a, PathBuf> {
-    pub(crate) fn load_json<T>(&self) -> Result<Option<T>>
-    where
-        T: for<'de> Deserialize<'de>,
-    {
-        let path = self.value.as_ref();
+    // pub(crate) fn load_json<T>(&self) -> Result<Option<T>>
+    // where
+    //     T: for<'de> Deserialize<'de>,
+    // {
+    //     let path = self.value.as_ref();
 
-        let file = match File::open(path) {
-            Ok(file) => file,
-            Err(e) if self.value.is_default() && e.kind() == io::ErrorKind::NotFound => {
-                return Ok(None)
-            }
-            Err(e) => {
-                return Err(Error::from(e).wrap_err(format!(
-                    "failed to open {}: {}",
-                    self.name,
-                    path.display()
-                )))
-            }
-        };
+    //     let file = match File::open(path) {
+    //         Ok(file) => file,
+    //         Err(e) if self.value.is_default() && e.kind() == io::ErrorKind::NotFound => {
+    //             return Ok(None)
+    //         }
+    //         Err(e) => {
+    //             return Err(Error::from(e).wrap_err(format!(
+    //                 "failed to open {}: {}",
+    //                 self.name,
+    //                 path.display()
+    //             )))
+    //         }
+    //     };
 
-        let reader = BufReader::new(file);
-        let value = serde_json::from_reader(reader).wrap_err_with(|| {
-            format!(
-                "failed to read {}: {}",
-                self.name,
-                self.value.as_ref().display()
-            )
-        })?;
-        Ok(Some(value))
-    }
+    //     let reader = BufReader::new(file);
+    //     let value = serde_json::from_reader(reader).wrap_err_with(|| {
+    //         format!(
+    //             "failed to read {}: {}",
+    //             self.name,
+    //             self.value.as_ref().display()
+    //         )
+    //     })?;
+    //     Ok(Some(value))
+    // }
 
-    pub(crate) fn store_json<T>(&self, value: &T) -> Result<()>
-    where
-        T: Serialize,
-    {
-        let path = self.value.as_ref();
+    // pub(crate) fn store_json<T>(&self, value: &T) -> Result<()>
+    // where
+    //     T: Serialize,
+    // {
+    //     let path = self.value.as_ref();
 
-        let dir = path
-            .parent()
-            .ok_or_else(|| eyre!("failed to get parent directory: {}", path.display()))?;
-        fs::create_dir_all(dir)
-            .wrap_err_with(|| format!("failed to create diretory: {}", dir.display()))?;
+    //     let dir = path
+    //         .parent()
+    //         .ok_or_else(|| eyre!("failed to get parent directory: {}", path.display()))?;
+    //     fs::create_dir_all(dir)
+    //         .wrap_err_with(|| format!("failed to create diretory: {}", dir.display()))?;
 
-        let mut file = NamedTempFile::new_in(dir)
-            .wrap_err_with(|| format!("failed to create temporary file in {}", dir.display(),))?;
-        let temp_path = file.path().to_owned();
-        {
-            let mut writer = BufWriter::new(&mut file);
-            serde_json::to_writer(&mut writer, value).wrap_err_with(|| {
-                format!(
-                    "failed to write {} to temporary file: {}",
-                    self.name,
-                    temp_path.display()
-                )
-            })?;
-        }
-        file.persist(path).wrap_err_with(|| {
-            format!("failed to write {} to file: {}", self.name, path.display())
-        })?;
-        Ok(())
-    }
+    //     let file = NamedTempFile::new_in(dir)
+    //         .wrap_err_with(|| format!("failed to create temporary file in {}", dir.display(),))?;
+    //     let temp_path = file.path().to_owned();
+    //     let mut writer = BufWriter::new(file);
+    //     serde_json::to_writer(&mut writer, value).wrap_err_with(|| {
+    //         format!(
+    //             "failed to write {} to temporary file: {}",
+    //             self.name,
+    //             temp_path.display()
+    //         )
+    //     })?;
+    //     let mut file = writer.into_inner()?;
+    //     file.as_file_mut().sync_all()?;
+    //     file.persist(path).wrap_err_with(|| {
+    //         format!("failed to write {} to file: {}", self.name, path.display())
+    //     })?;
+    //     Ok(())
+    // }
 
     pub(crate) fn load_toml_document(&self) -> Result<Option<Document>> {
         let path = self.value.as_ref();
@@ -174,20 +173,20 @@ impl<'a> OptionalParam<'a, PathBuf> {
     //         .parent()
     //         .ok_or_else(|| eyre!("failed to get parent directory: {}", path.display()))?;
 
-    //     let mut file = NamedTempFile::new_in(dir)
+    //     let file = NamedTempFile::new_in(dir)
     //         .wrap_err_with(|| format!("failed to create temporary file in {}", dir.display(),))?;
     //     let temp_path = file.path().to_owned();
-    //     {
-    //         let toml = doc.to_string();
-    //         let mut writer = BufWriter::new(&mut file);
-    //         writer.write_all(toml.as_bytes()).wrap_err_with(|| {
-    //             format!(
-    //                 "failed to write {} to temporary file: {}",
-    //                 self.name,
-    //                 temp_path.display()
-    //             )
-    //         })?;
-    //     }
+    //     let toml = doc.to_string();
+    //     let mut writer = BufWriter::new(file);
+    //     writer.write_all(toml.as_bytes()).wrap_err_with(|| {
+    //         format!(
+    //             "failed to write {} to temporary file: {}",
+    //             self.name,
+    //             temp_path.display()
+    //         )
+    //     })?;
+    //     let mut file = writer.into_inner()?;
+    //     file.as_file_mut().sync_all()?;
     //     file.persist(path).wrap_err_with(|| {
     //         format!("failed to write {} to file: {}", self.name, path.display())
     //     })?;

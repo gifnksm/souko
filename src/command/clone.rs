@@ -6,13 +6,12 @@ use std::{
 use color_eyre::eyre::{Result, WrapErr};
 use url::Url;
 
-use crate::{cli::subcommand::clone::Args, App, Config, Query, Repo, RepoIndex};
+use crate::{cli::subcommand::clone::Args, repo::Repo, App, Query};
 
 pub(super) fn run(app: &App, args: &Args) -> Result<()> {
-    let config_path = app.config();
-    let config = config_path.load_toml::<Config>()?.unwrap_or_default();
+    let config = app.config()?;
 
-    let root_path = args.root(&config);
+    let root_path = args.root_path(&config);
     let query = args.query();
 
     let query_config = config.query_config();
@@ -34,23 +33,10 @@ pub(super) fn run(app: &App, args: &Args) -> Result<()> {
         query.original_query(),
         dest_path.display()
     );
-
     let repo = git2::Repository::clone(query.url().as_str(), &dest_path)
         .wrap_err_with(|| format!("failed to clone git repository from {}", query.url()))?;
     let repo = Repo::try_from(&repo).expect("BUG: failed to convert git2::Repository to Repo");
-
-    let repo_index_path = app.repo_index();
-    let mut repo_index = repo_index_path
-        .load_json::<RepoIndex>()?
-        .unwrap_or_default();
-
-    let mut updated = false;
-    if super::import::import_repo(&mut repo_index, repo) {
-        updated = true;
-    }
-    if updated {
-        repo_index_path.store_json(&repo_index)?;
-    }
+    tracing::info!("Cloned {}", repo.path().display());
 
     Ok(())
 }
