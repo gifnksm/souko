@@ -6,15 +6,16 @@ use crate::{query, OptionalParam, ProjectDirs, Scheme, Template};
 
 #[derive(Debug, Default, Deserialize)]
 pub(crate) struct Config {
-    default_root: Option<PathBuf>,
+    #[serde(rename = "root")]
+    root_path: Option<PathBuf>,
     default_scheme: Option<Scheme>,
     scheme_alias: HashMap<Scheme, Scheme>,
     custom_scheme: HashMap<Scheme, Template>,
 }
 
 impl<'a> Config {
-    pub(crate) fn default_root(&'a self) -> OptionalParam<'a, PathBuf> {
-        OptionalParam::new("root", &self.default_root, || {
+    pub(crate) fn root_path(&'a self) -> OptionalParam<'a, PathBuf> {
+        OptionalParam::new("root", &self.root_path, || {
             ProjectDirs::get().data_local_dir().join("root")
         })
     }

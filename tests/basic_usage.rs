@@ -50,9 +50,6 @@ fn clone_and_list() {
     data_local_dir(&home)
         .child("root/github.com/gifnksm/souko/.git")
         .assert(predicate::path::is_dir());
-    data_local_dir(&home)
-        .child("repo_index.json")
-        .assert(predicate::path::is_file());
 
     souko_cmd(home.path())
         .args(["list"])
@@ -66,33 +63,5 @@ fn clone_and_list() {
                 .canonicalize()
                 .unwrap()
                 .display()
-        ));
-}
-
-#[test]
-fn import_and_list() {
-    let repo = TempDir::new().unwrap();
-    git2::Repository::clone("https://github.com/gifnksm/souko.git", repo.path()).unwrap();
-    repo.child(".git").assert(predicate::path::is_dir());
-
-    let home = TempDir::new().unwrap();
-
-    souko_cmd(home.path())
-        .args(["import", repo.path().display().to_string().as_str()])
-        .assert()
-        .success()
-        .stdout(predicate::str::is_empty());
-
-    data_local_dir(&home)
-        .child("repo_index.json")
-        .assert(predicate::path::is_file());
-
-    souko_cmd(home.path())
-        .args(["list"])
-        .assert()
-        .success()
-        .stdout(format!(
-            "{}\n",
-            repo.path().canonicalize().unwrap().display()
         ));
 }

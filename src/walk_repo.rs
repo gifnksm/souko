@@ -6,25 +6,11 @@ use crate::{repo, Repo};
 #[derive(Debug)]
 pub(crate) struct WalkRepo {
     walk_dir: WalkDir,
-    options: WalkRepoOptions,
-}
-
-#[derive(Debug, Default)]
-struct WalkRepoOptions {
-    include_hidden: bool,
 }
 
 impl WalkRepo {
     pub(crate) fn new(walk_dir: WalkDir) -> Self {
-        Self {
-            walk_dir,
-            options: WalkRepoOptions::default(),
-        }
-    }
-
-    pub(crate) fn include_hidden(mut self, yes: bool) -> Self {
-        self.options.include_hidden = yes;
-        self
+        Self { walk_dir }
     }
 }
 
@@ -43,7 +29,6 @@ impl IntoIterator for WalkRepo {
     fn into_iter(self) -> Self::IntoIter {
         Self::IntoIter {
             iter: self.walk_dir.into_iter(),
-            options: self.options,
         }
     }
 }
@@ -60,7 +45,6 @@ macro_rules! itry {
 #[derive(Debug)]
 pub(crate) struct IntoIter {
     iter: walkdir::IntoIter,
-    options: WalkRepoOptions,
 }
 
 impl Iterator for IntoIter {
@@ -75,7 +59,7 @@ impl Iterator for IntoIter {
                 continue;
             }
 
-            if !self.options.include_hidden && is_hidden(&entry) {
+            if is_hidden(&entry) {
                 tracing::trace!("skipping hidden directory: {}", entry.path().display());
                 self.iter.skip_current_dir();
                 continue;

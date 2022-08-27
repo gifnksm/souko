@@ -1,8 +1,9 @@
 use std::path::PathBuf;
 
+use color_eyre::eyre::Result;
 use tracing::Level;
 
-use crate::{optional_param::OptionalParam, project_dirs::ProjectDirs};
+use crate::{config::Config, optional_param::OptionalParam, project_dirs::ProjectDirs};
 
 use super::{args::Verbosity, subcommand::Subcommand};
 
@@ -13,11 +14,9 @@ pub struct App {
     verbosity: Verbosity,
 
     /// Path to souko config file
-    #[clap(long, env = "SOUKO_CONFIG")]
-    config: Option<PathBuf>,
-    /// Path to souko repository index
-    #[clap(long, env = "SOUKO_REPO_INDEX")]
-    repo_index: Option<PathBuf>,
+    #[clap(long = "config", env = "SOUKO_CONFIG")]
+    config_path: Option<PathBuf>,
+
     #[clap(subcommand)]
     subcommand: Option<Subcommand>,
 }
@@ -27,16 +26,18 @@ impl App {
         self.verbosity.verbosity()
     }
 
-    pub(crate) fn config(&'_ self) -> OptionalParam<'_, PathBuf> {
-        OptionalParam::new("config", &self.config, || {
+    pub(crate) fn config_path(&'_ self) -> OptionalParam<'_, PathBuf> {
+        OptionalParam::new("config", &self.config_path, || {
             ProjectDirs::get().config_dir().join("config.toml")
         })
     }
 
-    pub(crate) fn repo_index(&'_ self) -> OptionalParam<'_, PathBuf> {
-        OptionalParam::new("repository index", &self.repo_index, || {
-            ProjectDirs::get().data_local_dir().join("repo_index.json")
-        })
+    pub(crate) fn config(&self) -> Result<Config> {
+        let config = self
+            .config_path()
+            .load_toml::<Config>()?
+            .unwrap_or_default();
+        Ok(config)
     }
 
     pub(crate) fn subcommand(&self) -> Option<&Subcommand> {
