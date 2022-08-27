@@ -1,16 +1,17 @@
 use color_eyre::eyre::Result;
 
-use crate::{args::SubCommand, Args};
+use crate::{cli::subcommand::Subcommand, App};
 
-mod clone;
-mod import;
-mod list;
+pub(crate) mod clone;
+pub(crate) mod import;
+pub(crate) mod list;
 
-pub(crate) fn run(args: &Args) -> Result<()> {
-    match args.subcommand() {
-        SubCommand::Clone(clone_args) => clone::run(args, clone_args)?,
-        SubCommand::Import(import_args) => import::run(args, import_args)?,
-        SubCommand::List(list_args) => list::run(args, list_args)?,
+pub(crate) fn run(app: &App) -> Result<()> {
+    match app.subcommand() {
+        Some(Subcommand::Clone(args)) => clone::run(app, args)?,
+        Some(Subcommand::Import(args)) => import::run(app, args)?,
+        Some(Subcommand::List(args)) => list::run(app, args)?,
+        None => <App as clap::CommandFactory>::command().print_help()?,
     }
     Ok(())
 }

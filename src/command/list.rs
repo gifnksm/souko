@@ -1,9 +1,9 @@
 use color_eyre::eyre::Result;
 
-use crate::{args::List, Args, RepoIndex};
+use crate::{cli::subcommand::list::Args, App, RepoIndex};
 
-pub(super) fn run(args: &Args, _list_args: &List) -> Result<()> {
-    let repo_index_path = args.repo_index();
+pub(super) fn run(app: &App, _args: &Args) -> Result<()> {
+    let repo_index_path = app.repo_index();
     let repo_index = repo_index_path
         .load_json::<RepoIndex>()?
         .unwrap_or_default();
