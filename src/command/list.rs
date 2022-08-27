@@ -1,52 +1,105 @@
-use std::io::{self, Write};
+use std::{
+    io::{self, Write},
+    path::PathBuf,
+};
 
 use color_eyre::eyre::Result;
-use serde::ser::{SerializeSeq, Serializer};
+use serde::Serialize;
 
-use crate::{cli::subcommand::list::Args, repo::Repo, walk_repo::WalkRepo, App};
+use crate::{
+    cli::subcommand::list::Args,
+    config,
+    walk_repo::{self, WalkRepo},
+    App,
+};
 
 pub(super) fn run(app: &App, args: &Args) -> Result<()> {
     let config = app.config()?;
-    let root_path = config.root_path();
+    let root_paths = args.root_paths(&config);
 
-    let walk_dir = walkdir::WalkDir::new(root_path.value());
-    let walk_repo = WalkRepo::new(walk_dir);
-    let repos = walk_repo.into_iter().filter_map(|res| match res {
-        Ok(res) => Some(res),
-        Err(e) => {
-            tracing::warn!(error = %e, "failed to traverse directory");
-            None
-        }
-    });
+    let roots = root_paths
+        .into_iter()
+        .map(|(name, root)| Root::new(name, root))
+        .collect::<Vec<_>>();
 
     if args.json() {
-        emit_json(repos)?;
+        emit_json(&roots)?;
     } else {
-        emit_text(repos)?;
+        emit_text(&roots)?;
     }
 
     Ok(())
 }
 
-fn emit_json(repos: impl Iterator<Item = Repo>) -> Result<()> {
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct Root {
+    name: String,
+    path: PathBuf,
+    absolute_path: PathBuf,
+    repos: Vec<Repo>,
+}
+
+impl Root {
+    fn new(name: impl Into<String>, config: impl Into<config::Root>) -> Self {
+        let name = name.into();
+        let config = config.into();
+        let path = config.path().to_owned();
+        let absolute_path = path.canonicalize().unwrap_or_else(|_e| path.to_owned());
+        let repos = WalkRepo::new(&path)
+            .into_iter()
+            .filter_map(|res| {
+                if let Err(e) = &res {
+                    tracing::warn!("failed to traverse directory: {e}");
+                }
+                res.ok()
+            })
+            .map(Repo::from)
+            .collect();
+        Self {
+            name,
+            path,
+            absolute_path,
+            repos,
+        }
+    }
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct Repo {
+    name: PathBuf,
+    absolute_path: PathBuf,
+}
+
+impl From<&walk_repo::Repo> for Repo {
+    fn from(repo: &walk_repo::Repo) -> Self {
+        Repo {
+            name: repo.name().to_owned(),
+            absolute_path: repo.absolute_path().to_owned(),
+        }
+    }
+}
+
+impl From<walk_repo::Repo> for Repo {
+    fn from(repo: walk_repo::Repo) -> Self {
+        Self::from(&repo)
+    }
+}
+
+fn emit_json(roots: &[Root]) -> Result<()> {
     let out = io::stdout();
-    let mut ser = serde_json::Serializer::new(out);
-    let mut seq = ser.serialize_seq(None)?;
-
-    for repo in repos {
-        seq.serialize_element(&repo)?;
-    }
-
-    seq.end()?;
-    let mut out = ser.into_inner();
+    let mut out = out.lock();
+    serde_json::to_writer(&mut out, roots)?;
     out.flush()?;
-
     Ok(())
 }
 
-fn emit_text(repos: impl Iterator<Item = Repo>) -> Result<()> {
-    for repo in repos {
-        println!("{}", repo.path().display());
+fn emit_text(roots: &[Root]) -> Result<()> {
+    for root in roots {
+        for repo in &root.repos {
+            println!("{}", repo.absolute_path.display());
+        }
     }
     Ok(())
 }

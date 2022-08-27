@@ -19,7 +19,6 @@ mod config;
 mod optional_param;
 mod project_dirs;
 mod query;
-mod repo;
 mod scheme;
 mod template;
 mod walk_repo;
@@ -27,7 +26,7 @@ mod walk_repo;
 pub use self::cli::app::App;
 use self::{
     config::Config, optional_param::OptionalParam, project_dirs::ProjectDirs, query::Query,
-    repo::Repo, scheme::Scheme, template::Template,
+    scheme::Scheme, template::Template,
 };
 
 pub fn main(app: &App) -> Result<()> {

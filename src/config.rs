@@ -1,23 +1,46 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::collections::HashMap;
 
 use serde::Deserialize;
 
-use crate::{query, OptionalParam, ProjectDirs, Scheme, Template};
+use crate::{query, Scheme, Template};
 
-#[derive(Debug, Default, Deserialize)]
+mod root;
+
+pub(crate) use root::Root;
+
+#[derive(Debug, Clone, Deserialize)]
 pub(crate) struct Config {
-    #[serde(rename = "root")]
-    root_path: Option<PathBuf>,
+    #[serde(
+        rename = "root",
+        deserialize_with = "root::deserialize",
+        default = "root::default"
+    )]
+    root_map: HashMap<String, Root>,
     default_scheme: Option<Scheme>,
+    #[serde(default)]
     scheme_alias: HashMap<Scheme, Scheme>,
+    #[serde(default)]
     custom_scheme: HashMap<Scheme, Template>,
 }
 
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            root_map: root::default(),
+            default_scheme: None,
+            scheme_alias: HashMap::new(),
+            custom_scheme: HashMap::new(),
+        }
+    }
+}
+
 impl<'a> Config {
-    pub(crate) fn root_path(&'a self) -> OptionalParam<'a, PathBuf> {
-        OptionalParam::new("root", &self.root_path, || {
-            ProjectDirs::get().data_local_dir().join("root")
-        })
+    pub(crate) fn root_map(&self) -> &HashMap<String, Root> {
+        &self.root_map
+    }
+
+    pub(crate) fn default_root(&self) -> &Root {
+        self.root_map.get("default").unwrap()
     }
 
     pub(crate) fn query_config(&'a self) -> query::Config {
