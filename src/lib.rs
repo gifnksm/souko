@@ -16,6 +16,7 @@ use color_eyre::eyre::Result;
 mod cli;
 mod command;
 mod config;
+mod fs;
 mod optional_param;
 mod project_dirs;
 mod query;

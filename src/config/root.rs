@@ -1,11 +1,8 @@
-use std::{
-    collections::BTreeMap,
-    path::{Path, PathBuf},
-};
+use std::{collections::BTreeMap, path::PathBuf};
 
 use serde::{Deserialize, Deserializer};
 
-use crate::project_dirs::ProjectDirs;
+use crate::{optional_param::OptionalParam, project_dirs::ProjectDirs};
 
 type RootMapRepr = Vec<RootRepr>;
 
@@ -60,12 +57,13 @@ impl RootMap {
 
 #[derive(Debug, Clone)]
 pub(crate) struct Root {
-    path: PathBuf,
+    path: OptionalParam<PathBuf>,
 }
 
 impl Default for Root {
     fn default() -> Self {
-        let path = ProjectDirs::get().data_local_dir().join("root");
+        let path =
+            OptionalParam::new_default("root", ProjectDirs::get().data_local_dir().join("root"));
         Self { path }
     }
 }
@@ -73,10 +71,11 @@ impl Default for Root {
 impl Root {
     pub(crate) fn new(path: impl Into<PathBuf>) -> Self {
         let path = path.into();
+        let path = OptionalParam::new_explicit("root", path);
         Self { path }
     }
 
-    pub(crate) fn path(&self) -> &Path {
+    pub(crate) fn path(&self) -> &OptionalParam<PathBuf> {
         &self.path
     }
 }
