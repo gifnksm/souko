@@ -21,14 +21,21 @@ pub(super) fn run(app: &App, args: &Args) -> Result<()> {
         .into_iter()
         .filter_map(|(name, root)| Root::new(name, root))
         .collect::<Vec<_>>();
+    let list = List { roots };
 
     if args.json() {
-        emit_json(&roots)?;
+        emit_json(&list)?;
     } else {
-        emit_text(&roots)?;
+        emit_text(&list)?;
     }
 
     Ok(())
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct List {
+    roots: Vec<Root>,
 }
 
 #[derive(Debug, Serialize)]
@@ -38,6 +45,14 @@ struct Root {
     display_path: PathBuf,
     absolute_path: PathBuf,
     repos: Vec<Repo>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct Repo {
+    name: PathBuf,
+    display_path: PathBuf,
+    absolute_path: PathBuf,
 }
 
 impl Root {
@@ -74,14 +89,6 @@ impl Root {
     }
 }
 
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct Repo {
-    name: PathBuf,
-    display_path: PathBuf,
-    absolute_path: PathBuf,
-}
-
 impl From<&walk_repo::Repo> for Repo {
     fn from(repo: &walk_repo::Repo) -> Self {
         Repo {
@@ -98,16 +105,16 @@ impl From<walk_repo::Repo> for Repo {
     }
 }
 
-fn emit_json(roots: &[Root]) -> Result<()> {
+fn emit_json(list: &List) -> Result<()> {
     let out = io::stdout();
     let mut out = out.lock();
-    serde_json::to_writer(&mut out, roots)?;
+    serde_json::to_writer(&mut out, list)?;
     out.flush()?;
     Ok(())
 }
 
-fn emit_text(roots: &[Root]) -> Result<()> {
-    for root in roots {
+fn emit_text(list: &List) -> Result<()> {
+    for root in &list.roots {
         for repo in &root.repos {
             println!("{}", repo.absolute_path.display());
         }
