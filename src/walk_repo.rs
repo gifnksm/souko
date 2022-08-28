@@ -15,7 +15,7 @@ pub(crate) struct WalkRepo {
 impl WalkRepo {
     pub(crate) fn new(root_path: impl Into<PathBuf>) -> Self {
         let root_dir = root_path.into();
-        let walk_dir = WalkDir::new(&root_dir);
+        let walk_dir = WalkDir::new(&root_dir).sort_by_file_name();
         Self { root_dir, walk_dir }
     }
 }

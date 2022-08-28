@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::{collections::BTreeMap, path::PathBuf};
 
 use crate::config::{Config, Root};
 
@@ -14,7 +14,7 @@ pub(crate) struct Args {
 }
 
 impl Args {
-    pub(crate) fn root_paths(&self, config: &Config) -> HashMap<String, Root> {
+    pub(crate) fn root_paths(&self, config: &Config) -> BTreeMap<String, Root> {
         if let Some(root_path) = &self.root_path {
             root_path
                 .iter()
@@ -22,7 +22,7 @@ impl Args {
                 .map(|(i, path)| (format!("arg{i}"), Root::new(path.to_owned())))
                 .collect()
         } else {
-            config.root_map().clone()
+            config.root_map().map().clone()
         }
     }
 

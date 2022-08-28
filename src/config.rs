@@ -6,16 +6,12 @@ use crate::{query, Scheme, Template};
 
 mod root;
 
-pub(crate) use root::Root;
+pub(crate) use root::{Root, RootMap};
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Default, Deserialize)]
 pub(crate) struct Config {
-    #[serde(
-        rename = "root",
-        deserialize_with = "root::deserialize",
-        default = "root::default"
-    )]
-    root_map: HashMap<String, Root>,
+    #[serde(rename = "root")]
+    root_map: RootMap,
     default_scheme: Option<Scheme>,
     #[serde(default)]
     scheme_alias: HashMap<Scheme, Scheme>,
@@ -23,24 +19,9 @@ pub(crate) struct Config {
     custom_scheme: HashMap<Scheme, Template>,
 }
 
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            root_map: root::default(),
-            default_scheme: None,
-            scheme_alias: HashMap::new(),
-            custom_scheme: HashMap::new(),
-        }
-    }
-}
-
 impl<'a> Config {
-    pub(crate) fn root_map(&self) -> &HashMap<String, Root> {
+    pub(crate) fn root_map(&self) -> &RootMap {
         &self.root_map
-    }
-
-    pub(crate) fn default_root(&self) -> &Root {
-        self.root_map.get("default").unwrap()
     }
 
     pub(crate) fn query_config(&'a self) -> query::Config {
