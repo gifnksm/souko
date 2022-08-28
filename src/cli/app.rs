@@ -34,7 +34,7 @@ impl App {
 
     pub(crate) fn config(&self) -> Result<Config> {
         let config_path = self.config_path();
-        let config = fs::load_toml::<Config>(&config_path)?.unwrap_or_default();
+        let config = fs::load_toml(&config_path)?.unwrap_or_default();
         Ok(config)
     }
 
