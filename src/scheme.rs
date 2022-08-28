@@ -10,7 +10,7 @@ use serde::Deserialize;
 use thiserror::Error;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Deserialize)]
-#[serde(try_from = "&str")]
+#[serde(try_from = "String")]
 pub(crate) struct Scheme(String);
 
 impl Borrow<str> for Scheme {

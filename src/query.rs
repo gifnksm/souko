@@ -6,14 +6,7 @@ use std::{
 use thiserror::Error;
 use url::Url;
 
-use crate::{Scheme, Template};
-
-#[derive(Debug, Clone)]
-pub(crate) struct Config {
-    pub(crate) default_scheme: Option<Scheme>,
-    pub(crate) scheme_alias: HashMap<Scheme, Scheme>,
-    pub(crate) custom_scheme: HashMap<Scheme, Template>,
-}
+use crate::config::QueryConfig;
 
 #[derive(Debug, Clone)]
 pub(crate) struct Query {
@@ -62,7 +55,7 @@ impl Display for ErrorDisplayHelper<'_> {
 }
 
 impl Query {
-    pub(crate) fn parse(query: &str, config: &Config) -> Result<Self, QueryError> {
+    pub(crate) fn parse(query: &str, config: &QueryConfig) -> Result<Self, QueryError> {
         let url_schemes = ["http://", "https://", "ssh://", "git://", "ftp://"];
         let mut visited_scheme = HashSet::new();
 
@@ -136,7 +129,7 @@ mod tests {
 
     #[test]
     fn test_parse_with_empty_config() {
-        let config = Config {
+        let config = QueryConfig {
             default_scheme: None,
             scheme_alias: HashMap::new(),
             custom_scheme: HashMap::new(),
@@ -157,7 +150,7 @@ mod tests {
 
     #[test]
     fn test_parse_with_default_config() {
-        let config = Config {
+        let config = QueryConfig {
             default_scheme: Some("gh".parse().unwrap()),
             scheme_alias: HashMap::from_iter([
                 ("gh".parse().unwrap(), "github".parse().unwrap()),
@@ -196,7 +189,7 @@ mod tests {
 
     #[test]
     fn test_parse_with_cyclic_config() {
-        let config = Config {
+        let config = QueryConfig {
             default_scheme: Some("gh".parse().unwrap()),
             scheme_alias: HashMap::from_iter([
                 ("c1".parse().unwrap(), "c2".parse().unwrap()),

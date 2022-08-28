@@ -7,6 +7,7 @@ use crate::{optional_param::OptionalParam, project_dirs::ProjectDirs};
 type RootMapRepr = Vec<RootRepr>;
 
 #[derive(Debug, Deserialize)]
+#[serde(deny_unknown_fields)]
 struct RootRepr {
     name: String,
     path: Option<PathBuf>,

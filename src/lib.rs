@@ -27,7 +27,6 @@ mod walk_repo;
 pub use self::cli::app::App;
 use self::{
     config::Config, optional_param::OptionalParam, project_dirs::ProjectDirs, query::Query,
-    scheme::Scheme, template::Template,
 };
 
 pub fn main(app: &App) -> Result<()> {
