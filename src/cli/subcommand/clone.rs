@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::{Config, OptionalParam};
+use crate::{tilde_path::TildePath, Config, OptionalParam};
 
 #[derive(Debug, Clone, Default, clap::Args)]
 pub(crate) struct Args {
@@ -24,9 +24,9 @@ pub(crate) struct Args {
 }
 
 impl Args {
-    pub(crate) fn root_path(&self, config: &Config) -> OptionalParam<PathBuf> {
+    pub(crate) fn root_path(&self, config: &Config) -> OptionalParam<TildePath> {
         match &self.root_path {
-            Some(path) => OptionalParam::new_explicit("root", path.clone()),
+            Some(path) => OptionalParam::new_explicit("root", TildePath::new_verbatim(path)),
             None => config.root_map().default_root().path().clone(),
         }
     }

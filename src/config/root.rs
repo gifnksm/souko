@@ -1,8 +1,8 @@
-use std::{collections::BTreeMap, path::PathBuf};
+use std::collections::BTreeMap;
 
 use serde::{Deserialize, Deserializer};
 
-use crate::{optional_param::OptionalParam, project_dirs::ProjectDirs};
+use crate::{optional_param::OptionalParam, project_dirs::ProjectDirs, tilde_path::TildePath};
 
 type RootMapRepr = Vec<RootRepr>;
 
@@ -10,7 +10,7 @@ type RootMapRepr = Vec<RootRepr>;
 #[serde(deny_unknown_fields)]
 struct RootRepr {
     name: String,
-    path: Option<PathBuf>,
+    path: Option<TildePath>,
 }
 
 #[derive(Debug, Clone)]
@@ -58,25 +58,25 @@ impl RootMap {
 
 #[derive(Debug, Clone)]
 pub(crate) struct Root {
-    path: OptionalParam<PathBuf>,
+    path: OptionalParam<TildePath>,
 }
 
 impl Default for Root {
     fn default() -> Self {
-        let path =
-            OptionalParam::new_default("root", ProjectDirs::get().data_local_dir().join("root"));
+        let path = ProjectDirs::get().data_local_dir().join("root");
+        let path = OptionalParam::new_default("root", TildePath::from_expanded(path));
         Self { path }
     }
 }
 
 impl Root {
-    pub(crate) fn new(path: impl Into<PathBuf>) -> Self {
+    pub(crate) fn new(path: impl Into<TildePath>) -> Self {
         let path = path.into();
         let path = OptionalParam::new_explicit("root", path);
         Self { path }
     }
 
-    pub(crate) fn path(&self) -> &OptionalParam<PathBuf> {
+    pub(crate) fn path(&self) -> &OptionalParam<TildePath> {
         &self.path
     }
 }

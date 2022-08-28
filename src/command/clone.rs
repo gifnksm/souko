@@ -18,7 +18,7 @@ pub(super) fn run(app: &App, args: &Args) -> Result<()> {
     let query =
         Query::parse(query, query_config).wrap_err_with(|| format!("invalid query: {}", query))?;
 
-    let dest_path = make_dest_path(root_path.value(), query.url());
+    let dest_path = make_dest_path(root_path.value().as_path(), query.url());
     fs::create_dir_all(&dest_path).wrap_err_with(|| {
         format!(
             "failed to create destination directory: {}",

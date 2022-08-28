@@ -35,7 +35,7 @@ pub(super) fn run(app: &App, args: &Args) -> Result<()> {
 #[serde(rename_all = "camelCase")]
 struct Root {
     name: String,
-    path: PathBuf,
+    display_path: PathBuf,
     absolute_path: PathBuf,
     repos: Vec<Repo>,
 }
@@ -45,6 +45,7 @@ impl Root {
         let name = name.into();
         let config = config.into();
         let path = config.path();
+        let display_path = path.value().as_display_path().to_owned();
         let absolute_path = match fs::canonicalize(path) {
             Ok(path) => path,
             Err(e) => {
@@ -53,7 +54,7 @@ impl Root {
             }
         }?;
 
-        let repos = WalkRepo::new(&path.value())
+        let repos = WalkRepo::new(path.value().clone())
             .into_iter()
             .filter_map(|res| {
                 if let Err(e) = &res {
@@ -63,9 +64,10 @@ impl Root {
             })
             .map(Repo::from)
             .collect();
+
         Some(Self {
             name,
-            path: path.value().clone(),
+            display_path,
             absolute_path,
             repos,
         })
@@ -76,6 +78,7 @@ impl Root {
 #[serde(rename_all = "camelCase")]
 struct Repo {
     name: PathBuf,
+    display_path: PathBuf,
     absolute_path: PathBuf,
 }
 
@@ -83,6 +86,7 @@ impl From<&walk_repo::Repo> for Repo {
     fn from(repo: &walk_repo::Repo) -> Self {
         Repo {
             name: repo.name().to_owned(),
+            display_path: repo.display_path().to_owned(),
             absolute_path: repo.absolute_path().to_owned(),
         }
     }

@@ -22,6 +22,7 @@ mod project_dirs;
 mod query;
 mod scheme;
 mod template;
+mod tilde_path;
 mod walk_repo;
 
 pub use self::cli::app::App;

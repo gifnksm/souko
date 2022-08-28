@@ -8,25 +8,25 @@ use color_eyre::eyre::{Error, Result, WrapErr};
 use serde::Deserialize;
 use toml_edit::Document;
 
-use crate::optional_param::OptionalParam;
+use crate::{optional_param::OptionalParam, tilde_path::PathLike};
 
-pub(crate) fn open(path: &OptionalParam<PathBuf>) -> Result<Option<File>> {
-    let file = match File::open(path.value()) {
+pub(crate) fn open(path: &OptionalParam<impl PathLike>) -> Result<Option<File>> {
+    let file = match File::open(path.value().as_path()) {
         Ok(file) => Some(file),
         Err(e) if path.is_default() && e.kind() == io::ErrorKind::NotFound => None,
         Err(e) => {
             return Err(Error::from(e).wrap_err(format!(
                 "failed to open {}: {}",
                 path.name(),
-                path.value().display()
+                path.value().display(),
             )))
         }
     };
     Ok(file)
 }
 
-pub(crate) fn canonicalize(path: &OptionalParam<PathBuf>) -> Result<Option<PathBuf>> {
-    let path = match path.value().canonicalize() {
+pub(crate) fn canonicalize(path: &OptionalParam<impl PathLike>) -> Result<Option<PathBuf>> {
+    let path = match path.value().as_path().canonicalize() {
         Ok(file) => Some(file),
         Err(e) if path.is_default() && e.kind() == io::ErrorKind::NotFound => None,
         Err(e) => {
@@ -40,7 +40,7 @@ pub(crate) fn canonicalize(path: &OptionalParam<PathBuf>) -> Result<Option<PathB
     Ok(path)
 }
 
-// pub(crate) fn load_json<T>(path: &OptionalParam<PathBuf>) -> Result<Option<T>>
+// pub(crate) fn load_json<T>(path: &OptionalParam<impl PathLike>) -> Result<Option<T>>
 // where
 //     T: for<'de> Deserialize<'de>,
 // {
@@ -55,7 +55,7 @@ pub(crate) fn canonicalize(path: &OptionalParam<PathBuf>) -> Result<Option<PathB
 //     Ok(Some(value))
 // }
 
-// pub(crate) fn store_json<T>(path: &OptionalParam<PathBuf>, value: &T) -> Result<()>
+// pub(crate) fn store_json<T>(path: &OptionalParam<impl PathLike>, value: &T) -> Result<()>
 // where
 //     T: Serialize,
 // {
@@ -89,7 +89,7 @@ pub(crate) fn canonicalize(path: &OptionalParam<PathBuf>) -> Result<Option<PathB
 //     Ok(())
 // }
 
-pub(crate) fn load_toml_document(path: &OptionalParam<PathBuf>) -> Result<Option<Document>> {
+pub(crate) fn load_toml_document(path: &OptionalParam<impl PathLike>) -> Result<Option<Document>> {
     let mut file = match open(path)? {
         Some(file) => file,
         None => return Ok(None),
@@ -110,7 +110,7 @@ pub(crate) fn load_toml_document(path: &OptionalParam<PathBuf>) -> Result<Option
     Ok(Some(doc))
 }
 
-pub(crate) fn load_toml<T>(path: &OptionalParam<PathBuf>) -> Result<Option<T>>
+pub(crate) fn load_toml<T>(path: &OptionalParam<impl PathLike>) -> Result<Option<T>>
 where
     T: for<'de> Deserialize<'de>,
 {
@@ -128,7 +128,7 @@ where
     Ok(value)
 }
 
-// pub(crate) fn store_toml_document(path: &OptionalParam<PathBuf>) -> Result<()> {
+// pub(crate) fn store_toml_document(path: &OptionalParam<impl PathLike>) -> Result<()> {
 //     let dir = path
 //         .value()
 //         .parent()

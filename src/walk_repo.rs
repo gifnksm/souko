@@ -6,16 +6,20 @@ use std::{
 use thiserror::Error;
 use walkdir::{DirEntry, WalkDir};
 
+use crate::tilde_path::PathLike;
+
 #[derive(Debug)]
-pub(crate) struct WalkRepo {
-    root_dir: PathBuf,
+pub(crate) struct WalkRepo<P> {
+    root_dir: P,
     walk_dir: WalkDir,
 }
 
-impl WalkRepo {
-    pub(crate) fn new(root_path: impl Into<PathBuf>) -> Self {
-        let root_dir = root_path.into();
-        let walk_dir = WalkDir::new(&root_dir).sort_by_file_name();
+impl<P> WalkRepo<P> {
+    pub(crate) fn new(root_dir: P) -> Self
+    where
+        P: PathLike,
+    {
+        let walk_dir = WalkDir::new(root_dir.as_path()).sort_by_file_name();
         Self { root_dir, walk_dir }
     }
 }
@@ -30,9 +34,12 @@ pub(crate) enum Error {
     GetAbsolutePath { path: PathBuf, source: io::Error },
 }
 
-impl IntoIterator for WalkRepo {
+impl<P> IntoIterator for WalkRepo<P>
+where
+    P: PathLike,
+{
     type Item = Result<Repo, Error>;
-    type IntoIter = IntoIter;
+    type IntoIter = IntoIter<P>;
 
     fn into_iter(self) -> Self::IntoIter {
         Self::IntoIter {
@@ -52,12 +59,15 @@ macro_rules! itry {
 }
 
 #[derive(Debug)]
-pub(crate) struct IntoIter {
-    root_dir: PathBuf,
+pub(crate) struct IntoIter<P> {
+    root_dir: P,
     iter: walkdir::IntoIter,
 }
 
-impl Iterator for IntoIter {
+impl<P> Iterator for IntoIter<P>
+where
+    P: PathLike,
+{
     type Item = Result<Repo, Error>;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -101,16 +111,26 @@ fn is_hidden(entry: &walkdir::DirEntry) -> bool {
 
 pub(crate) struct Repo {
     name: PathBuf,
+    display_path: PathBuf,
     absolute_path: PathBuf,
 }
 
 impl Repo {
-    fn new(root_dir: &Path, entry: &DirEntry, repo: &git2::Repository) -> Result<Self, Error> {
-        let name = entry.path().strip_prefix(root_dir).unwrap().to_owned();
+    fn new<P>(root_dir: &P, entry: &DirEntry, repo: &git2::Repository) -> Result<Self, Error>
+    where
+        P: PathLike,
+    {
+        let name = entry
+            .path()
+            .strip_prefix(root_dir.as_path())
+            .unwrap()
+            .to_owned();
 
         let workdir = repo.workdir().ok_or_else(|| Error::BareRepo {
             path: repo.path().to_owned(),
         })?;
+
+        let display_path = root_dir.as_display_path().join(&name);
 
         let absolute_path = workdir.canonicalize().map_err(|e| Error::GetAbsolutePath {
             path: workdir.to_owned(),
@@ -119,12 +139,17 @@ impl Repo {
 
         Ok(Self {
             name,
+            display_path,
             absolute_path,
         })
     }
 
     pub(crate) fn name(&self) -> &Path {
         &self.name
+    }
+
+    pub(crate) fn display_path(&self) -> &Path {
+        &self.display_path
     }
 
     pub(crate) fn absolute_path(&self) -> &Path {

@@ -1,6 +1,9 @@
 use std::{collections::BTreeMap, path::PathBuf};
 
-use crate::config::{Config, Root};
+use crate::{
+    config::{Config, Root},
+    tilde_path::TildePath,
+};
 
 #[derive(Debug, Clone, Default, clap::Args)]
 pub(crate) struct Args {
@@ -19,7 +22,7 @@ impl Args {
             root_path
                 .iter()
                 .enumerate()
-                .map(|(i, path)| (format!("arg{i}"), Root::new(path.to_owned())))
+                .map(|(i, path)| (format!("arg{i}"), Root::new(TildePath::from_expanded(path))))
                 .collect()
         } else {
             config.root_map().map().clone()
