@@ -24,10 +24,11 @@ pub(crate) struct Args {
 }
 
 impl Args {
-    pub(crate) fn root_path(&self, config: &Config) -> OptionalParam<'_, PathBuf> {
-        OptionalParam::new("root", &self.root_path, || {
-            config.root_map().default_root().path().to_owned()
-        })
+    pub(crate) fn root_path(&self, config: &Config) -> OptionalParam<PathBuf> {
+        match &self.root_path {
+            Some(path) => OptionalParam::new_explicit("root", path.clone()),
+            None => config.root_map().default_root().path().clone(),
+        }
     }
 
     pub(crate) fn query(&self) -> &String {

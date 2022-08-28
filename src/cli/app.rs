@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use color_eyre::eyre::Result;
 use tracing::Level;
 
-use crate::{config::Config, optional_param::OptionalParam, project_dirs::ProjectDirs};
+use crate::{config::Config, fs, optional_param::OptionalParam, project_dirs::ProjectDirs};
 
 use super::{args::Verbosity, subcommand::Subcommand};
 
@@ -26,17 +26,15 @@ impl App {
         self.verbosity.verbosity()
     }
 
-    pub(crate) fn config_path(&'_ self) -> OptionalParam<'_, PathBuf> {
-        OptionalParam::new("config", &self.config_path, || {
+    pub(crate) fn config_path(&'_ self) -> OptionalParam<PathBuf> {
+        OptionalParam::new("config", self.config_path.clone(), || {
             ProjectDirs::get().config_dir().join("config.toml")
         })
     }
 
     pub(crate) fn config(&self) -> Result<Config> {
-        let config = self
-            .config_path()
-            .load_toml::<Config>()?
-            .unwrap_or_default();
+        let config_path = self.config_path();
+        let config = fs::load_toml::<Config>(&config_path)?.unwrap_or_default();
         Ok(config)
     }
 

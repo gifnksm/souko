@@ -8,7 +8,7 @@ use serde::Serialize;
 
 use crate::{
     cli::subcommand::list::Args,
-    config,
+    config, fs,
     walk_repo::{self, WalkRepo},
     App,
 };
@@ -19,7 +19,7 @@ pub(super) fn run(app: &App, args: &Args) -> Result<()> {
 
     let roots = root_paths
         .into_iter()
-        .map(|(name, root)| Root::new(name, root))
+        .filter_map(|(name, root)| Root::new(name, root))
         .collect::<Vec<_>>();
 
     if args.json() {
@@ -41,12 +41,19 @@ struct Root {
 }
 
 impl Root {
-    fn new(name: impl Into<String>, config: impl Into<config::Root>) -> Self {
+    fn new(name: impl Into<String>, config: impl Into<config::Root>) -> Option<Self> {
         let name = name.into();
         let config = config.into();
-        let path = config.path().to_owned();
-        let absolute_path = path.canonicalize().unwrap_or_else(|_e| path.to_owned());
-        let repos = WalkRepo::new(&path)
+        let path = config.path();
+        let absolute_path = match fs::canonicalize(path) {
+            Ok(path) => path,
+            Err(e) => {
+                tracing::warn!("failed to get absolute path of {}: {}", path.name(), e);
+                return None;
+            }
+        }?;
+
+        let repos = WalkRepo::new(&path.value())
             .into_iter()
             .filter_map(|res| {
                 if let Err(e) = &res {
@@ -56,12 +63,12 @@ impl Root {
             })
             .map(Repo::from)
             .collect();
-        Self {
+        Some(Self {
             name,
-            path,
+            path: path.value().clone(),
             absolute_path,
             repos,
-        }
+        })
     }
 }
 

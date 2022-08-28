@@ -1,22 +1,12 @@
-use std::{
-    fs::File,
-    io::{self, Read},
-    path::PathBuf,
-};
-
-use color_eyre::eyre::{Error, Result, WrapErr};
-use serde::Deserialize;
-use toml_edit::Document;
-
-#[derive(Debug)]
-enum OptionalParamValue<'a, T> {
+#[derive(Debug, Clone)]
+enum OptionalParamValue<T> {
     /// Explicitly specified value (via command line argument, environment variable, configuration file, etc.)
-    Explicit(&'a T),
+    Explicit(T),
     /// Automatically determined value
     Default(T),
 }
 
-impl<'a, T> OptionalParamValue<'a, T> {
+impl<T> OptionalParamValue<T> {
     fn is_default(&self) -> bool {
         matches!(self, Self::Default(_))
     }
@@ -29,22 +19,28 @@ impl<'a, T> OptionalParamValue<'a, T> {
     }
 }
 
-#[derive(Debug)]
-pub(crate) struct OptionalParam<'a, T> {
+#[derive(Debug, Clone)]
+pub(crate) struct OptionalParam<T> {
     name: &'static str,
-    value: OptionalParamValue<'a, T>,
+    value: OptionalParamValue<T>,
 }
 
-impl<'a, T> OptionalParam<'a, T> {
-    pub(super) fn new(
-        name: &'static str,
-        value: &'a Option<T>,
-        default: impl FnOnce() -> T,
-    ) -> Self {
+impl<T> OptionalParam<T> {
+    pub(crate) fn new(name: &'static str, value: Option<T>, default: impl FnOnce() -> T) -> Self {
         let value = match value {
             Some(path) => OptionalParamValue::Explicit(path),
             None => OptionalParamValue::Default(default()),
         };
+        OptionalParam { name, value }
+    }
+
+    pub(crate) fn new_default(name: &'static str, value: T) -> Self {
+        let value = OptionalParamValue::Default(value);
+        OptionalParam { name, value }
+    }
+
+    pub(crate) fn new_explicit(name: &'static str, value: T) -> Self {
+        let value = OptionalParamValue::Explicit(value);
         OptionalParam { name, value }
     }
 
@@ -55,141 +51,8 @@ impl<'a, T> OptionalParam<'a, T> {
     pub(crate) fn value(&self) -> &T {
         self.value.as_ref()
     }
-}
 
-impl<'a> OptionalParam<'a, PathBuf> {
-    // pub(crate) fn load_json<T>(&self) -> Result<Option<T>>
-    // where
-    //     T: for<'de> Deserialize<'de>,
-    // {
-    //     let path = self.value.as_ref();
-
-    //     let file = match File::open(path) {
-    //         Ok(file) => file,
-    //         Err(e) if self.value.is_default() && e.kind() == io::ErrorKind::NotFound => {
-    //             return Ok(None)
-    //         }
-    //         Err(e) => {
-    //             return Err(Error::from(e).wrap_err(format!(
-    //                 "failed to open {}: {}",
-    //                 self.name,
-    //                 path.display()
-    //             )))
-    //         }
-    //     };
-
-    //     let reader = BufReader::new(file);
-    //     let value = serde_json::from_reader(reader).wrap_err_with(|| {
-    //         format!(
-    //             "failed to read {}: {}",
-    //             self.name,
-    //             self.value.as_ref().display()
-    //         )
-    //     })?;
-    //     Ok(Some(value))
-    // }
-
-    // pub(crate) fn store_json<T>(&self, value: &T) -> Result<()>
-    // where
-    //     T: Serialize,
-    // {
-    //     let path = self.value.as_ref();
-
-    //     let dir = path
-    //         .parent()
-    //         .ok_or_else(|| eyre!("failed to get parent directory: {}", path.display()))?;
-    //     fs::create_dir_all(dir)
-    //         .wrap_err_with(|| format!("failed to create diretory: {}", dir.display()))?;
-
-    //     let file = NamedTempFile::new_in(dir)
-    //         .wrap_err_with(|| format!("failed to create temporary file in {}", dir.display(),))?;
-    //     let temp_path = file.path().to_owned();
-    //     let mut writer = BufWriter::new(file);
-    //     serde_json::to_writer(&mut writer, value).wrap_err_with(|| {
-    //         format!(
-    //             "failed to write {} to temporary file: {}",
-    //             self.name,
-    //             temp_path.display()
-    //         )
-    //     })?;
-    //     let mut file = writer.into_inner()?;
-    //     file.as_file_mut().sync_all()?;
-    //     file.persist(path).wrap_err_with(|| {
-    //         format!("failed to write {} to file: {}", self.name, path.display())
-    //     })?;
-    //     Ok(())
-    // }
-
-    pub(crate) fn load_toml_document(&self) -> Result<Option<Document>> {
-        let path = self.value.as_ref();
-
-        let mut file = match File::open(path) {
-            Ok(file) => file,
-            Err(e) if self.value.is_default() && e.kind() == io::ErrorKind::NotFound => {
-                return Ok(None)
-            }
-            Err(e) => {
-                return Err(Error::from(e).wrap_err(format!(
-                    "failed to open {}: {}",
-                    self.name,
-                    path.display()
-                )))
-            }
-        };
-
-        let mut toml = String::new();
-        file.read_to_string(&mut toml)
-            .wrap_err_with(|| format!("failed to read P{}: {}", self.name, path.display()))?;
-
-        let doc = toml
-            .parse()
-            .wrap_err_with(|| format!("failed to parse {}: {}", self.name, path.display()))?;
-
-        Ok(Some(doc))
+    pub(crate) fn is_default(&self) -> bool {
+        self.value.is_default()
     }
-
-    pub(crate) fn load_toml<T>(&self) -> Result<Option<T>>
-    where
-        T: for<'de> Deserialize<'de>,
-    {
-        let doc = self.load_toml_document()?;
-        let value = match doc {
-            Some(toml) => toml_edit::de::from_document(toml).wrap_err_with(|| {
-                format!(
-                    "failed to parse {}: {}",
-                    self.name(),
-                    self.value().display()
-                )
-            })?,
-            None => None,
-        };
-        Ok(value)
-    }
-
-    // pub(crate) fn store_toml_document(&self, doc: &Document) -> Result<()> {
-    //     let path = self.value.as_ref();
-
-    //     let dir = path
-    //         .parent()
-    //         .ok_or_else(|| eyre!("failed to get parent directory: {}", path.display()))?;
-
-    //     let file = NamedTempFile::new_in(dir)
-    //         .wrap_err_with(|| format!("failed to create temporary file in {}", dir.display(),))?;
-    //     let temp_path = file.path().to_owned();
-    //     let toml = doc.to_string();
-    //     let mut writer = BufWriter::new(file);
-    //     writer.write_all(toml.as_bytes()).wrap_err_with(|| {
-    //         format!(
-    //             "failed to write {} to temporary file: {}",
-    //             self.name,
-    //             temp_path.display()
-    //         )
-    //     })?;
-    //     let mut file = writer.into_inner()?;
-    //     file.as_file_mut().sync_all()?;
-    //     file.persist(path).wrap_err_with(|| {
-    //         format!("failed to write {} to file: {}", self.name, path.display())
-    //     })?;
-    //     Ok(())
-    // }
 }
