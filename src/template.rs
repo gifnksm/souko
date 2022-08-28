@@ -11,7 +11,7 @@ use std::{
 use thiserror::Error;
 
 #[derive(Debug, Clone, Deserialize)]
-#[serde(try_from = "&str")]
+#[serde(try_from = "String")]
 pub(crate) struct Template {
     parts: Vec<Parts>,
 }

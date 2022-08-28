@@ -24,15 +24,31 @@ $ souko list
 # => list of absolute paths of all repositories cloned with souko
 ```
 
-You can also import a cloned local repository into souko.
-Imported repositories are also listed by the list command.
-
-```console
-$ souko import -r ~/repos
-# => import all repositories under ~/repos into souko
-```
-
 By combining souko, fuzzy finder, and shell functions, you can easily jump between repositories (TODO: add shell script example).
+
+## Configuration
+
+```toml
+[[root]]
+name = "default"
+path = "~/.local/share/souko/root"
+
+[[root]]
+name = "repos"
+path = "~/repos"
+
+[query]
+default_scheme = "github"
+
+[query.scheme_alias]
+gh = "github"
+gl = "gitlab"
+
+[query.custom_scheme]
+github = "https://github.com/{path}.git"
+gitlab = "https://gitlab.com/{path}.git"
+
+```
 
 ## Installation
 
