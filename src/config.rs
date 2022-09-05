@@ -17,12 +17,12 @@ pub(crate) struct Config {
     query_config: QueryConfig,
 }
 
-impl<'a> Config {
+impl Config {
     pub(crate) fn root_map(&self) -> &RootMap {
         &self.root_map
     }
 
-    pub(crate) fn query_config(&'a self) -> &QueryConfig {
+    pub(crate) fn query_config(&self) -> &QueryConfig {
         &self.query_config
     }
 }
