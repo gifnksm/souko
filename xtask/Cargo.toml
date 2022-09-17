@@ -3,9 +3,10 @@ name = "xtask"
 version = "0.1.0"
 edition = "2021"
 publish = false
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cli-xtask = { version = "0.1.4", features = ["bin-crate", "bin-crate-extra", "main"] }
+cli-xtask = { version = "0.5.0", features = ["bin-crate", "bin-crate-extra", "main"] }
 souko = { path = ".." }
