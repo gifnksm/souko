@@ -4,6 +4,7 @@ use std::{
 };
 
 use color_eyre::eyre::{Result, WrapErr};
+use git2_credentials::CredentialHandler;
 use url::Url;
 
 use crate::{cli::subcommand::clone::Args, App, Query};
@@ -33,8 +34,26 @@ pub(super) fn run(app: &App, args: &Args) -> Result<()> {
         query.original_query(),
         dest_path.display()
     );
-    let _repo = git2::Repository::clone(query.url().as_str(), &dest_path)
+
+    let mut cb = git2::RemoteCallbacks::new();
+    let git_config = git2::Config::open_default().wrap_err("failed to open git config")?;
+    let mut ch = CredentialHandler::new(git_config);
+    cb.credentials(move |url, username, allowed| ch.try_next_credential(url, username, allowed));
+
+    let mut po = git2::ProxyOptions::new();
+    po.auto();
+
+    let mut fo = git2::FetchOptions::new();
+    fo.remote_callbacks(cb)
+        .proxy_options(po)
+        .download_tags(git2::AutotagOption::All)
+        .update_fetchhead(true);
+
+    let _repo = git2::build::RepoBuilder::new()
+        .fetch_options(fo)
+        .clone(query.url().as_str(), &dest_path)
         .wrap_err_with(|| format!("failed to clone git repository from {}", query.url()))?;
+
     tracing::info!("Cloned {}", query.original_query());
 
     Ok(())
