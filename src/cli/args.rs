@@ -1,15 +1,16 @@
+use clap::ArgAction;
 use tracing::Level;
 
 #[derive(Debug, Clone, Default, clap::Args)]
 pub(crate) struct Verbosity {
     /// More output per occurrence
-    #[clap(long, short = 'v', parse(from_occurrences), global = true)]
+    #[clap(long, short = 'v', action = ArgAction::Count, global = true)]
     verbose: i8,
     /// Less output per occurrence
     #[clap(
         long,
         short = 'q',
-        parse(from_occurrences),
+        action = ArgAction::Count,
         global = true,
         conflicts_with = "verbose"
     )]
