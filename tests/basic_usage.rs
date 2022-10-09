@@ -34,7 +34,7 @@ fn show_help_message() {
         .args(["--help"])
         .assert()
         .success()
-        .stdout(predicate::str::contains("USAGE"));
+        .stdout(predicate::str::contains("Usage:"));
 }
 
 #[test]
