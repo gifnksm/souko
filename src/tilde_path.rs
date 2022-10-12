@@ -72,7 +72,7 @@ impl TildePath {
             .and_then(|base_dirs| expanded.strip_prefix(base_dirs.home_dir()).ok())
             .map(|rest| Path::new("~").join(rest))
             .unwrap_or_else(|| expanded.clone());
-        let expanded = (original != expanded).then(|| expanded);
+        let expanded = (original != expanded).then_some(expanded);
         Self { original, expanded }
     }
 
