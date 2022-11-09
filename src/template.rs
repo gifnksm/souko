@@ -68,7 +68,7 @@ impl FromStr for Template {
     fn from_str(mut s: &str) -> Result<Self, Self::Err> {
         let mut parts = vec![];
 
-        while let Some(idx) = s.find(&['{', '}']) {
+        while let Some(idx) = s.find(['{', '}']) {
             let (text, brace) = s.split_at(idx);
             push_str(&mut parts, text);
             s = brace;
