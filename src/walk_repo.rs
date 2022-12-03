@@ -85,7 +85,7 @@ where
                 continue;
             }
 
-            let repo = match git2::Repository::open(&entry.path()) {
+            let repo = match git2::Repository::open(entry.path()) {
                 Ok(repo) => repo,
                 Err(e) => {
                     tracing::trace!(error = %e, "skipping non-git repository: {}", entry.path().display());
