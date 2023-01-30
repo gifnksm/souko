@@ -27,7 +27,7 @@ impl Template {
             match part {
                 Parts::Variable(name) => {
                     if let Some(value) = variables.get(name) {
-                        write!(&mut result, "{}", value).unwrap();
+                        write!(&mut result, "{value}").unwrap();
                     }
                 }
                 Parts::Text(text) => result.push_str(text),

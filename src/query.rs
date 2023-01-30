@@ -86,7 +86,7 @@ impl Query {
 
                 // scheme alias
                 if let Some(scheme) = config.scheme_alias.get(scheme) {
-                    query = format!("{}:{}", scheme, rest);
+                    query = format!("{scheme}:{rest}");
                     continue;
                 }
 
@@ -97,13 +97,13 @@ impl Query {
                 }
 
                 // unknown scheme, assume it's a scp-like syntax
-                query = format!("ssh://{}/{}", scheme, rest);
+                query = format!("ssh://{scheme}/{rest}");
                 continue;
             }
 
             // no scheme, add default scheme
             if let Some(scheme) = &config.default_scheme {
-                query = format!("{}:{}", scheme, query);
+                query = format!("{scheme}:{query}");
                 continue;
             }
 
