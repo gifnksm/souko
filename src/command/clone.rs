@@ -17,7 +17,7 @@ pub(super) fn run(app: &App, args: &Args) -> Result<()> {
 
     let query_config = config.query_config();
     let query =
-        Query::parse(query, query_config).wrap_err_with(|| format!("invalid query: {}", query))?;
+        Query::parse(query, query_config).wrap_err_with(|| format!("invalid query: {query}"))?;
 
     let dest_path = make_dest_path(root_path.value().as_path(), query.url());
     fs::create_dir_all(&dest_path).wrap_err_with(|| {
@@ -63,7 +63,7 @@ fn make_dest_path(root_path: &Path, url: &Url) -> PathBuf {
     let mut dest_path = root_path.to_owned();
     if let Some(host) = url.host_str() {
         if let Some(port) = url.port() {
-            dest_path.push(format!("{}:{}", host, port));
+            dest_path.push(format!("{host}:{port}"));
         } else {
             dest_path.push(host);
         }
