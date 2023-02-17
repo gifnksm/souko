@@ -28,7 +28,7 @@ github-actions = { workflows = ["ci.yml"] }
 codecov = true
 
 [dependencies]
-clap = { version = "4.1.1", features = ["derive", "env"] }
+clap = { version = "4.1.6", features = ["derive", "env"] }
 color-eyre = "0.6.2"
 directories = "4.0.1"
 git2 = { version = "0.15.0", features = ["vendored-libgit2", "vendored-openssl"] }
