@@ -32,7 +32,7 @@ clap = { version = "4.1.8", features = ["derive", "env"] }
 color-eyre = "0.6.2"
 directories = "4.0.1"
 git2 = { version = "0.16.1", features = ["vendored-libgit2", "vendored-openssl"] }
-git2_credentials = "0.10.0"
+git2_credentials = "0.11.0"
 once_cell = "1.17.1"
 regex = "1.7.1"
 serde = { version = "1.0.152", features = ["derive"] }
