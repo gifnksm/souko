@@ -34,7 +34,7 @@ directories = "5.0.1"
 git2 = { version = "0.16.1", features = ["vendored-libgit2", "vendored-openssl"] }
 git2_credentials = "0.11.0"
 once_cell = "1.17.1"
-regex = "1.8.1"
+regex = "1.8.2"
 serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0.96"
 thiserror = "1.0.40"
