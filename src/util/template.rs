@@ -1,6 +1,3 @@
-use once_cell::sync::Lazy;
-use regex::Regex;
-use serde::Deserialize;
 use std::{
     borrow::Borrow,
     collections::HashMap,
@@ -8,6 +5,10 @@ use std::{
     hash::Hash,
     str::FromStr,
 };
+
+use once_cell::sync::Lazy;
+use regex::Regex;
+use serde::Deserialize;
 use thiserror::Error;
 
 #[derive(Debug, Clone, Deserialize)]

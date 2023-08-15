@@ -6,7 +6,7 @@ use std::{
 use thiserror::Error;
 use walkdir::{DirEntry, WalkDir};
 
-use crate::tilde_path::PathLike;
+use crate::util::tilde_path::PathLike;
 
 #[derive(Debug)]
 pub(crate) struct WalkRepo<P> {

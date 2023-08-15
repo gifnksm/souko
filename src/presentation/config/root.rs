@@ -2,7 +2,9 @@ use std::collections::BTreeMap;
 
 use serde::{Deserialize, Deserializer};
 
-use crate::{optional_param::OptionalParam, project_dirs::ProjectDirs, tilde_path::TildePath};
+use crate::util::{
+    optional_param::OptionalParam, project_dirs::ProjectDirs, tilde_path::TildePath,
+};
 
 type RootMapRepr = Vec<RootRepr>;
 

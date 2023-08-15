@@ -6,7 +6,7 @@ use std::{
 use thiserror::Error;
 use url::Url;
 
-use crate::config::QueryConfig;
+use crate::presentation::config::QueryConfig;
 
 #[derive(Debug, Clone)]
 pub(crate) struct Query {

@@ -8,7 +8,7 @@ fn main() -> Result<()> {
     <Xtask>::main_with_config(|| {
         let workspace = workspace::current();
         let (dist, package) = DistConfigBuilder::from_root_package(workspace)?;
-        let command = souko::App::command();
+        let command = souko::Args::command();
         let target = package
             .binary_by_name(command.get_name())?
             .command(command)

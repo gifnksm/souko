@@ -2,11 +2,11 @@ use std::env;
 
 use clap::Parser;
 use color_eyre::eyre::{eyre, Result};
-use souko::App;
+use souko::Args;
 use tracing::Level;
 
 fn main() -> Result<()> {
-    let app = App::parse();
+    let app = Args::parse();
 
     if env::var_os("RUST_LOG").is_none() {
         match app.verbosity() {

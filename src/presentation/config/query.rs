@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 
-use crate::{scheme::Scheme, template::Template};
+use crate::util::{scheme::Scheme, template::Template};
 
 #[derive(Debug, Clone)]
 pub(crate) struct QueryConfig {

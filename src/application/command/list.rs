@@ -7,13 +7,15 @@ use color_eyre::eyre::Result;
 use serde::Serialize;
 
 use crate::{
-    cli::subcommand::list::Args,
-    config, fs,
-    walk_repo::{self, WalkRepo},
-    App,
+    presentation::{args::subcommand::list::Args as CommandArgs, config},
+    util::{
+        fs,
+        walk_repo::{self, WalkRepo},
+    },
+    Args as AppArgs,
 };
 
-pub(super) fn run(app: &App, args: &Args) -> Result<()> {
+pub(super) fn run(app: &AppArgs, args: &CommandArgs) -> Result<()> {
     let config = app.config()?;
     let root_paths = args.root_paths(&config);
 

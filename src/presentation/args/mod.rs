@@ -3,13 +3,16 @@ use std::path::PathBuf;
 use color_eyre::eyre::Result;
 use tracing::Level;
 
-use crate::{config::Config, fs, optional_param::OptionalParam, project_dirs::ProjectDirs};
+use self::{subcommand::Subcommand, verbosity::Verbosity};
+use super::config::Config;
+use crate::util::{fs, optional_param::OptionalParam, project_dirs::ProjectDirs};
 
-use super::{args::Verbosity, subcommand::Subcommand};
+pub(crate) mod subcommand;
+pub(crate) mod verbosity;
 
 #[derive(Debug, Clone, Default, clap::Parser)]
 #[clap(author, version, about)]
-pub struct App {
+pub struct Args {
     #[clap(flatten)]
     verbosity: Verbosity,
 
@@ -21,7 +24,7 @@ pub struct App {
     subcommand: Option<Subcommand>,
 }
 
-impl App {
+impl Args {
     pub fn verbosity(&self) -> Option<Level> {
         self.verbosity.verbosity()
     }

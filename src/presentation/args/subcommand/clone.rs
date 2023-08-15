@@ -1,6 +1,9 @@
 use std::path::PathBuf;
 
-use crate::{tilde_path::TildePath, Config, OptionalParam};
+use crate::{
+    presentation::config::Config,
+    util::{optional_param::OptionalParam, tilde_path::TildePath},
+};
 
 #[derive(Debug, Clone, Default, clap::Args)]
 pub(crate) struct Args {

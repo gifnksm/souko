@@ -7,9 +7,11 @@ use color_eyre::eyre::{Result, WrapErr};
 use git2_credentials::CredentialHandler;
 use url::Url;
 
-use crate::{cli::subcommand::clone::Args, App, Query};
+use crate::{
+    presentation::args::subcommand::clone::Args as CommandArgs, util::query::Query, Args as AppArgs,
+};
 
-pub(super) fn run(app: &App, args: &Args) -> Result<()> {
+pub(super) fn run(app: &AppArgs, args: &CommandArgs) -> Result<()> {
     let config = app.config()?;
 
     let root_path = args.root_path(&config);

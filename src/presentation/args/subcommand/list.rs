@@ -1,8 +1,8 @@
 use std::{collections::BTreeMap, path::PathBuf};
 
 use crate::{
-    config::{Config, Root},
-    tilde_path::TildePath,
+    presentation::config::{Config, Root},
+    util::tilde_path::TildePath,
 };
 
 #[derive(Debug, Clone, Default, clap::Args)]

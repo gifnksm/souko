@@ -13,25 +13,17 @@
 
 use color_eyre::eyre::Result;
 
-mod cli;
-mod command;
-mod config;
-mod fs;
-mod optional_param;
-mod project_dirs;
-mod query;
-mod scheme;
-mod template;
-mod tilde_path;
-mod walk_repo;
+pub use self::presentation::args::Args;
+use self::util::project_dirs::ProjectDirs;
 
-pub use self::cli::app::App;
-use self::{
-    config::Config, optional_param::OptionalParam, project_dirs::ProjectDirs, query::Query,
-};
+mod application;
+mod domain;
+mod infrastructure;
+mod presentation;
+mod util;
 
-pub fn main(app: &App) -> Result<()> {
+pub fn main(app: &Args) -> Result<()> {
     ProjectDirs::init()?;
-    command::run(app)?;
+    application::command::run(app)?;
     Ok(())
 }
