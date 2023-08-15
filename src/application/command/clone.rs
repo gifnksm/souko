@@ -7,22 +7,10 @@ use color_eyre::eyre::{Result, WrapErr};
 use git2_credentials::CredentialHandler;
 use url::Url;
 
-use crate::{
-    domain::model::query::Query, presentation::args::subcommand::clone::Args as CommandArgs,
-    Args as AppArgs,
-};
+use crate::domain::model::query::Query;
 
-pub(super) fn run(app: &AppArgs, args: &CommandArgs) -> Result<()> {
-    let config = app.config()?;
-
-    let root_path = args.root_path(&config);
-    let query = args.query();
-
-    let query_parse_option = config.query_parse_option();
-    let query = Query::parse(query, &query_parse_option)
-        .wrap_err_with(|| format!("invalid query: {query}"))?;
-
-    let dest_path = make_dest_path(root_path.value().as_path(), query.url());
+pub(crate) fn run(root_path: &Path, query: &Query) -> Result<()> {
+    let dest_path = make_dest_path(root_path, query.url());
     fs::create_dir_all(&dest_path).wrap_err_with(|| {
         format!(
             "failed to create destination directory: {}",

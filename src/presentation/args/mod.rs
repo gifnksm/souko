@@ -14,34 +14,46 @@ pub(crate) mod verbosity;
 #[clap(author, version, about)]
 pub struct Args {
     #[clap(flatten)]
-    verbosity: Verbosity,
-
-    /// Path to souko config file
-    #[clap(long = "config", env = "SOUKO_CONFIG")]
-    config_path: Option<PathBuf>,
+    global_args: GlobalArgs,
 
     #[clap(subcommand)]
     subcommand: Option<Subcommand>,
 }
 
-impl Args {
-    pub fn verbosity(&self) -> Option<Level> {
-        self.verbosity.verbosity()
-    }
+#[derive(Debug, Clone, Default, clap::Args)]
+struct GlobalArgs {
+    #[clap(flatten)]
+    verbosity: Verbosity,
 
-    pub(crate) fn config_path(&'_ self) -> OptionalParam<PathBuf> {
+    /// Path to souko config file
+    #[clap(long = "config", env = "SOUKO_CONFIG")]
+    config_path: Option<PathBuf>,
+}
+
+impl GlobalArgs {
+    fn config_path(&'_ self) -> OptionalParam<PathBuf> {
         OptionalParam::new("config", self.config_path.clone(), || {
             ProjectDirs::get().config_dir().join("config.toml")
         })
     }
 
-    pub(crate) fn config(&self) -> Result<Config> {
+    fn config(&self) -> Result<Config> {
         let config_path = self.config_path();
         let config = fs::load_toml(&config_path)?.unwrap_or_default();
         Ok(config)
     }
+}
 
-    pub(crate) fn subcommand(&self) -> Option<&Subcommand> {
-        self.subcommand.as_ref()
+impl Args {
+    pub fn verbosity(&self) -> Option<Level> {
+        self.global_args.verbosity.verbosity()
+    }
+
+    pub(crate) fn run(&self) -> Result<()> {
+        match &self.subcommand {
+            Some(subcommand) => subcommand.run(&self.global_args)?,
+            None => <Args as clap::CommandFactory>::command().print_help()?,
+        }
+        Ok(())
     }
 }

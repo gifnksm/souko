@@ -1,12 +1,16 @@
 use std::path::PathBuf;
 
+use color_eyre::eyre::{Result, WrapErr};
+
 use crate::{
-    presentation::config::Config,
+    application,
+    domain::model::query::Query,
+    presentation::{args::GlobalArgs, config::Config},
     util::{optional_param::OptionalParam, tilde_path::TildePath},
 };
 
 #[derive(Debug, Clone, Default, clap::Args)]
-pub(crate) struct Args {
+pub(super) struct Args {
     /// Path of the root directory under which the repository will be cloned
     #[clap(long = "root")]
     root_path: Option<PathBuf>,
@@ -27,14 +31,29 @@ pub(crate) struct Args {
 }
 
 impl Args {
-    pub(crate) fn root_path(&self, config: &Config) -> OptionalParam<TildePath> {
+    fn root_path(&self, config: &Config) -> OptionalParam<TildePath> {
         match &self.root_path {
             Some(path) => OptionalParam::new_explicit("root", TildePath::new_verbatim(path)),
             None => config.root_map().default_root().path().clone(),
         }
     }
 
-    pub(crate) fn query(&self) -> &String {
-        &self.query
+    fn query(&self, config: &Config) -> Result<Query> {
+        let query_parse_option = config.query_parse_option();
+        let query_str = &self.query;
+        let query = Query::parse(query_str, &query_parse_option)
+            .wrap_err_with(|| format!("invalid query: {query_str}"))?;
+        Ok(query)
+    }
+
+    pub(super) fn run(&self, global_args: &GlobalArgs) -> Result<()> {
+        let config = global_args.config()?;
+
+        let root_path = self.root_path(&config);
+        let query = self.query(&config)?;
+
+        application::command::clone::run(root_path.value().as_ref(), &query)?;
+
+        Ok(())
     }
 }

@@ -130,6 +130,19 @@ impl PathLike for TildePath {
     }
 }
 
+impl<T> PathLike for &T
+where
+    T: PathLike,
+{
+    fn as_display_path(&self) -> &Path {
+        (*self).as_display_path()
+    }
+
+    fn as_path(&self) -> &Path {
+        (*self).as_path()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

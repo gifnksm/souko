@@ -11,10 +11,9 @@
 
 #![doc(html_root_url = "https://docs.rs/souko/0.0.0")]
 
-use color_eyre::eyre::Result;
+pub use color_eyre::eyre::Result;
 
-pub use self::presentation::args::Args;
-use self::util::project_dirs::ProjectDirs;
+pub use crate::souko::Souko;
 
 mod application;
 mod domain;
@@ -22,8 +21,36 @@ mod infrastructure;
 mod presentation;
 mod util;
 
-pub fn main(app: &Args) -> Result<()> {
-    ProjectDirs::init()?;
-    application::command::run(app)?;
-    Ok(())
+mod souko {
+    use clap::{CommandFactory as _, Parser as _};
+    use color_eyre::eyre::Result;
+
+    use crate::{presentation::args::Args, util::project_dirs::ProjectDirs};
+
+    #[derive(Debug)]
+    pub struct Souko {
+        args: Args,
+    }
+
+    impl Souko {
+        #[allow(clippy::new_without_default)]
+        pub fn from_env() -> Self {
+            let args = Args::parse();
+            Self { args }
+        }
+
+        pub fn command() -> clap::Command {
+            Args::command()
+        }
+
+        pub fn verbosity(&self) -> Option<tracing::Level> {
+            self.args.verbosity()
+        }
+
+        pub fn main(self) -> Result<()> {
+            ProjectDirs::init()?;
+            self.args.run()?;
+            Ok(())
+        }
+    }
 }

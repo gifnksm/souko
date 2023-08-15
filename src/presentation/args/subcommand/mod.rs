@@ -1,10 +1,35 @@
+use color_eyre::eyre::Result;
+
+use super::GlobalArgs;
+
 pub(crate) mod clone;
 pub(crate) mod list;
 
 #[derive(Debug, Clone, clap::Subcommand)]
-pub(crate) enum Subcommand {
+pub(super) enum Subcommand {
     /// Clone remote repositories and put them into souko
-    Clone(clone::Args),
+    Clone(CloneArgs),
     /// List repositories in souko
-    List(list::Args),
+    List(ListArgs),
+}
+
+impl Subcommand {
+    pub(super) fn run(&self, global_args: &GlobalArgs) -> Result<()> {
+        match self {
+            Self::Clone(args) => args.inner.run(global_args),
+            Self::List(args) => args.inner.run(global_args),
+        }
+    }
+}
+
+// To prevent leak of clone::Args and list::Args, we wrap them with our own Args
+#[derive(Debug, Clone, clap::Args)]
+pub(super) struct CloneArgs {
+    #[clap(flatten)]
+    inner: clone::Args,
+}
+#[derive(Debug, Clone, clap::Args)]
+pub(super) struct ListArgs {
+    #[clap(flatten)]
+    inner: list::Args,
 }

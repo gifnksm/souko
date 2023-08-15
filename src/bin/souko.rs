@@ -1,17 +1,13 @@
 use std::env;
 
-use clap::Parser;
 use color_eyre::eyre::{eyre, Result};
-use souko::Args;
+use souko::Souko;
 
 fn main() -> Result<()> {
-    let app = Args::parse();
+    let app = Souko::from_env();
 
     if env::var_os("RUST_LOG").is_none() {
-        let level_str = args
-            .verbosity()
-            .map(|level| level.as_str())
-            .unwrap_or("off");
+        let level_str = app.verbosity().map(|level| level.as_str()).unwrap_or("off");
         env::set_var("RUST_LOG", level_str)
     }
 
@@ -23,5 +19,5 @@ fn main() -> Result<()> {
         .try_init()
         .map_err(|e| eyre!(e))?;
 
-    souko::main(&app)
+    app.main()
 }

@@ -24,6 +24,8 @@ impl<P> WalkRepo<P> {
     }
 }
 
+pub(crate) type Result<T> = std::result::Result<T, Error>;
+
 #[derive(Debug, Error)]
 pub(crate) enum Error {
     #[error(transparent)]
@@ -38,7 +40,7 @@ impl<P> IntoIterator for WalkRepo<P>
 where
     P: PathLike,
 {
-    type Item = Result<Repo, Error>;
+    type Item = Result<Repo>;
     type IntoIter = IntoIter<P>;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -68,7 +70,7 @@ impl<P> Iterator for IntoIter<P>
 where
     P: PathLike,
 {
-    type Item = Result<Repo, Error>;
+    type Item = Result<Repo>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -116,7 +118,7 @@ pub(crate) struct Repo {
 }
 
 impl Repo {
-    fn new<P>(root_dir: &P, entry: &DirEntry, repo: &git2::Repository) -> Result<Self, Error>
+    fn new<P>(root_dir: &P, entry: &DirEntry, repo: &git2::Repository) -> Result<Self>
     where
         P: PathLike,
     {
