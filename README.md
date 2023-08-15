@@ -31,6 +31,8 @@ By combining souko, fuzzy finder, and shell functions, you can easily jump betwe
 
 ## Configuration
 
+Configuration is done via a TOML file located at `~/.config/souko/config.toml` by default.
+
 ```toml
 [[root]]
 name = "default"
@@ -50,7 +52,6 @@ gl = "gitlab"
 [query.custom_scheme]
 github = "https://github.com/{path}.git"
 gitlab = "https://gitlab.com/{path}.git"
-
 ```
 
 ## Installation
@@ -81,7 +82,7 @@ $ cargo install --git https://github.com/gifnksm/souko.git souko
 
 ## Minimum supported Rust version (MSRV)
 
-The minimum supported Rust version is **Rust 1.62.1**.
+The minimum supported Rust version is **Rust 1.66.0**.
 At least the last 3 versions of stable Rust are supported at any given time.
 
 While a crate is a pre-release status (0.x.x) it may have its MSRV bumped in a patch release.
