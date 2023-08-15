@@ -8,7 +8,8 @@ use color_eyre::eyre::{Error, Result, WrapErr};
 use serde::Deserialize;
 use toml_edit::Document;
 
-use crate::util::{optional_param::OptionalParam, tilde_path::PathLike};
+use super::optional_param::OptionalParam;
+use crate::domain::model::path_like::PathLike;
 
 pub(crate) fn open(path: &OptionalParam<impl PathLike>) -> Result<Option<File>> {
     let file = match File::open(path.value().as_path()) {

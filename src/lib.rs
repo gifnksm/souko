@@ -19,38 +19,33 @@ mod application;
 mod domain;
 mod infrastructure;
 mod presentation;
-mod util;
 
 mod souko {
-    use clap::{CommandFactory as _, Parser as _};
     use color_eyre::eyre::Result;
 
-    use crate::{presentation::args::Args, util::project_dirs::ProjectDirs};
+    use crate::presentation::Presentation;
 
     #[derive(Debug)]
     pub struct Souko {
-        args: Args,
+        presentation: Presentation,
     }
 
     impl Souko {
-        #[allow(clippy::new_without_default)]
         pub fn from_env() -> Self {
-            let args = Args::parse();
-            Self { args }
+            let presentation = Presentation::from_env();
+            Self { presentation }
         }
 
         pub fn command() -> clap::Command {
-            Args::command()
+            Presentation::command()
         }
 
         pub fn verbosity(&self) -> Option<tracing::Level> {
-            self.args.verbosity()
+            self.presentation.verbosity()
         }
 
         pub fn main(self) -> Result<()> {
-            ProjectDirs::init()?;
-            self.args.run()?;
-            Ok(())
+            self.presentation.main()
         }
     }
 }

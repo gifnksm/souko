@@ -1,2 +1,35 @@
-pub(crate) mod args;
-pub(crate) mod config;
+use clap::{CommandFactory as _, Parser as _};
+pub use color_eyre::eyre::Result;
+
+use self::{args::Args, util::project_dirs::ProjectDirs};
+
+mod args;
+mod config;
+mod util;
+
+#[derive(Debug)]
+pub(crate) struct Presentation {
+    args: Args,
+}
+
+impl Presentation {
+    pub(crate) fn from_env() -> Self {
+        Self {
+            args: Args::parse(),
+        }
+    }
+
+    pub(crate) fn command() -> clap::Command {
+        Args::command()
+    }
+
+    pub(crate) fn verbosity(&self) -> Option<tracing::Level> {
+        self.args.verbosity()
+    }
+
+    pub(crate) fn main(self) -> Result<()> {
+        ProjectDirs::init()?;
+        self.args.run()?;
+        Ok(())
+    }
+}

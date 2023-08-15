@@ -4,8 +4,10 @@ use color_eyre::eyre::Result;
 use tracing::Level;
 
 use self::{subcommand::Subcommand, verbosity::Verbosity};
-use super::config::Config;
-use crate::util::{fs, optional_param::OptionalParam, project_dirs::ProjectDirs};
+use super::{
+    config::Config,
+    util::{dwym_fs, optional_param::OptionalParam, project_dirs::ProjectDirs},
+};
 
 pub(crate) mod subcommand;
 pub(crate) mod verbosity;
@@ -39,7 +41,7 @@ impl GlobalArgs {
 
     fn config(&self) -> Result<Config> {
         let config_path = self.config_path();
-        let config = fs::load_toml(&config_path)?.unwrap_or_default();
+        let config = dwym_fs::load_toml(&config_path)?.unwrap_or_default();
         Ok(config)
     }
 }

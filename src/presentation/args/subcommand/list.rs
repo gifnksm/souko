@@ -11,8 +11,8 @@ use crate::{
     presentation::{
         args::GlobalArgs,
         config::{self, Config},
+        util::{dwym_fs, optional_param::OptionalParam, tilde_path::TildePath},
     },
-    util::{fs, optional_param::OptionalParam, tilde_path::TildePath},
 };
 
 #[derive(Debug, Clone, Default, clap::Args)]
@@ -99,7 +99,7 @@ struct RootConfig {
 impl RootConfig {
     fn new(name: String, path: &OptionalParam<TildePath>) -> Option<Self> {
         let display_path: PathBuf = path.value().as_display_path().to_owned();
-        let absolute_path = match fs::canonicalize(path) {
+        let absolute_path = match dwym_fs::canonicalize(path) {
             Ok(path) => path,
             Err(e) => {
                 tracing::warn!("{e}");

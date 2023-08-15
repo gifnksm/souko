@@ -5,8 +5,11 @@ use color_eyre::eyre::{Result, WrapErr};
 use crate::{
     application,
     domain::model::query::Query,
-    presentation::{args::GlobalArgs, config::Config},
-    util::{optional_param::OptionalParam, tilde_path::TildePath},
+    presentation::{
+        args::GlobalArgs,
+        config::Config,
+        util::{optional_param::OptionalParam, tilde_path::TildePath},
+    },
 };
 
 #[derive(Debug, Clone, Default, clap::Args)]
