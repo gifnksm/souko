@@ -6,7 +6,7 @@ use std::{
 use thiserror::Error;
 use url::Url;
 
-use crate::presentation::config::QueryConfig;
+use super::{scheme::Scheme, template::Template};
 
 #[derive(Debug, Clone)]
 pub(crate) struct Query {
@@ -15,7 +15,7 @@ pub(crate) struct Query {
 }
 
 #[derive(Debug, Error)]
-pub(crate) enum QueryError {
+pub(crate) enum ParseError {
     #[error("invalid URL {}: {source}", ErrorDisplayHelper { original_query, expanded_query })]
     InvalidUrl {
         original_query: String,
@@ -27,7 +27,7 @@ pub(crate) enum QueryError {
         original_query: String,
         expanded_query: String,
     },
-    #[error("invalid config: circular alias {}", ErrorDisplayHelper { original_query, expanded_query })]
+    #[error("invalid option: circular alias {}", ErrorDisplayHelper { original_query, expanded_query })]
     CircularAlias {
         original_query: String,
         expanded_query: String,
@@ -54,8 +54,15 @@ impl Display for ErrorDisplayHelper<'_> {
     }
 }
 
+#[derive(Debug, Clone)]
+pub(crate) struct ParseOption {
+    pub(crate) default_scheme: Option<Scheme>,
+    pub(crate) scheme_alias: HashMap<Scheme, Scheme>,
+    pub(crate) custom_scheme: HashMap<Scheme, Template>,
+}
+
 impl Query {
-    pub(crate) fn parse(query: &str, config: &QueryConfig) -> Result<Self, QueryError> {
+    pub(crate) fn parse(query: &str, option: &ParseOption) -> Result<Self, ParseError> {
         let url_schemes = ["http://", "https://", "ssh://", "git://", "ftp://"];
         let mut visited_scheme = HashSet::new();
 
@@ -64,7 +71,7 @@ impl Query {
         loop {
             if url_schemes.iter().any(|scheme| query.starts_with(scheme)) {
                 // URL detected, no need to expand
-                let url = Url::parse(&query).map_err(|e| QueryError::InvalidUrl {
+                let url = Url::parse(&query).map_err(|e| ParseError::InvalidUrl {
                     original_query: original_query.clone(),
                     expanded_query: query.clone(),
                     source: e,
@@ -77,7 +84,7 @@ impl Query {
 
             if let Some((scheme, rest)) = query.split_once(':') {
                 if visited_scheme.contains(scheme) {
-                    return Err(QueryError::CircularAlias {
+                    return Err(ParseError::CircularAlias {
                         original_query,
                         expanded_query: query,
                     });
@@ -85,13 +92,13 @@ impl Query {
                 visited_scheme.insert(scheme.to_owned());
 
                 // scheme alias
-                if let Some(scheme) = config.scheme_alias.get(scheme) {
+                if let Some(scheme) = option.scheme_alias.get(scheme) {
                     query = format!("{scheme}:{rest}");
                     continue;
                 }
 
                 // custom scheme
-                if let Some(template) = config.custom_scheme.get(scheme) {
+                if let Some(template) = option.custom_scheme.get(scheme) {
                     query = template.expand(&HashMap::from_iter([("path", rest)]));
                     continue;
                 }
@@ -102,12 +109,12 @@ impl Query {
             }
 
             // no scheme, add default scheme
-            if let Some(scheme) = &config.default_scheme {
+            if let Some(scheme) = &option.default_scheme {
                 query = format!("{scheme}:{query}");
                 continue;
             }
 
-            return Err(QueryError::NoSchemeSpecified {
+            return Err(ParseError::NoSchemeSpecified {
                 original_query,
                 expanded_query: query,
             });
@@ -129,28 +136,28 @@ mod tests {
 
     #[test]
     fn test_parse_with_empty_config() {
-        let config = QueryConfig {
+        let option = ParseOption {
             default_scheme: None,
             scheme_alias: HashMap::new(),
             custom_scheme: HashMap::new(),
         };
 
-        let query = Query::parse("ssh://github.com/gifnksm/souko.git", &config).unwrap();
+        let query = Query::parse("ssh://github.com/gifnksm/souko.git", &option).unwrap();
         assert_eq!(query.url.as_str(), "ssh://github.com/gifnksm/souko.git");
 
-        let query = Query::parse("https://github.com/gifnksm/souko.git", &config).unwrap();
+        let query = Query::parse("https://github.com/gifnksm/souko.git", &option).unwrap();
         assert_eq!(query.url.as_str(), "https://github.com/gifnksm/souko.git");
 
-        let query = Query::parse("git@github.com:gifnksm/souko.git", &config).unwrap();
+        let query = Query::parse("git@github.com:gifnksm/souko.git", &option).unwrap();
         assert_eq!(query.url.as_str(), "ssh://git@github.com/gifnksm/souko.git");
 
-        let err = Query::parse("gifnksm/souko", &config).unwrap_err();
+        let err = Query::parse("gifnksm/souko", &option).unwrap_err();
         assert_eq!(err.to_string(), "no scheme specified `gifnksm/souko`");
     }
 
     #[test]
     fn test_parse_with_default_config() {
-        let config = QueryConfig {
+        let option = ParseOption {
             default_scheme: Some("gh".parse().unwrap()),
             scheme_alias: HashMap::from_iter([
                 ("gh".parse().unwrap(), "github".parse().unwrap()),
@@ -168,28 +175,28 @@ mod tests {
             ]),
         };
 
-        let query = Query::parse("ssh://github.com/gifnksm/souko.git", &config).unwrap();
+        let query = Query::parse("ssh://github.com/gifnksm/souko.git", &option).unwrap();
         assert_eq!(query.url.as_str(), "ssh://github.com/gifnksm/souko.git");
 
-        let query = Query::parse("https://github.com/gifnksm/souko.git", &config).unwrap();
+        let query = Query::parse("https://github.com/gifnksm/souko.git", &option).unwrap();
         assert_eq!(query.url.as_str(), "https://github.com/gifnksm/souko.git");
 
-        let query = Query::parse("git@github.com:gifnksm/souko.git", &config).unwrap();
+        let query = Query::parse("git@github.com:gifnksm/souko.git", &option).unwrap();
         assert_eq!(query.url.as_str(), "ssh://git@github.com/gifnksm/souko.git");
 
-        let query = Query::parse("gh:gifnksm/souko", &config).unwrap();
+        let query = Query::parse("gh:gifnksm/souko", &option).unwrap();
         assert_eq!(query.url.as_str(), "https://github.com/gifnksm/souko.git");
 
-        let query = Query::parse("gl:gifnksm/souko", &config).unwrap();
+        let query = Query::parse("gl:gifnksm/souko", &option).unwrap();
         assert_eq!(query.url.as_str(), "https://gitlab.com/gifnksm/souko.git");
 
-        let query = Query::parse("gifnksm/souko", &config).unwrap();
+        let query = Query::parse("gifnksm/souko", &option).unwrap();
         assert_eq!(query.url.as_str(), "https://github.com/gifnksm/souko.git");
     }
 
     #[test]
     fn test_parse_with_cyclic_config() {
-        let config = QueryConfig {
+        let option = ParseOption {
             default_scheme: Some("gh".parse().unwrap()),
             scheme_alias: HashMap::from_iter([
                 ("c1".parse().unwrap(), "c2".parse().unwrap()),
@@ -204,13 +211,13 @@ mod tests {
             ]),
         };
 
-        let err = Query::parse("c1:test", &config).unwrap_err();
-        assert_eq!(err.to_string(), "invalid config: circular alias `c1:test`");
+        let err = Query::parse("c1:test", &option).unwrap_err();
+        assert_eq!(err.to_string(), "invalid option: circular alias `c1:test`");
 
-        let err = Query::parse("d4:test", &config).unwrap_err();
+        let err = Query::parse("d4:test", &option).unwrap_err();
         assert_eq!(
             err.to_string(),
-            "invalid config: circular alias `d4:test` (expanded to `d4:xytest`)"
+            "invalid option: circular alias `d4:test` (expanded to `d4:xytest`)"
         );
     }
 }

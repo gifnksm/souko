@@ -26,19 +26,19 @@ impl Display for Scheme {
 }
 
 #[derive(Debug, Error)]
-pub(crate) enum SchemeParseError {
+pub(crate) enum ParseError {
     #[error("invalid URL scheme `{scheme}`")]
     InvalidScheme { scheme: String },
 }
 
 impl FromStr for Scheme {
-    type Err = SchemeParseError;
+    type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         static SCHEME_RE: Lazy<Regex> =
             Lazy::new(|| Regex::new(r"^[a-zA-Z][a-zA-Z0-9+.-]+$").unwrap());
         if !SCHEME_RE.is_match(s) {
-            return Err(SchemeParseError::InvalidScheme {
+            return Err(ParseError::InvalidScheme {
                 scheme: s.to_string(),
             });
         }
@@ -47,7 +47,7 @@ impl FromStr for Scheme {
 }
 
 impl TryFrom<String> for Scheme {
-    type Error = SchemeParseError;
+    type Error = ParseError;
 
     fn try_from(s: String) -> Result<Self, Self::Error> {
         Self::from_str(s.as_str())
@@ -55,7 +55,7 @@ impl TryFrom<String> for Scheme {
 }
 
 impl TryFrom<&str> for Scheme {
-    type Error = SchemeParseError;
+    type Error = ParseError;
 
     fn try_from(s: &str) -> Result<Self, Self::Error> {
         Self::from_str(s)

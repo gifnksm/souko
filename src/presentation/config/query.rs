@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use serde::Deserialize;
 
-use crate::util::{scheme::Scheme, template::Template};
+use crate::domain::model::{query::ParseOption, scheme::Scheme, template::Template};
 
 #[derive(Debug, Clone)]
 pub(crate) struct QueryConfig {
@@ -75,5 +75,20 @@ impl<'de> Deserialize<'de> for QueryConfig {
         config.custom_scheme.extend(custom_scheme);
 
         Ok(config)
+    }
+}
+
+impl From<QueryConfig> for ParseOption {
+    fn from(value: QueryConfig) -> Self {
+        let QueryConfig {
+            default_scheme,
+            scheme_alias,
+            custom_scheme,
+        } = value;
+        Self {
+            default_scheme,
+            scheme_alias,
+            custom_scheme,
+        }
     }
 }

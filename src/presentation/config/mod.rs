@@ -7,6 +7,7 @@ pub(crate) use self::{
     query::QueryConfig,
     root::{Root, RootMap},
 };
+use crate::domain::model::query::ParseOption;
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -22,7 +23,7 @@ impl Config {
         &self.root_map
     }
 
-    pub(crate) fn query_config(&self) -> &QueryConfig {
-        &self.query_config
+    pub(crate) fn query_parse_option(&self) -> ParseOption {
+        self.query_config.clone().into()
     }
 }

@@ -8,7 +8,8 @@ use git2_credentials::CredentialHandler;
 use url::Url;
 
 use crate::{
-    presentation::args::subcommand::clone::Args as CommandArgs, util::query::Query, Args as AppArgs,
+    domain::model::query::Query, presentation::args::subcommand::clone::Args as CommandArgs,
+    Args as AppArgs,
 };
 
 pub(super) fn run(app: &AppArgs, args: &CommandArgs) -> Result<()> {
@@ -17,9 +18,9 @@ pub(super) fn run(app: &AppArgs, args: &CommandArgs) -> Result<()> {
     let root_path = args.root_path(&config);
     let query = args.query();
 
-    let query_config = config.query_config();
-    let query =
-        Query::parse(query, query_config).wrap_err_with(|| format!("invalid query: {query}"))?;
+    let query_parse_option = config.query_parse_option();
+    let query = Query::parse(query, &query_parse_option)
+        .wrap_err_with(|| format!("invalid query: {query}"))?;
 
     let dest_path = make_dest_path(root_path.value().as_path(), query.url());
     fs::create_dir_all(&dest_path).wrap_err_with(|| {
