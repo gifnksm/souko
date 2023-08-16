@@ -3,8 +3,8 @@ use color_eyre::eyre::Result;
 use super::GlobalArgs;
 use crate::application::service::Service;
 
-pub(crate) mod clone;
-pub(crate) mod list;
+mod clone;
+mod list;
 
 #[derive(Debug, Clone, clap::Subcommand)]
 pub(super) enum Subcommand {

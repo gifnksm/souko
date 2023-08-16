@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use crate::domain::model::path_like::PathLike;
 
 #[derive(Debug, Default, Clone)]
-pub(crate) struct TildePath {
+pub(in super::super) struct TildePath {
     original: PathBuf,
     expanded: Option<PathBuf>,
 }
@@ -58,7 +58,7 @@ impl Serialize for TildePath {
 }
 
 impl TildePath {
-    pub(crate) fn new(original: impl Into<PathBuf>) -> Self {
+    pub(in super::super) fn new(original: impl Into<PathBuf>) -> Self {
         let original = original.into();
         // replace first tilde only
         let expanded = original.strip_prefix("~").ok().and_then(|path| {
@@ -68,7 +68,7 @@ impl TildePath {
         Self { original, expanded }
     }
 
-    pub(crate) fn from_expanded(expanded: impl Into<PathBuf>) -> Self {
+    pub(in super::super) fn from_expanded(expanded: impl Into<PathBuf>) -> Self {
         let expanded = expanded.into();
         let original = BaseDirs::new()
             .and_then(|base_dirs| expanded.strip_prefix(base_dirs.home_dir()).ok())
@@ -78,17 +78,17 @@ impl TildePath {
         Self { original, expanded }
     }
 
-    pub(crate) fn new_verbatim(path: impl Into<PathBuf>) -> Self {
+    pub(in super::super) fn new_verbatim(path: impl Into<PathBuf>) -> Self {
         let original = path.into();
         let expanded = None;
         Self { original, expanded }
     }
 
-    pub(crate) fn as_path(&self) -> &Path {
+    pub(in super::super) fn as_path(&self) -> &Path {
         self.expanded.as_deref().unwrap_or(&self.original)
     }
 
-    pub(crate) fn as_display_path(&self) -> &Path {
+    pub(in super::super) fn as_display_path(&self) -> &Path {
         self.original.as_ref()
     }
 }

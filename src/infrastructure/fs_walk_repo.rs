@@ -6,7 +6,7 @@ use crate::domain::{
 };
 
 #[derive(custom_debug_derive::Debug)]
-pub(crate) struct FsWalkRepo {
+pub(super) struct FsWalkRepo {
     root: Arc<Root>,
     iter: walkdir::IntoIter,
     #[debug(skip)]
@@ -14,7 +14,7 @@ pub(crate) struct FsWalkRepo {
 }
 
 impl FsWalkRepo {
-    pub(crate) fn new(root: &Root) -> Self {
+    pub(super) fn new(root: &Root) -> Self {
         let root = Arc::new(root.clone());
         let iter = walkdir::WalkDir::new(root.absolute_path())
             .sort_by_file_name()
@@ -46,7 +46,7 @@ impl WalkRepo for FsWalkRepo {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub(crate) enum Error {
+enum Error {
     #[error(transparent)]
     WalkDir(#[from] walkdir::Error),
 }
@@ -85,7 +85,7 @@ impl Iterator for FsWalkRepo {
 }
 
 #[derive(Debug)]
-pub(crate) struct FsEntry {
+struct FsEntry {
     root: Arc<Root>,
     inner: walkdir::DirEntry,
 }

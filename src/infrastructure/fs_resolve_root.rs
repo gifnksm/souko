@@ -7,16 +7,16 @@ use crate::domain::{
 };
 
 #[derive(Debug)]
-pub(crate) struct FsResolveRoot;
+pub(super) struct FsResolveRoot;
 
 impl FsResolveRoot {
-    pub(crate) fn new() -> Self {
+    pub(super) fn new() -> Self {
         Self
     }
 }
 
 #[derive(Debug, thiserror::Error)]
-pub(crate) enum ResolveError {
+enum ResolveError {
     #[error("failed to get absolute path of root {root_name}: {path}")]
     Canonicalize {
         root_name: String,

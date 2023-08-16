@@ -37,7 +37,7 @@ impl Args {
     fn root_path(&self, config: &Config) -> OptionalParam<TildePath> {
         match &self.root_path {
             Some(path) => OptionalParam::new_explicit("root", TildePath::new_verbatim(path)),
-            None => config.root_map().default_root().path().clone(),
+            None => config.default_root_path().clone(),
         }
     }
 

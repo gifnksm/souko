@@ -19,7 +19,7 @@ struct RootRepr {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct RootMap {
+pub(super) struct RootMap {
     map: BTreeMap<String, Root>,
 }
 
@@ -50,26 +50,24 @@ impl<'de> Deserialize<'de> for RootMap {
 }
 
 impl RootMap {
-    pub(crate) fn default_root(&self) -> &Root {
+    pub(super) fn default_root_path(&self) -> &OptionalParam<TildePath> {
+        let name = DEFAULT_ROOT_NAME;
         self.map
-            .get(DEFAULT_ROOT_NAME)
+            .get(name)
             .expect("BUG: default root not found")
+            .path()
     }
 
-    pub(crate) fn specs(&self) -> Vec<OptionalParam<RootSpec>> {
+    pub(super) fn specs(&self) -> Vec<OptionalParam<RootSpec>> {
         self.map
             .iter()
-            .map(|(name, root)| {
-                root.path()
-                    .clone()
-                    .map(|path| RootSpec::new(name.clone(), Box::new(path)))
-            })
+            .map(|(name, root)| root.to_spec(name.clone()))
             .collect()
     }
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct Root {
+struct Root {
     path: OptionalParam<TildePath>,
 }
 
@@ -82,13 +80,19 @@ impl Default for Root {
 }
 
 impl Root {
-    pub(crate) fn new(path: impl Into<TildePath>) -> Self {
+    fn new(path: impl Into<TildePath>) -> Self {
         let path = path.into();
         let path = OptionalParam::new_explicit("root", path);
         Self { path }
     }
 
-    pub(crate) fn path(&self) -> &OptionalParam<TildePath> {
+    fn to_spec(&self, name: String) -> OptionalParam<RootSpec> {
+        self.path
+            .clone()
+            .map(|path| RootSpec::new(name, Box::new(path)))
+    }
+
+    fn path(&self) -> &OptionalParam<TildePath> {
         &self.path
     }
 }

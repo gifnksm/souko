@@ -10,8 +10,8 @@ use super::{
 };
 use crate::application::service::Service;
 
-pub(crate) mod subcommand;
-pub(crate) mod verbosity;
+mod subcommand;
+mod verbosity;
 
 #[derive(Debug, Clone, Default, clap::Parser)]
 #[clap(author, version, about)]

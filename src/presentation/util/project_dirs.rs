@@ -9,14 +9,14 @@ use once_cell::sync::OnceCell;
 static PROJECT_DIRS: OnceCell<ProjectDirs> = OnceCell::new();
 
 #[derive(Debug, Clone)]
-pub(crate) struct ProjectDirs {
+pub(in super::super) struct ProjectDirs {
     config_dir: Option<PathBuf>,
     data_local_dir: Option<PathBuf>,
     inner: directories::ProjectDirs,
 }
 
 impl ProjectDirs {
-    pub(crate) fn init() -> Result<()> {
+    pub(in super::super) fn init() -> Result<()> {
         let project_dirs = ProjectDirs::new()?;
         PROJECT_DIRS
             .set(project_dirs)
@@ -24,7 +24,7 @@ impl ProjectDirs {
         Ok(())
     }
 
-    pub(crate) fn get() -> &'static Self {
+    pub(in super::super) fn get() -> &'static Self {
         PROJECT_DIRS
             .get()
             .expect("BUG: ProjectDirs::get() called before ProjectDirs::init()")
@@ -51,13 +51,13 @@ impl ProjectDirs {
         })
     }
 
-    pub(crate) fn config_dir(&self) -> &Path {
+    pub(in super::super) fn config_dir(&self) -> &Path {
         self.config_dir
             .as_deref()
             .unwrap_or_else(|| self.inner.config_dir())
     }
 
-    pub(crate) fn data_local_dir(&self) -> &Path {
+    pub(in super::super) fn data_local_dir(&self) -> &Path {
         self.data_local_dir
             .as_deref()
             .unwrap_or_else(|| self.inner.data_local_dir())

@@ -10,7 +10,7 @@ use toml_edit::Document;
 use super::optional_param::OptionalParam;
 use crate::domain::model::path_like::PathLike;
 
-pub(crate) fn open(path: &OptionalParam<impl PathLike>) -> Result<Option<File>> {
+pub(in super::super) fn open(path: &OptionalParam<impl PathLike>) -> Result<Option<File>> {
     let file = match File::open(path.value().as_path()) {
         Ok(file) => Some(file),
         Err(e) if path.is_default() && e.kind() == io::ErrorKind::NotFound => None,
@@ -25,7 +25,7 @@ pub(crate) fn open(path: &OptionalParam<impl PathLike>) -> Result<Option<File>> 
     Ok(file)
 }
 
-// pub(crate) fn canonicalize(path: &OptionalParam<impl PathLike>) -> Result<Option<PathBuf>> {
+// pub(in super::super) fn canonicalize(path: &OptionalParam<impl PathLike>) -> Result<Option<PathBuf>> {
 //     let path = match path.value().as_path().canonicalize() {
 //         Ok(file) => Some(file),
 //         Err(e) if path.is_default() && e.kind() == io::ErrorKind::NotFound => None,
@@ -40,7 +40,7 @@ pub(crate) fn open(path: &OptionalParam<impl PathLike>) -> Result<Option<File>> 
 //     Ok(path)
 // }
 
-// pub(crate) fn load_json<T>(path: &OptionalParam<impl PathLike>) -> Result<Option<T>>
+// pub(in super::super) fn load_json<T>(path: &OptionalParam<impl PathLike>) -> Result<Option<T>>
 // where
 //     T: for<'de> Deserialize<'de>,
 // {
@@ -55,7 +55,7 @@ pub(crate) fn open(path: &OptionalParam<impl PathLike>) -> Result<Option<File>> 
 //     Ok(Some(value))
 // }
 
-// pub(crate) fn store_json<T>(path: &OptionalParam<impl PathLike>, value: &T) -> Result<()>
+// pub(in super::super) fn store_json<T>(path: &OptionalParam<impl PathLike>, value: &T) -> Result<()>
 // where
 //     T: Serialize,
 // {
@@ -89,7 +89,9 @@ pub(crate) fn open(path: &OptionalParam<impl PathLike>) -> Result<Option<File>> 
 //     Ok(())
 // }
 
-pub(crate) fn load_toml_document(path: &OptionalParam<impl PathLike>) -> Result<Option<Document>> {
+pub(in super::super) fn load_toml_document(
+    path: &OptionalParam<impl PathLike>,
+) -> Result<Option<Document>> {
     let mut file = match open(path)? {
         Some(file) => file,
         None => return Ok(None),
@@ -110,7 +112,7 @@ pub(crate) fn load_toml_document(path: &OptionalParam<impl PathLike>) -> Result<
     Ok(Some(doc))
 }
 
-pub(crate) fn load_toml<T>(path: &OptionalParam<impl PathLike>) -> Result<Option<T>>
+pub(in super::super) fn load_toml<T>(path: &OptionalParam<impl PathLike>) -> Result<Option<T>>
 where
     T: for<'de> Deserialize<'de>,
 {
@@ -128,7 +130,7 @@ where
     Ok(value)
 }
 
-// pub(crate) fn store_toml_document(path: &OptionalParam<impl PathLike>) -> Result<()> {
+// pub(in super::super) fn store_toml_document(path: &OptionalParam<impl PathLike>) -> Result<()> {
 //     let dir = path
 //         .value()
 //         .parent()

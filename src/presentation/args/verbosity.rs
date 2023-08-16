@@ -2,7 +2,7 @@ use clap::ArgAction;
 use tracing::Level;
 
 #[derive(Debug, Clone, Default, clap::Args)]
-pub(crate) struct Verbosity {
+pub(super) struct Verbosity {
     /// More output per occurrence
     #[clap(long, short = 'v', action = ArgAction::Count, global = true)]
     verbose: u8,
@@ -18,7 +18,7 @@ pub(crate) struct Verbosity {
 }
 
 impl Verbosity {
-    pub(crate) fn verbosity(&self) -> Option<Level> {
+    pub(super) fn verbosity(&self) -> Option<Level> {
         let level = i8::try_from(self.verbose).unwrap_or(i8::MAX)
             - i8::try_from(self.quiet).unwrap_or(i8::MAX);
         match level {

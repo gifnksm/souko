@@ -24,13 +24,17 @@ impl<T> OptionalParamValue<T> {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct OptionalParam<T> {
+pub(in super::super) struct OptionalParam<T> {
     name: &'static str,
     value: OptionalParamValue<T>,
 }
 
 impl<T> OptionalParam<T> {
-    pub(crate) fn new(name: &'static str, value: Option<T>, default: impl FnOnce() -> T) -> Self {
+    pub(in super::super) fn new(
+        name: &'static str,
+        value: Option<T>,
+        default: impl FnOnce() -> T,
+    ) -> Self {
         let value = match value {
             Some(path) => OptionalParamValue::Explicit(path),
             None => OptionalParamValue::Default(default()),
@@ -38,33 +42,33 @@ impl<T> OptionalParam<T> {
         OptionalParam { name, value }
     }
 
-    pub(crate) fn new_default(name: &'static str, value: T) -> Self {
+    pub(in super::super) fn new_default(name: &'static str, value: T) -> Self {
         let value = OptionalParamValue::Default(value);
         OptionalParam { name, value }
     }
 
-    pub(crate) fn new_explicit(name: &'static str, value: T) -> Self {
+    pub(in super::super) fn new_explicit(name: &'static str, value: T) -> Self {
         let value = OptionalParamValue::Explicit(value);
         OptionalParam { name, value }
     }
 
-    pub(crate) fn name(&self) -> &'static str {
+    pub(in super::super) fn name(&self) -> &'static str {
         self.name
     }
 
-    pub(crate) fn value(&self) -> &T {
+    pub(in super::super) fn value(&self) -> &T {
         self.value.as_ref()
     }
 
-    pub(crate) fn is_default(&self) -> bool {
+    pub(in super::super) fn is_default(&self) -> bool {
         self.value.is_default()
     }
 
-    pub(crate) fn is_explicit(&self) -> bool {
+    pub(in super::super) fn is_explicit(&self) -> bool {
         self.value.is_explicit()
     }
 
-    pub(crate) fn map<U>(self, f: impl FnOnce(T) -> U) -> OptionalParam<U> {
+    pub(in super::super) fn map<U>(self, f: impl FnOnce(T) -> U) -> OptionalParam<U> {
         OptionalParam {
             name: self.name,
             value: match self.value {

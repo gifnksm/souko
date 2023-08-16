@@ -5,10 +5,10 @@ use serde::Deserialize;
 use crate::domain::model::{query::ParseOption, scheme::Scheme, template::Template};
 
 #[derive(Debug, Clone)]
-pub(crate) struct QueryConfig {
-    pub(crate) default_scheme: Option<Scheme>,
-    pub(crate) scheme_alias: HashMap<Scheme, Scheme>,
-    pub(crate) custom_scheme: HashMap<Scheme, Template>,
+pub(super) struct QueryConfig {
+    default_scheme: Option<Scheme>,
+    scheme_alias: HashMap<Scheme, Scheme>,
+    custom_scheme: HashMap<Scheme, Template>,
 }
 
 impl Default for QueryConfig {
