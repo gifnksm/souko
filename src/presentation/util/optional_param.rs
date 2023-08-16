@@ -11,6 +11,10 @@ impl<T> OptionalParamValue<T> {
         matches!(self, Self::Default(_))
     }
 
+    fn is_explicit(&self) -> bool {
+        matches!(self, Self::Explicit(_))
+    }
+
     fn as_ref(&self) -> &T {
         match self {
             Self::Explicit(v) => v,
@@ -54,5 +58,19 @@ impl<T> OptionalParam<T> {
 
     pub(crate) fn is_default(&self) -> bool {
         self.value.is_default()
+    }
+
+    pub(crate) fn is_explicit(&self) -> bool {
+        self.value.is_explicit()
+    }
+
+    pub(crate) fn map<U>(self, f: impl FnOnce(T) -> U) -> OptionalParam<U> {
+        OptionalParam {
+            name: self.name,
+            value: match self.value {
+                OptionalParamValue::Explicit(v) => OptionalParamValue::Explicit(f(v)),
+                OptionalParamValue::Default(v) => OptionalParamValue::Default(f(v)),
+            },
+        }
     }
 }

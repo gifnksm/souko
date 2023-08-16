@@ -1,7 +1,6 @@
 use std::{
     fs::File,
     io::{self, Read},
-    path::PathBuf,
 };
 
 use color_eyre::eyre::{Error, Result, WrapErr};
@@ -26,20 +25,20 @@ pub(crate) fn open(path: &OptionalParam<impl PathLike>) -> Result<Option<File>> 
     Ok(file)
 }
 
-pub(crate) fn canonicalize(path: &OptionalParam<impl PathLike>) -> Result<Option<PathBuf>> {
-    let path = match path.value().as_path().canonicalize() {
-        Ok(file) => Some(file),
-        Err(e) if path.is_default() && e.kind() == io::ErrorKind::NotFound => None,
-        Err(e) => {
-            return Err(Error::from(e).wrap_err(format!(
-                "failed to get absolute path of {}: {}",
-                path.name(),
-                path.value().display()
-            )))
-        }
-    };
-    Ok(path)
-}
+// pub(crate) fn canonicalize(path: &OptionalParam<impl PathLike>) -> Result<Option<PathBuf>> {
+//     let path = match path.value().as_path().canonicalize() {
+//         Ok(file) => Some(file),
+//         Err(e) if path.is_default() && e.kind() == io::ErrorKind::NotFound => None,
+//         Err(e) => {
+//             return Err(Error::from(e).wrap_err(format!(
+//                 "failed to get absolute path of {}: {}",
+//                 path.name(),
+//                 path.value().display()
+//             )))
+//         }
+//     };
+//     Ok(path)
+// }
 
 // pub(crate) fn load_json<T>(path: &OptionalParam<impl PathLike>) -> Result<Option<T>>
 // where

@@ -8,6 +8,7 @@ use super::{
     config::Config,
     util::{dwym_fs, optional_param::OptionalParam, project_dirs::ProjectDirs},
 };
+use crate::application::service::Service;
 
 pub(crate) mod subcommand;
 pub(crate) mod verbosity;
@@ -51,9 +52,9 @@ impl Args {
         self.global_args.verbosity.verbosity()
     }
 
-    pub(crate) fn run(&self) -> Result<()> {
+    pub(crate) fn run(&self, service: &Service) -> Result<()> {
         match &self.subcommand {
-            Some(subcommand) => subcommand.run(&self.global_args)?,
+            Some(subcommand) => subcommand.run(&self.global_args, service)?,
             None => <Args as clap::CommandFactory>::command().print_help()?,
         }
         Ok(())

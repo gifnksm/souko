@@ -1,9 +1,10 @@
 use std::{
+    fmt::Debug,
     path,
     path::{Path, PathBuf},
 };
 
-pub(crate) trait PathLike {
+pub(crate) trait PathLike: Debug {
     fn display(&self) -> path::Display<'_> {
         self.as_display_path().display()
     }

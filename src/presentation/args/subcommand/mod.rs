@@ -1,6 +1,7 @@
 use color_eyre::eyre::Result;
 
 use super::GlobalArgs;
+use crate::application::service::Service;
 
 pub(crate) mod clone;
 pub(crate) mod list;
@@ -14,10 +15,10 @@ pub(super) enum Subcommand {
 }
 
 impl Subcommand {
-    pub(super) fn run(&self, global_args: &GlobalArgs) -> Result<()> {
+    pub(super) fn run(&self, global_args: &GlobalArgs, service: &Service) -> Result<()> {
         match self {
             Self::Clone(args) => args.inner.run(global_args),
-            Self::List(args) => args.inner.run(global_args),
+            Self::List(args) => args.inner.run(global_args, service),
         }
     }
 }

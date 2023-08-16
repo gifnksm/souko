@@ -2,6 +2,7 @@ use clap::{CommandFactory as _, Parser as _};
 pub use color_eyre::eyre::Result;
 
 use self::{args::Args, util::project_dirs::ProjectDirs};
+use crate::application::service::Service;
 
 mod args;
 mod config;
@@ -27,9 +28,9 @@ impl Presentation {
         self.args.verbosity()
     }
 
-    pub(crate) fn main(self) -> Result<()> {
+    pub(crate) fn main(self, service: &Service) -> Result<()> {
         ProjectDirs::init()?;
-        self.args.run()?;
+        self.args.run(service)?;
         Ok(())
     }
 }

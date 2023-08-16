@@ -15,6 +15,9 @@ pub use color_eyre::eyre::Result;
 
 pub use crate::souko::Souko;
 
+#[macro_use]
+mod macros;
+
 mod application;
 mod domain;
 mod infrastructure;
@@ -23,7 +26,7 @@ mod presentation;
 mod souko {
     use color_eyre::eyre::Result;
 
-    use crate::presentation::Presentation;
+    use crate::{infrastructure, presentation::Presentation};
 
     #[derive(Debug)]
     pub struct Souko {
@@ -45,7 +48,8 @@ mod souko {
         }
 
         pub fn main(self) -> Result<()> {
-            self.presentation.main()
+            let service = infrastructure::service();
+            self.presentation.main(&service)
         }
     }
 }

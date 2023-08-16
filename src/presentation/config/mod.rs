@@ -3,11 +3,9 @@ use serde::Deserialize;
 mod query;
 mod root;
 
-pub(crate) use self::{
-    query::QueryConfig,
-    root::{Root, RootMap},
-};
-use crate::domain::model::query::ParseOption;
+pub(crate) use self::{query::QueryConfig, root::RootMap};
+use super::util::optional_param::OptionalParam;
+use crate::domain::model::{query::ParseOption, root::RootSpec};
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -19,6 +17,10 @@ pub(crate) struct Config {
 }
 
 impl Config {
+    pub(crate) fn root_specs(&self) -> Vec<OptionalParam<RootSpec>> {
+        self.root_map.specs()
+    }
+
     pub(crate) fn root_map(&self) -> &RootMap {
         &self.root_map
     }
