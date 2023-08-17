@@ -84,18 +84,18 @@ impl FromStr for Template {
                 continue;
             }
             if s.starts_with('}') {
-                return Err(ParseError::UnexpectedChar('}'));
+                bail!(ParseError::UnexpectedChar('}'));
             }
             assert!(s.starts_with('{'));
             if let Some(end) = s.find('}') {
                 let variable = s[1..end].trim();
                 if !is_valid_variable(variable) {
-                    return Err(ParseError::InvalidVariable(variable.to_string()));
+                    bail!(ParseError::InvalidVariable(variable.to_string()));
                 }
                 s = &s[end + 1..];
                 parts.push(Parts::variable(variable));
             } else {
-                return Err(ParseError::NoClosingBrace);
+                bail!(ParseError::NoClosingBrace);
             }
         }
         push_str(&mut parts, s);

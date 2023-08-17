@@ -14,28 +14,26 @@ pub(in super::super) fn open(path: &OptionalParam<impl PathLike>) -> Result<Opti
     let file = match File::open(path.value().as_path()) {
         Ok(file) => Some(file),
         Err(e) if path.is_default() && e.kind() == io::ErrorKind::NotFound => None,
-        Err(e) => {
-            return Err(Error::from(e).wrap_err(format!(
-                "failed to open {}: {}",
-                path.name(),
-                path.value().display(),
-            )))
-        }
+        Err(e) => bail!(Error::from(e).wrap_err(format!(
+            "failed to open {}: {}",
+            path.name(),
+            path.value().display(),
+        ))),
     };
     Ok(file)
 }
 
-// pub(in super::super) fn canonicalize(path: &OptionalParam<impl PathLike>) -> Result<Option<PathBuf>> {
+// pub(in super::super) fn canonicalize(
+//     path: &OptionalParam<impl PathLike>,
+// ) -> Result<Option<PathBuf>> {
 //     let path = match path.value().as_path().canonicalize() {
 //         Ok(file) => Some(file),
 //         Err(e) if path.is_default() && e.kind() == io::ErrorKind::NotFound => None,
-//         Err(e) => {
-//             return Err(Error::from(e).wrap_err(format!(
-//                 "failed to get absolute path of {}: {}",
-//                 path.name(),
-//                 path.value().display()
-//             )))
-//         }
+//         Err(e) => bail!(Error::from(e).wrap_err(format!(
+//             "failed to get absolute path of {}: {}",
+//             path.name(),
+//             path.value().display()
+//         ))),
 //     };
 //     Ok(path)
 // }

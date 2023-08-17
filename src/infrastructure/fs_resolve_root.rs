@@ -37,14 +37,11 @@ impl ResolveRoot for FsResolveRoot {
         let absolute_path = match spec.path().as_path().canonicalize() {
             Ok(path) => path,
             Err(err) if !should_exist && err.kind() == io::ErrorKind::NotFound => return Ok(None),
-            Err(err) => {
-                return Err(ResolveError::Canonicalize {
-                    root_name: name.clone(),
-                    path: spec.path().as_path().to_owned(),
-                    source: err,
-                }
-                .into())
-            }
+            Err(err) => bail!(ResolveError::Canonicalize {
+                root_name: name.clone(),
+                path: spec.path().as_path().to_owned(),
+                source: err,
+            }),
         };
 
         let root = Root::new(name, display_path, absolute_path);

@@ -102,7 +102,7 @@ impl Query {
 
             if let Some((scheme, rest)) = query.split_once(':') {
                 if visited_scheme.contains(scheme) {
-                    return Err(ParseError::CircularAlias {
+                    bail!(ParseError::CircularAlias {
                         original_query,
                         expanded_query: query,
                     });
@@ -132,7 +132,7 @@ impl Query {
                 continue;
             }
 
-            return Err(ParseError::NoSchemeSpecified {
+            bail!(ParseError::NoSchemeSpecified {
                 original_query,
                 expanded_query: query,
             });
