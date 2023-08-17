@@ -26,7 +26,7 @@ mod presentation;
 mod souko {
     use color_eyre::eyre::Result;
 
-    use crate::{infrastructure, presentation::Presentation};
+    use crate::{application::service::Service, infrastructure, presentation::Presentation};
 
     #[derive(Debug)]
     pub struct Souko {
@@ -48,7 +48,8 @@ mod souko {
         }
 
         pub fn main(self) -> Result<()> {
-            let service = infrastructure::service();
+            let repository = infrastructure::repository();
+            let service = Service::new(&repository);
             self.presentation.main(&service)
         }
     }

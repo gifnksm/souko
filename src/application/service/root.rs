@@ -8,6 +8,7 @@ use crate::domain::{
     repository::{
         resolve_root::ResolveRoot,
         walk_repo::{Repos, WalkRepo},
+        Repository,
     },
 };
 
@@ -18,10 +19,10 @@ pub(crate) struct RootService {
 }
 
 impl RootService {
-    pub(crate) fn new(resolve_root: Arc<dyn ResolveRoot>, walk_repo: Arc<dyn WalkRepo>) -> Self {
+    pub(crate) fn new(repository: &Repository) -> Self {
         Self {
-            resolve_root,
-            walk_repo,
+            resolve_root: Arc::clone(&repository.resolve_root),
+            walk_repo: Arc::clone(&repository.walk_repo),
         }
     }
 

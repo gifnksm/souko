@@ -1,6 +1,4 @@
-use std::sync::Arc;
-
-use crate::domain::repository::{resolve_root::ResolveRoot, walk_repo::WalkRepo};
+use crate::domain::repository::Repository;
 
 pub(crate) mod root;
 
@@ -9,9 +7,9 @@ pub(crate) struct Service {
 }
 
 impl Service {
-    pub(crate) fn new(resolve_root: Arc<dyn ResolveRoot>, walk_repo: Arc<dyn WalkRepo>) -> Self {
+    pub(crate) fn new(repository: &Repository) -> Self {
         Self {
-            root: root::RootService::new(resolve_root, walk_repo),
+            root: root::RootService::new(repository),
         }
     }
 
