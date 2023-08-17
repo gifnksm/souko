@@ -7,5 +7,6 @@ mod fs_walk_repo;
 
 pub(crate) fn service() -> Service {
     let resolve_root = Arc::new(fs_resolve_root::FsResolveRoot::new());
-    Service::new(resolve_root)
+    let walk_repo = Arc::new(fs_walk_repo::FsWalkRepo::new());
+    Service::new(resolve_root, walk_repo)
 }

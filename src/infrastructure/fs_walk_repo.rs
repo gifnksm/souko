@@ -2,18 +2,33 @@ use std::{path::Path, sync::Arc};
 
 use crate::domain::{
     model::{repo::Repo, root::Root},
-    repository::walk_repo::{Entry, FilterPredicate, WalkRepo},
+    repository::walk_repo::{Entry, FilterPredicate, Repos, WalkRepo},
 };
 
+#[derive(Debug)]
+pub(super) struct FsWalkRepo {}
+
+impl FsWalkRepo {
+    pub(super) fn new() -> Self {
+        Self {}
+    }
+}
+
+impl WalkRepo for FsWalkRepo {
+    fn walk_repo(&self, root: &Root) -> Result<Box<dyn Repos>, Box<dyn std::error::Error>> {
+        Ok(Box::new(FsRepos::new(root)))
+    }
+}
+
 #[derive(custom_debug_derive::Debug)]
-pub(super) struct FsWalkRepo {
+pub(super) struct FsRepos {
     root: Arc<Root>,
     iter: walkdir::IntoIter,
     #[debug(skip)]
     filter: Option<FilterPredicate>,
 }
 
-impl FsWalkRepo {
+impl FsRepos {
     pub(super) fn new(root: &Root) -> Self {
         let root = Arc::new(root.clone());
         let iter = walkdir::WalkDir::new(root.absolute_path())
@@ -27,7 +42,7 @@ impl FsWalkRepo {
     }
 }
 
-impl WalkRepo for FsWalkRepo {
+impl Repos for FsRepos {
     fn skip_subdir(&mut self) {
         self.iter.skip_current_dir();
     }
@@ -51,7 +66,7 @@ enum Error {
     WalkDir(#[from] walkdir::Error),
 }
 
-impl Iterator for FsWalkRepo {
+impl Iterator for FsRepos {
     type Item = Result<Box<dyn Entry>, Box<dyn std::error::Error>>;
 
     fn next(&mut self) -> Option<Self::Item> {

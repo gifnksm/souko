@@ -5,17 +5,24 @@ use crate::domain::{
         repo::Repo,
         root::{Root, RootSpec},
     },
-    repository::{resolve_root::ResolveRoot, walk_repo::WalkRepo},
+    repository::{
+        resolve_root::ResolveRoot,
+        walk_repo::{Repos, WalkRepo},
+    },
 };
 
 #[derive(Debug, Clone)]
 pub(crate) struct RootService {
-    root_resolver: Arc<dyn ResolveRoot>,
+    resolve_root: Arc<dyn ResolveRoot>,
+    walk_repo: Arc<dyn WalkRepo>,
 }
 
 impl RootService {
-    pub(crate) fn new(root_resolver: Arc<dyn ResolveRoot>) -> Self {
-        Self { root_resolver }
+    pub(crate) fn new(resolve_root: Arc<dyn ResolveRoot>, walk_repo: Arc<dyn WalkRepo>) -> Self {
+        Self {
+            resolve_root,
+            walk_repo,
+        }
     }
 
     pub(crate) fn resolve_root(
@@ -23,7 +30,7 @@ impl RootService {
         root: &RootSpec,
         should_exist: bool,
     ) -> Result<Option<Root>, Box<dyn std::error::Error>> {
-        self.root_resolver.resolve_root(root, should_exist)
+        self.resolve_root.resolve_root(root, should_exist)
     }
 
     pub(crate) fn find_repos(
@@ -32,11 +39,27 @@ impl RootService {
         skip_hidden: bool,
         skip_bare: bool,
         no_recursive: bool,
-    ) -> Result<
-        impl Iterator<Item = Result<Repo, Box<dyn std::error::Error>>>,
-        Box<dyn std::error::Error>,
-    > {
-        let mut walker = self.root_resolver.repo_walker(root)?;
+    ) -> Result<FindRepos, Box<dyn std::error::Error>> {
+        FindRepos::new(&*self.walk_repo, root, skip_hidden, skip_bare, no_recursive)
+    }
+}
+
+#[derive(Debug)]
+pub(crate) struct FindRepos {
+    skip_bare: bool,
+    no_recursive: bool,
+    walker: Box<dyn Repos>,
+}
+
+impl FindRepos {
+    fn new(
+        walk_repo: &dyn WalkRepo,
+        root: &Root,
+        skip_hidden: bool,
+        skip_bare: bool,
+        no_recursive: bool,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
+        let mut walker = walk_repo.walk_repo(root)?;
         if skip_hidden {
             walker.filter_entry(Box::new(|e| !e.is_hidden()));
         }
@@ -46,13 +69,6 @@ impl RootService {
             walker,
         })
     }
-}
-
-#[derive(Debug)]
-pub(crate) struct FindRepos {
-    skip_bare: bool,
-    no_recursive: bool,
-    walker: Box<dyn WalkRepo>,
 }
 
 impl Iterator for FindRepos {

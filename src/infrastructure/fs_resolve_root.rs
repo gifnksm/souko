@@ -1,9 +1,8 @@
 use std::{io, path::PathBuf};
 
-use super::fs_walk_repo::FsWalkRepo;
 use crate::domain::{
     model::root::{Root, RootSpec},
-    repository::{resolve_root::ResolveRoot, walk_repo::WalkRepo},
+    repository::resolve_root::ResolveRoot,
 };
 
 #[derive(Debug)]
@@ -46,9 +45,5 @@ impl ResolveRoot for FsResolveRoot {
 
         let root = Root::new(name, display_path, absolute_path);
         Ok(Some(root))
-    }
-
-    fn repo_walker(&self, root: &Root) -> Result<Box<dyn WalkRepo>, Box<dyn std::error::Error>> {
-        Ok(Box::new(FsWalkRepo::new(root)))
     }
 }
