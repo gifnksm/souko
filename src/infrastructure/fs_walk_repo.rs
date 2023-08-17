@@ -71,7 +71,7 @@ impl Iterator for FsRepos {
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
-            let entry = itry!(self.iter.next()?);
+            let entry = itry!(self.iter.next()?.map_err(Error::WalkDir));
 
             if !entry.file_type().is_dir() {
                 tracing::trace!("skipping non-directory: {}", entry.path().display());
