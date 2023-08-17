@@ -66,7 +66,7 @@ impl Iterator for FindRepos {
                 self.walker.skip_subdir();
             }
             match repo {
-                Some(repo) if self.skip_bare && repo.is_bare() => {
+                Some(repo) if self.skip_bare && repo.bare() => {
                     tracing::trace!("skipping bare repo: {}", repo.absolute_path().display());
                     continue;
                 }

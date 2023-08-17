@@ -151,16 +151,16 @@ struct JsonRoot {
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct JsonRepo {
-    name: String,
     relative_path: PathBuf,
+    display_absolute_path: PathBuf,
     absolute_path: PathBuf,
 }
 
 impl From<Repo> for JsonRepo {
     fn from(value: Repo) -> Self {
         Self {
-            name: value.name().to_owned(),
             relative_path: value.relative_path().to_owned(),
+            display_absolute_path: value.display_absolute_path().to_owned(),
             absolute_path: value.absolute_path().to_owned(),
         }
     }

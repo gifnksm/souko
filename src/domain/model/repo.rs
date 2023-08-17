@@ -1,30 +1,30 @@
 use std::path::{Path, PathBuf};
 
+use super::root::Root;
+
 #[derive(Debug, Clone)]
 pub(crate) struct Repo {
-    name: String,
     relative_path: PathBuf,
+    display_absolute_path: PathBuf,
     absolute_path: PathBuf,
-    is_bare: bool,
+    bare: bool,
 }
 
 impl Repo {
-    pub(crate) fn new(
-        name: String,
-        relative_path: PathBuf,
-        absolute_path: PathBuf,
-        is_bare: bool,
-    ) -> Self {
+    pub(crate) fn from_relative_path(root: &Root, relative_path: PathBuf, bare: bool) -> Self {
+        let display_absolute_path = root.display_path().join(&relative_path);
+        let absolute_path = root.absolute_path().join(&relative_path);
+
         Self {
-            name,
             relative_path,
+            display_absolute_path,
             absolute_path,
-            is_bare,
+            bare,
         }
     }
 
-    pub(crate) fn name(&self) -> &str {
-        &self.name
+    pub(crate) fn display_absolute_path(&self) -> &Path {
+        &self.display_absolute_path
     }
 
     pub(crate) fn relative_path(&self) -> &Path {
@@ -35,7 +35,7 @@ impl Repo {
         &self.absolute_path
     }
 
-    pub(crate) fn is_bare(&self) -> bool {
-        self.is_bare
+    pub(crate) fn bare(&self) -> bool {
+        self.bare
     }
 }

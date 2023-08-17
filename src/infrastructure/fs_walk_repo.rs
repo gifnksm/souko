@@ -108,16 +108,15 @@ impl Entry for FsEntry {
             Ok(repo) => repo,
             Err(_e) => return Ok(None),
         };
-        let is_bare = git2_repo.is_bare();
+        let bare = git2_repo.is_bare();
 
-        let absolute_path = self.absolute_path().to_owned();
         let relative_path = self
             .absolute_path()
             .strip_prefix(self.root.absolute_path())
             .unwrap() // never panic because the path starts with the root path
             .to_owned();
-        let name = relative_path.display().to_string();
 
-        Ok(Some(Repo::new(name, relative_path, absolute_path, is_bare)))
+        let repo = Repo::from_relative_path(&self.root, relative_path, bare);
+        Ok(Some(repo))
     }
 }
