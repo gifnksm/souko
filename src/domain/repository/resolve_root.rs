@@ -9,3 +9,11 @@ pub(crate) trait ResolveRoot: Debug {
         should_exist: bool,
     ) -> Result<Option<Root>, Box<dyn std::error::Error>>;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Assert object safety for trait object.
+    const _: Option<&dyn ResolveRoot> = None;
+}

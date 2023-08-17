@@ -20,3 +20,13 @@ pub(crate) trait Entry: Debug {
     fn is_hidden(&self) -> bool;
     fn to_repo(&self) -> Result<Option<Repo>, Box<dyn std::error::Error>>;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // Assert object safety for trait object.
+    const _: Option<&dyn WalkRepo> = None;
+    const _: Option<&dyn Repos> = None;
+    const _: Option<&dyn Entry> = None;
+}
