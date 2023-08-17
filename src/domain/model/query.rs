@@ -63,7 +63,9 @@ pub(crate) struct ParseOption {
 
 impl Query {
     pub(crate) fn parse(query: &str, option: &ParseOption) -> Result<Self, ParseError> {
-        let url_schemes = ["http://", "https://", "ssh://", "git://", "ftp://"];
+        let url_schemes = [
+            "http://", "https://", "ssh://", "git://", "ftp://", "ftps://",
+        ];
         let mut visited_scheme = HashSet::new();
 
         let original_query = query.to_string();
@@ -71,11 +73,27 @@ impl Query {
         loop {
             if url_schemes.iter().any(|scheme| query.starts_with(scheme)) {
                 // URL detected, no need to expand
-                let url = Url::parse(&query).map_err(|e| ParseError::InvalidUrl {
+                let mut url = Url::parse(&query).map_err(|e| ParseError::InvalidUrl {
                     original_query: original_query.clone(),
                     expanded_query: query.clone(),
                     source: e,
                 })?;
+
+                // To normalize URL, remove default port
+                if let Some(port) = url.port() {
+                    match (url.scheme(), port) {
+                        ("http", 80)
+                        | ("https", 443)
+                        | ("ssh", 22)
+                        | ("git", 9418)
+                        | ("ftp", 21)
+                        | ("ftps", 990) => {
+                            url.set_port(None).unwrap();
+                        }
+                        _ => {}
+                    }
+                }
+
                 return Ok(Self {
                     original_query,
                     url,
@@ -145,7 +163,13 @@ mod tests {
         let query = Query::parse("ssh://github.com/gifnksm/souko.git", &option).unwrap();
         assert_eq!(query.url.as_str(), "ssh://github.com/gifnksm/souko.git");
 
+        let query = Query::parse("ssh://github.com:22/gifnksm/souko.git", &option).unwrap();
+        assert_eq!(query.url.as_str(), "ssh://github.com/gifnksm/souko.git");
+
         let query = Query::parse("https://github.com/gifnksm/souko.git", &option).unwrap();
+        assert_eq!(query.url.as_str(), "https://github.com/gifnksm/souko.git");
+
+        let query = Query::parse("https://github.com:443/gifnksm/souko.git", &option).unwrap();
         assert_eq!(query.url.as_str(), "https://github.com/gifnksm/souko.git");
 
         let query = Query::parse("git@github.com:gifnksm/souko.git", &option).unwrap();
