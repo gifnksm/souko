@@ -6,16 +6,16 @@ use crate::domain::{
 };
 
 #[derive(Debug)]
-pub(super) struct FsResolveRoot;
+pub(super) struct FsResolveRoot {}
 
 impl FsResolveRoot {
     pub(super) fn new() -> Self {
-        Self
+        Self {}
     }
 }
 
 #[derive(Debug, thiserror::Error)]
-enum ResolveError {
+enum Error {
     #[error("failed to get absolute path of root {root_name}: {path}")]
     Canonicalize {
         root_name: String,
@@ -36,7 +36,7 @@ impl ResolveRoot for FsResolveRoot {
         let absolute_path = match spec.path().as_path().canonicalize() {
             Ok(path) => path,
             Err(err) if !should_exist && err.kind() == io::ErrorKind::NotFound => return Ok(None),
-            Err(err) => bail!(ResolveError::Canonicalize {
+            Err(err) => bail!(Error::Canonicalize {
                 root_name: name.clone(),
                 path: spec.path().as_path().to_owned(),
                 source: err,
