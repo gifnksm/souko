@@ -17,7 +17,7 @@ pub(super) enum Subcommand {
 impl Subcommand {
     pub(super) fn run(&self, global_args: &GlobalArgs, service: &Service) -> Result<()> {
         match self {
-            Self::Clone(args) => args.inner.run(global_args),
+            Self::Clone(args) => args.inner.run(global_args, service),
             Self::List(args) => args.inner.run(global_args, service),
         }
     }

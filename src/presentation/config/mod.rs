@@ -4,8 +4,11 @@ mod query;
 mod root;
 
 use self::{query::QueryConfig, root::RootMap};
-use super::util::{optional_param::OptionalParam, tilde_path::TildePath};
-use crate::domain::model::{query::ParseOption, root::RootSpec};
+use super::util::optional_param::OptionalParam;
+use crate::domain::model::{
+    query::ParseOption,
+    root::{Root, RootSpec},
+};
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -21,8 +24,8 @@ impl Config {
         self.root_map.specs()
     }
 
-    pub(super) fn default_root_path(&self) -> &OptionalParam<TildePath> {
-        self.root_map.default_root_path()
+    pub(super) fn default_root(&self) -> Root {
+        self.root_map.default_root()
     }
 
     pub(super) fn query_parse_option(&self) -> ParseOption {

@@ -54,7 +54,7 @@ impl Display for ErrorDisplayHelper<'_> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub(crate) struct ParseOption {
     pub(crate) default_scheme: Option<Scheme>,
     pub(crate) scheme_alias: HashMap<Scheme, Scheme>,

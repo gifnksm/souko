@@ -1,5 +1,6 @@
 use crate::domain::repository::Repository;
 
+mod helper;
 pub(crate) mod root;
 
 pub(crate) struct Service {

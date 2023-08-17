@@ -78,11 +78,11 @@ impl TildePath {
         Self { original, expanded }
     }
 
-    pub(in super::super) fn new_verbatim(path: impl Into<PathBuf>) -> Self {
-        let original = path.into();
-        let expanded = None;
-        Self { original, expanded }
-    }
+    // pub(in super::super) fn new_verbatim(path: impl Into<PathBuf>) -> Self {
+    //     let original = path.into();
+    //     let expanded = None;
+    //     Self { original, expanded }
+    // }
 
     pub(in super::super) fn as_path(&self) -> &Path {
         self.expanded.as_deref().unwrap_or(&self.original)

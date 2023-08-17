@@ -1,11 +1,15 @@
 use std::sync::Arc;
 
+use super::helper::workdir::Workdir;
 use crate::domain::{
     model::{
+        query::Query,
         repo::Repo,
         root::{Root, RootSpec},
     },
     repository::{
+        clone_repo::CloneRepo,
+        edit_dir::EditDir,
         resolve_root::ResolveRoot,
         walk_repo::{Repos, WalkRepo},
         Repository,
@@ -16,6 +20,8 @@ use crate::domain::{
 pub(crate) struct RootService {
     resolve_root: Arc<dyn ResolveRoot>,
     walk_repo: Arc<dyn WalkRepo>,
+    clone_repo: Arc<dyn CloneRepo>,
+    edit_dir: Arc<dyn EditDir>,
 }
 
 impl RootService {
@@ -23,6 +29,8 @@ impl RootService {
         Self {
             resolve_root: Arc::clone(&repository.resolve_root),
             walk_repo: Arc::clone(&repository.walk_repo),
+            clone_repo: Arc::clone(&repository.clone_repo),
+            edit_dir: Arc::clone(&repository.edit_dir),
         }
     }
 
@@ -32,6 +40,24 @@ impl RootService {
         should_exist: bool,
     ) -> Result<Option<Root>, Box<dyn std::error::Error>> {
         self.resolve_root.resolve_root(root, should_exist)
+    }
+
+    pub(crate) fn clone_repo(
+        &self,
+        root: &Root,
+        query: &Query,
+        bare: bool,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
+        let repo = Repo::from_query(root, query, bare);
+
+        let clone_path = repo.absolute_path();
+
+        let edit_dir = Arc::clone(&self.edit_dir);
+        let mut workdir = Workdir::create(edit_dir, clone_path)?;
+        self.clone_repo.clone_repo(query.url(), clone_path, bare)?;
+        workdir.persist()?;
+
+        Ok(())
     }
 
     pub(crate) fn find_repos(
