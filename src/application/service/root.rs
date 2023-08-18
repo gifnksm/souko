@@ -5,13 +5,13 @@ use crate::domain::{
     model::{
         path_like::PathLike,
         query::Query,
-        repo::Repo,
-        root::{Root, RootSpec},
+        repo::{CanonicalRepo, Repo},
+        root::{CanonicalRoot, Root},
     },
     repository::{
+        canonicalize_root::CanonicalizeRoot,
         clone_repo::CloneRepo,
         edit_dir::EditDir,
-        resolve_root::ResolveRoot,
         walk_repo::{Repos, WalkRepo},
         Repository,
     },
@@ -19,7 +19,7 @@ use crate::domain::{
 
 #[derive(Debug, Clone)]
 pub(crate) struct RootService {
-    resolve_root: Arc<dyn ResolveRoot>,
+    canonicalize_root: Arc<dyn CanonicalizeRoot>,
     walk_repo: Arc<dyn WalkRepo>,
     clone_repo: Arc<dyn CloneRepo>,
     edit_dir: Arc<dyn EditDir>,
@@ -28,19 +28,19 @@ pub(crate) struct RootService {
 impl RootService {
     pub(crate) fn new(repository: &Repository) -> Self {
         Self {
-            resolve_root: Arc::clone(&repository.resolve_root),
+            canonicalize_root: Arc::clone(&repository.canonicalize_root),
             walk_repo: Arc::clone(&repository.walk_repo),
             clone_repo: Arc::clone(&repository.clone_repo),
             edit_dir: Arc::clone(&repository.edit_dir),
         }
     }
 
-    pub(crate) fn resolve_root(
+    pub(crate) fn canonicalize_root(
         &self,
-        root: &RootSpec,
+        root: &Root,
         should_exist: bool,
-    ) -> Result<Option<Root>, Box<dyn std::error::Error>> {
-        self.resolve_root.resolve_root(root, should_exist)
+    ) -> Result<Option<CanonicalRoot>, Box<dyn std::error::Error>> {
+        self.canonicalize_root.canonicalize_root(root, should_exist)
     }
 
     pub(crate) fn clone_repo(
@@ -62,7 +62,7 @@ impl RootService {
 
     pub(crate) fn find_repos(
         &self,
-        root: &Root,
+        root: &CanonicalRoot,
         skip_hidden: bool,
         skip_bare: bool,
         no_recursive: bool,
@@ -81,7 +81,7 @@ pub(crate) struct FindRepos {
 impl FindRepos {
     fn new(
         walk_repo: &dyn WalkRepo,
-        root: &Root,
+        root: &CanonicalRoot,
         skip_hidden: bool,
         skip_bare: bool,
         no_recursive: bool,
@@ -99,7 +99,7 @@ impl FindRepos {
 }
 
 impl Iterator for FindRepos {
-    type Item = Result<Repo, Box<dyn std::error::Error>>;
+    type Item = Result<CanonicalRepo, Box<dyn std::error::Error>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {

@@ -2,16 +2,16 @@ use std::{io, path::PathBuf};
 
 use crate::domain::{
     model::{
-        display_path::DisplayPath,
-        root::{Root, RootSpec},
+        path_like::PathLike,
+        root::{CanonicalRoot, Root},
     },
-    repository::resolve_root::ResolveRoot,
+    repository::canonicalize_root::CanonicalizeRoot,
 };
 
 #[derive(Debug)]
-pub(super) struct FsResolveRoot {}
+pub(super) struct FsCanonicalizeRoot {}
 
-impl FsResolveRoot {
+impl FsCanonicalizeRoot {
     pub(super) fn new() -> Self {
         Self {}
     }
@@ -28,25 +28,24 @@ enum Error {
     },
 }
 
-impl ResolveRoot for FsResolveRoot {
-    fn resolve_root(
+impl CanonicalizeRoot for FsCanonicalizeRoot {
+    fn canonicalize_root(
         &self,
-        spec: &RootSpec,
+        root: &Root,
         should_exist: bool,
-    ) -> Result<Option<Root>, Box<dyn std::error::Error>> {
-        let name = spec.name().to_owned();
-        let display_path = spec.path().as_display_path().to_owned();
-        let absolute_path = match spec.path().as_path().canonicalize() {
+    ) -> Result<Option<CanonicalRoot>, Box<dyn std::error::Error>> {
+        let real_path = root.path().as_real_path();
+        let canonical_path = match real_path.canonicalize() {
             Ok(path) => path,
             Err(err) if !should_exist && err.kind() == io::ErrorKind::NotFound => return Ok(None),
             Err(err) => bail!(Error::Canonicalize {
-                root_name: name.clone(),
-                path: spec.path().as_path().to_owned(),
+                root_name: root.name().to_owned(),
+                path: real_path.to_owned(),
                 source: err,
             }),
         };
 
-        let root = Root::new(name, DisplayPath::from_pair(absolute_path, display_path));
+        let root = CanonicalRoot::new(root.clone(), canonical_path);
         Ok(Some(root))
     }
 }

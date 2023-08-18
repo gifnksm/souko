@@ -9,9 +9,10 @@ use serde::Serialize;
 use crate::{
     application::service::Service,
     domain::model::{
+        display_path::DisplayPath,
         path_like::PathLike,
-        repo::Repo,
-        root::{Root, RootSpec},
+        repo::CanonicalRepo,
+        root::{CanonicalRoot, Root},
     },
     presentation::{
         args::GlobalArgs,
@@ -32,30 +33,33 @@ pub(super) struct Args {
 }
 
 impl Args {
-    fn root_specs(&self, config: &Config) -> Vec<OptionalParam<RootSpec>> {
+    fn roots(&self, config: &Config) -> Vec<OptionalParam<Root>> {
         if let Some(root_paths) = &self.root_path {
             root_paths
                 .iter()
                 .enumerate()
                 .map(|(i, path)| {
                     let name = format!("arg{i}");
-                    let spec = RootSpec::new(name, Box::new(TildePath::from_expanded(path)));
-                    OptionalParam::new_explicit("root", spec)
+                    let root = Root::new(
+                        name,
+                        DisplayPath::from_pathlike(&TildePath::from_expanded(path)),
+                    );
+                    OptionalParam::new_explicit("root", root)
                 })
                 .collect()
         } else {
-            config.root_specs()
+            config.roots()
         }
     }
 
     pub(super) fn run(&self, global_args: &GlobalArgs, service: &Service) -> Result<()> {
         let config = global_args.config()?;
-        let root_specs = self.root_specs(&config);
+        let roots = self.roots(&config);
 
         let root_service = service.root();
-        let roots = root_specs.into_iter().filter_map(|spec| {
-            let should_exist = spec.is_explicit();
-            match root_service.resolve_root(spec.value(), should_exist) {
+        let roots = roots.into_iter().filter_map(|root| {
+            let should_exist = root.is_explicit();
+            match root_service.canonicalize_root(root.value(), should_exist) {
                 Ok(root) => root,
                 Err(e) => {
                     tracing::warn!("{e}");
@@ -67,7 +71,7 @@ impl Args {
         let skip_hidden = true;
         let skip_bare = true;
         let no_recursive = true;
-        let repos_in_root = move |root: &Root| {
+        let repos_in_root = move |root: &CanonicalRoot| {
             let repos = match root_service.find_repos(root, skip_hidden, skip_bare, no_recursive) {
                 Ok(repos) => Some(repos),
                 Err(e) => {
@@ -97,16 +101,17 @@ impl Args {
 
 fn emit_json<Roots, F, Repos>(roots: Roots, repos_in_root: F) -> Result<()>
 where
-    Roots: Iterator<Item = Root>,
-    F: Fn(&Root) -> Repos,
-    Repos: Iterator<Item = Repo>,
+    Roots: Iterator<Item = CanonicalRoot>,
+    F: Fn(&CanonicalRoot) -> Repos,
+    Repos: Iterator<Item = CanonicalRepo>,
 {
     let list = JsonList {
         roots: roots
             .map(|root| JsonRoot {
                 name: root.name().to_owned(),
-                path: root.path().as_path().to_owned(),
                 display_path: root.path().as_display_path().to_owned(),
+                real_path: root.path().as_real_path().to_owned(),
+                canonical_path: root.canonical_path().to_owned(),
                 repos: repos_in_root(&root).map(JsonRepo::from).collect(),
             })
             .collect(),
@@ -121,13 +126,13 @@ where
 
 fn emit_text<Roots, F, Repos>(roots: Roots, repos_in_root: F) -> Result<()>
 where
-    Roots: Iterator<Item = Root>,
-    F: Fn(&Root) -> Repos,
-    Repos: Iterator<Item = Repo>,
+    Roots: Iterator<Item = CanonicalRoot>,
+    F: Fn(&CanonicalRoot) -> Repos,
+    Repos: Iterator<Item = CanonicalRepo>,
 {
     for root in roots {
         for repo in repos_in_root(&root) {
-            println!("{}", repo.path().as_path().display());
+            println!("{}", repo.canonical_path().display());
         }
     }
 
@@ -144,8 +149,9 @@ struct JsonList {
 #[serde(rename_all = "camelCase")]
 struct JsonRoot {
     name: String,
+    real_path: PathBuf,
     display_path: PathBuf,
-    path: PathBuf,
+    canonical_path: PathBuf,
     repos: Vec<JsonRepo>,
 }
 
@@ -153,16 +159,18 @@ struct JsonRoot {
 #[serde(rename_all = "camelCase")]
 struct JsonRepo {
     relative_path: PathBuf,
+    real_path: PathBuf,
     display_path: PathBuf,
-    path: PathBuf,
+    canonical_path: PathBuf,
 }
 
-impl From<Repo> for JsonRepo {
-    fn from(value: Repo) -> Self {
+impl From<CanonicalRepo> for JsonRepo {
+    fn from(value: CanonicalRepo) -> Self {
         Self {
-            relative_path: value.relative_path().as_path().to_owned(),
+            relative_path: value.relative_path().as_real_path().to_owned(),
             display_path: value.path().as_display_path().to_owned(),
-            path: value.path().as_path().to_owned(),
+            real_path: value.path().as_real_path().to_owned(),
+            canonical_path: value.canonical_path().to_owned(),
         }
     }
 }

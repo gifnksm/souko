@@ -5,7 +5,7 @@ use color_eyre::eyre::{eyre, Result, WrapErr};
 use crate::{
     application::service::Service,
     domain::model::{display_path::DisplayPath, path_like::PathLike, query::Query, root::Root},
-    presentation::{args::GlobalArgs, config::Config},
+    presentation::{args::GlobalArgs, config::Config, util::optional_param::OptionalParam},
 };
 
 #[derive(Debug, Clone, Default, clap::Args)]
@@ -30,9 +30,12 @@ pub(super) struct Args {
 }
 
 impl Args {
-    fn root(&self, config: &Config) -> Root {
+    fn root(&self, config: &Config) -> OptionalParam<Root> {
         match &self.root_path {
-            Some(path) => Root::new("arg".to_string(), DisplayPath::from_expanded(path.clone())),
+            Some(path) => OptionalParam::new_explicit(
+                "root",
+                Root::new("arg".to_string(), DisplayPath::from_real_path(path.clone())),
+            ),
             None => config.default_root().clone(),
         }
     }
@@ -58,11 +61,11 @@ impl Args {
         tracing::info!(
             "Cloning {} into {}",
             query.original_query(),
-            root.path().display()
+            root.value().path().display()
         );
 
         root_service
-            .clone_repo(&root, &query, bare)
+            .clone_repo(root.value(), &query, bare)
             .map_err(|e| eyre!(e))
             .wrap_err("failed to clone repository")?;
 

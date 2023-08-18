@@ -22,19 +22,19 @@ impl fmt::Display for TildePath {
 
 impl AsRef<Path> for TildePath {
     fn as_ref(&self) -> &Path {
-        self.as_path()
+        self.as_real_path()
     }
 }
 
 impl From<TildePath> for PathBuf {
     fn from(path: TildePath) -> Self {
-        path.as_path().to_owned()
+        path.as_real_path().to_owned()
     }
 }
 
 impl From<&TildePath> for PathBuf {
     fn from(path: &TildePath) -> Self {
-        path.as_path().to_owned()
+        path.as_real_path().to_owned()
     }
 }
 
@@ -84,7 +84,7 @@ impl TildePath {
     //     Self { original, expanded }
     // }
 
-    pub(in super::super) fn as_path(&self) -> &Path {
+    pub(in super::super) fn as_real_path(&self) -> &Path {
         self.expanded.as_deref().unwrap_or(&self.original)
     }
 
@@ -94,12 +94,12 @@ impl TildePath {
 }
 
 impl PathLike for TildePath {
-    fn as_display_path(&self) -> &Path {
-        self.as_display_path()
+    fn as_real_path(&self) -> &Path {
+        self.as_real_path()
     }
 
-    fn as_path(&self) -> &Path {
-        self.as_path()
+    fn as_display_path(&self) -> &Path {
+        self.as_display_path()
     }
 }
 

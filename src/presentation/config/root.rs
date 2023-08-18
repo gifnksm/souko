@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Deserializer};
 
 use crate::{
-    domain::model::{self, display_path::DisplayPath, root::RootSpec},
+    domain::model::{display_path::DisplayPath, root::Root},
     presentation::util::{
         optional_param::OptionalParam, project_dirs::ProjectDirs, tilde_path::TildePath,
     },
@@ -20,7 +20,7 @@ struct RootRepr {
 
 #[derive(Debug, Clone)]
 pub(super) struct RootMap {
-    map: BTreeMap<String, Root>,
+    map: BTreeMap<String, RootConfig>,
 }
 
 const DEFAULT_ROOT_NAME: &str = "default";
@@ -28,7 +28,7 @@ const DEFAULT_ROOT_NAME: &str = "default";
 impl Default for RootMap {
     fn default() -> Self {
         let mut map = BTreeMap::new();
-        map.insert(DEFAULT_ROOT_NAME.to_string(), Root::default());
+        map.insert(DEFAULT_ROOT_NAME.to_string(), RootConfig::default());
         Self { map }
     }
 }
@@ -42,7 +42,7 @@ impl<'de> Deserialize<'de> for RootMap {
 
         let mut map = Self::default();
         for RootRepr { name, path } in pairs {
-            let root = path.map(Root::new).unwrap_or_default();
+            let root = path.map(RootConfig::new).unwrap_or_default();
             map.map.insert(name, root);
         }
         Ok(map)
@@ -50,31 +50,28 @@ impl<'de> Deserialize<'de> for RootMap {
 }
 
 impl RootMap {
-    pub(super) fn default_root(&self) -> model::root::Root {
+    pub(super) fn default_root(&self) -> OptionalParam<Root> {
         let name = DEFAULT_ROOT_NAME;
-        let path = self
-            .map
+        self.map
             .get(name)
             .expect("BUG: default root not found")
-            .path()
-            .value();
-        model::root::Root::new(name.to_string(), DisplayPath::from_pathlike(&path))
+            .to_root(name.to_owned())
     }
 
-    pub(super) fn specs(&self) -> Vec<OptionalParam<RootSpec>> {
+    pub(super) fn roots(&self) -> Vec<OptionalParam<Root>> {
         self.map
             .iter()
-            .map(|(name, root)| root.to_spec(name.clone()))
+            .map(|(name, root)| root.to_root(name.clone()))
             .collect()
     }
 }
 
 #[derive(Debug, Clone)]
-struct Root {
+struct RootConfig {
     path: OptionalParam<TildePath>,
 }
 
-impl Default for Root {
+impl Default for RootConfig {
     fn default() -> Self {
         let path = ProjectDirs::get().data_local_dir().join("root");
         let path = OptionalParam::new_default("root", TildePath::from_expanded(path));
@@ -82,20 +79,16 @@ impl Default for Root {
     }
 }
 
-impl Root {
+impl RootConfig {
     fn new(path: impl Into<TildePath>) -> Self {
         let path = path.into();
         let path = OptionalParam::new_explicit("root", path);
         Self { path }
     }
 
-    fn to_spec(&self, name: String) -> OptionalParam<RootSpec> {
+    fn to_root(&self, name: String) -> OptionalParam<Root> {
         self.path
-            .clone()
-            .map(|path| RootSpec::new(name, Box::new(path)))
-    }
-
-    fn path(&self) -> &OptionalParam<TildePath> {
-        &self.path
+            .as_ref()
+            .map(|path| Root::new(name, DisplayPath::from_pathlike(path)))
     }
 }

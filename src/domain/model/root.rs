@@ -1,24 +1,6 @@
-use super::{display_path::DisplayPath, path_like::PathLike};
+use std::path::{Path, PathBuf};
 
-#[derive(Debug)]
-pub(crate) struct RootSpec {
-    name: String,
-    path: Box<dyn PathLike>,
-}
-
-impl RootSpec {
-    pub(crate) fn new(name: String, path: Box<dyn PathLike>) -> Self {
-        Self { name, path }
-    }
-
-    pub(crate) fn name(&self) -> &str {
-        &self.name
-    }
-
-    pub(crate) fn path(&self) -> &dyn PathLike {
-        &*self.path
-    }
-}
+use super::display_path::DisplayPath;
 
 #[derive(Debug, Clone)]
 pub(crate) struct Root {
@@ -37,5 +19,36 @@ impl Root {
 
     pub(crate) fn path(&self) -> &DisplayPath {
         &self.path
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct CanonicalRoot {
+    inner: Root,
+    canonical_path: PathBuf,
+}
+
+impl CanonicalRoot {
+    pub(crate) fn new(root: Root, canonical_path: PathBuf) -> Self {
+        Self {
+            inner: root,
+            canonical_path,
+        }
+    }
+
+    pub(crate) fn as_root(&self) -> &Root {
+        &self.inner
+    }
+
+    pub(crate) fn name(&self) -> &str {
+        self.inner.name()
+    }
+
+    pub(crate) fn path(&self) -> &DisplayPath {
+        self.inner.path()
+    }
+
+    pub(crate) fn canonical_path(&self) -> &Path {
+        &self.canonical_path
     }
 }

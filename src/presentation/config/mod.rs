@@ -5,10 +5,7 @@ mod root;
 
 use self::{query::QueryConfig, root::RootMap};
 use super::util::optional_param::OptionalParam;
-use crate::domain::model::{
-    query::ParseOption,
-    root::{Root, RootSpec},
-};
+use crate::domain::model::{query::ParseOption, root::Root};
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -20,11 +17,11 @@ pub(super) struct Config {
 }
 
 impl Config {
-    pub(super) fn root_specs(&self) -> Vec<OptionalParam<RootSpec>> {
-        self.root_map.specs()
+    pub(super) fn roots(&self) -> Vec<OptionalParam<Root>> {
+        self.root_map.roots()
     }
 
-    pub(super) fn default_root(&self) -> Root {
+    pub(super) fn default_root(&self) -> OptionalParam<Root> {
         self.root_map.default_root()
     }
 

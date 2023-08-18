@@ -54,7 +54,7 @@ impl CloneRepo for FsCloneRepo {
         let _repo = git2::build::RepoBuilder::new()
             .bare(bare)
             .fetch_options(fo)
-            .clone(url.as_str(), path.as_path())
+            .clone(url.as_str(), path.as_real_path())
             .map_err(|err| Error::Clone {
                 url: url.clone(),
                 source: err,

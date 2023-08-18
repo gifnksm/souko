@@ -1,7 +1,12 @@
-use std::sync::Arc;
+use std::{io, path::PathBuf, sync::Arc};
 
 use crate::domain::{
-    model::{display_path::DisplayPath, path_like::PathLike, repo::Repo, root::Root},
+    model::{
+        display_path::DisplayPath,
+        path_like::PathLike,
+        repo::{CanonicalRepo, Repo},
+        root::CanonicalRoot,
+    },
     repository::walk_repo::{Entry, FilterPredicate, Repos, WalkRepo},
 };
 
@@ -15,23 +20,26 @@ impl FsWalkRepo {
 }
 
 impl WalkRepo for FsWalkRepo {
-    fn walk_repo(&self, root: &Root) -> Result<Box<dyn Repos>, Box<dyn std::error::Error>> {
+    fn walk_repo(
+        &self,
+        root: &CanonicalRoot,
+    ) -> Result<Box<dyn Repos>, Box<dyn std::error::Error>> {
         Ok(Box::new(FsRepos::new(root)))
     }
 }
 
 #[derive(custom_debug_derive::Debug)]
 pub(super) struct FsRepos {
-    root: Arc<Root>,
+    root: Arc<CanonicalRoot>,
     iter: walkdir::IntoIter,
     #[debug(skip)]
     filter: Option<FilterPredicate>,
 }
 
 impl FsRepos {
-    pub(super) fn new(root: &Root) -> Self {
+    pub(super) fn new(root: &CanonicalRoot) -> Self {
         let root = Arc::new(root.clone());
-        let iter = walkdir::WalkDir::new(root.path().as_path())
+        let iter = walkdir::WalkDir::new(root.path().as_real_path())
             .sort_by_file_name()
             .into_iter();
         Self {
@@ -64,6 +72,12 @@ impl Repos for FsRepos {
 enum Error {
     #[error(transparent)]
     WalkDir(#[from] walkdir::Error),
+    #[error("failed to canonicalize: {path}")]
+    Canonicalize {
+        path: PathBuf,
+        #[source]
+        source: io::Error,
+    },
 }
 
 impl Iterator for FsRepos {
@@ -95,23 +109,25 @@ impl Iterator for FsRepos {
 
 #[derive(Debug)]
 struct FsEntry {
-    root: Arc<Root>,
+    root: Arc<CanonicalRoot>,
+    entry: walkdir::DirEntry,
     relative_path: DisplayPath,
     path: DisplayPath,
 }
 
 impl FsEntry {
-    fn new(root: Arc<Root>, entry: walkdir::DirEntry) -> Self {
+    fn new(root: Arc<CanonicalRoot>, entry: walkdir::DirEntry) -> Self {
         let relative_path = entry
             .path()
-            .strip_prefix(root.path().as_path())
+            .strip_prefix(root.path().as_real_path())
             .unwrap() // never panic because the path starts with the root path
             .to_owned();
-        let relative_path = DisplayPath::from_expanded(relative_path);
+        let relative_path = DisplayPath::from_real_path(relative_path);
         let path = root.path().join(&relative_path);
 
         Self {
             root,
+            entry,
             relative_path,
             path,
         }
@@ -125,19 +141,31 @@ impl Entry for FsEntry {
 
     fn is_hidden(&self) -> bool {
         self.path()
-            .as_path()
+            .as_real_path()
             .file_name()
             .and_then(|file_name| file_name.to_str().map(|s| s.starts_with('.')))
             .unwrap_or(false)
     }
 
-    fn to_repo(&self) -> Result<Option<Repo>, Box<dyn std::error::Error>> {
-        let git2_repo = match git2::Repository::open(self.path().as_path()) {
+    fn to_repo(&self) -> Result<Option<CanonicalRepo>, Box<dyn std::error::Error>> {
+        let git2_repo = match git2::Repository::open(self.path().as_real_path()) {
             Ok(repo) => repo,
             Err(_e) => return Ok(None),
         };
         let bare = git2_repo.is_bare();
-        let repo = Repo::from_relative_path(&self.root, self.relative_path.clone(), bare);
-        Ok(Some(repo))
+        let repo = Repo::from_relative_path(self.root.as_root(), self.relative_path.clone(), bare);
+
+        let canonical_path =
+            self.entry
+                .path()
+                .canonicalize()
+                .map_err(|err| Error::Canonicalize {
+                    path: self.entry.path().to_owned(),
+                    source: err,
+                })?;
+
+        let canonical_repo = CanonicalRepo::new(repo, canonical_path);
+
+        Ok(Some(canonical_repo))
     }
 }

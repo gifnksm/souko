@@ -11,7 +11,7 @@ use super::optional_param::OptionalParam;
 use crate::domain::model::path_like::PathLike;
 
 pub(in super::super) fn open(path: &OptionalParam<impl PathLike>) -> Result<Option<File>> {
-    let file = match File::open(path.value().as_path()) {
+    let file = match File::open(path.value().as_real_path()) {
         Ok(file) => Some(file),
         Err(e) if path.is_default() && e.kind() == io::ErrorKind::NotFound => None,
         Err(e) => bail!(Error::from(e).wrap_err(format!(
@@ -26,7 +26,7 @@ pub(in super::super) fn open(path: &OptionalParam<impl PathLike>) -> Result<Opti
 // pub(in super::super) fn canonicalize(
 //     path: &OptionalParam<impl PathLike>,
 // ) -> Result<Option<PathBuf>> {
-//     let path = match path.value().as_path().canonicalize() {
+//     let path = match path.value().as_real_path().canonicalize() {
 //         Ok(file) => Some(file),
 //         Err(e) if path.is_default() && e.kind() == io::ErrorKind::NotFound => None,
 //         Err(e) => bail!(Error::from(e).wrap_err(format!(

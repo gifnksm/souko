@@ -22,9 +22,9 @@ impl Workdir {
             created_dirs: vec![],
             erase_leaf_content: false,
         };
-        let path = path.as_path();
+        let path = path.as_real_path();
         let leaf_path = path;
-        let mut to_create = vec![path];
+        let mut to_create = vec![leaf_path];
         while let Some(path) = to_create.last().copied() {
             match edit_dir.ensure_dir_exist(path) {
                 Ok(created_by_call) => {
@@ -85,9 +85,8 @@ impl Drop for Workdir {
 mod test {
     use assert_fs::{prelude::*, TempDir};
 
-    use crate::infrastructure;
-
     use super::*;
+    use crate::infrastructure;
 
     #[test]
     fn persist() {

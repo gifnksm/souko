@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use super::{display_path::DisplayPath, query::Query, root::Root};
 
@@ -42,7 +42,7 @@ impl Repo {
             }
         }
 
-        let relative_path = DisplayPath::from_expanded(relative_path);
+        let relative_path = DisplayPath::from_real_path(relative_path);
         Self::from_relative_path(root, relative_path, bare)
     }
 
@@ -56,6 +56,37 @@ impl Repo {
 
     pub(crate) fn bare(&self) -> bool {
         self.bare
+    }
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct CanonicalRepo {
+    inner: Repo,
+    canonical_path: PathBuf,
+}
+
+impl CanonicalRepo {
+    pub(crate) fn new(repo: Repo, canonical_path: PathBuf) -> Self {
+        Self {
+            inner: repo,
+            canonical_path,
+        }
+    }
+
+    pub(crate) fn relative_path(&self) -> &DisplayPath {
+        self.inner.relative_path()
+    }
+
+    pub(crate) fn path(&self) -> &DisplayPath {
+        self.inner.path()
+    }
+
+    pub(crate) fn bare(&self) -> bool {
+        self.inner.bare()
+    }
+
+    pub(crate) fn canonical_path(&self) -> &Path {
+        &self.canonical_path
     }
 }
 
@@ -104,7 +135,7 @@ mod tests {
         for (url_str, path_str) in pairs {
             let query = Query::parse(url_str, &parse_option).unwrap();
             let repo = Repo::from_query(&root, &query, false);
-            assert_eq!(repo.relative_path().as_path(), Path::new(path_str));
+            assert_eq!(repo.relative_path().as_real_path(), Path::new(path_str));
         }
     }
 }

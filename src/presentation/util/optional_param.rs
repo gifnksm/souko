@@ -68,6 +68,16 @@ impl<T> OptionalParam<T> {
         self.value.is_explicit()
     }
 
+    pub(in super::super) fn as_ref(&self) -> OptionalParam<&T> {
+        OptionalParam {
+            name: self.name,
+            value: match &self.value {
+                OptionalParamValue::Explicit(v) => OptionalParamValue::Explicit(v),
+                OptionalParamValue::Default(v) => OptionalParamValue::Default(v),
+            },
+        }
+    }
+
     pub(in super::super) fn map<U>(self, f: impl FnOnce(T) -> U) -> OptionalParam<U> {
         OptionalParam {
             name: self.name,
