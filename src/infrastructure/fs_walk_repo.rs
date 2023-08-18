@@ -2,8 +2,8 @@ use std::{io, path::PathBuf, sync::Arc};
 
 use crate::domain::{
     model::{
-        display_path::DisplayPath,
         path_like::PathLike,
+        pretty_path::PrettyPath,
         repo::{CanonicalRepo, Repo},
         root::CanonicalRoot,
     },
@@ -111,8 +111,8 @@ impl Iterator for FsRepos {
 struct FsEntry {
     root: Arc<CanonicalRoot>,
     entry: walkdir::DirEntry,
-    relative_path: DisplayPath,
-    path: DisplayPath,
+    relative_path: PrettyPath,
+    path: PrettyPath,
 }
 
 impl FsEntry {
@@ -122,7 +122,7 @@ impl FsEntry {
             .strip_prefix(root.path().as_real_path())
             .unwrap() // never panic because the path starts with the root path
             .to_owned();
-        let relative_path = DisplayPath::from_real_path(relative_path);
+        let relative_path = PrettyPath::from_real_path(relative_path);
         let path = root.path().join(&relative_path);
 
         Self {
@@ -135,7 +135,7 @@ impl FsEntry {
 }
 
 impl Entry for FsEntry {
-    fn path(&self) -> &DisplayPath {
+    fn path(&self) -> &PrettyPath {
         &self.path
     }
 

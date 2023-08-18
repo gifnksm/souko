@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::domain::model::{display_path::DisplayPath, repo::CanonicalRepo, root::CanonicalRoot};
+use crate::domain::model::{pretty_path::PrettyPath, repo::CanonicalRepo, root::CanonicalRoot};
 
 pub(crate) trait WalkRepo: Debug {
     fn walk_repo(&self, root: &CanonicalRoot)
@@ -17,7 +17,7 @@ pub(crate) trait Repos:
 pub(crate) type FilterPredicate = Box<dyn FnMut(&dyn Entry) -> bool>;
 
 pub(crate) trait Entry: Debug {
-    fn path(&self) -> &DisplayPath;
+    fn path(&self) -> &PrettyPath;
     fn is_hidden(&self) -> bool;
     fn to_repo(&self) -> Result<Option<CanonicalRepo>, Box<dyn std::error::Error>>;
 }

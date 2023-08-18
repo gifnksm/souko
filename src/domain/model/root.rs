@@ -1,15 +1,15 @@
 use std::path::{Path, PathBuf};
 
-use super::display_path::DisplayPath;
+use super::pretty_path::PrettyPath;
 
 #[derive(Debug, Clone)]
 pub(crate) struct Root {
     name: String,
-    path: DisplayPath,
+    path: PrettyPath,
 }
 
 impl Root {
-    pub(crate) fn new(name: String, path: DisplayPath) -> Self {
+    pub(crate) fn new(name: String, path: PrettyPath) -> Self {
         Self { name, path }
     }
 
@@ -17,7 +17,7 @@ impl Root {
         self.name.as_ref()
     }
 
-    pub(crate) fn path(&self) -> &DisplayPath {
+    pub(crate) fn path(&self) -> &PrettyPath {
         &self.path
     }
 }
@@ -44,7 +44,7 @@ impl CanonicalRoot {
         self.inner.name()
     }
 
-    pub(crate) fn path(&self) -> &DisplayPath {
+    pub(crate) fn path(&self) -> &PrettyPath {
         self.inner.path()
     }
 

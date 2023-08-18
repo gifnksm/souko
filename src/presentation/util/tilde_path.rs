@@ -6,18 +6,18 @@ use std::{
 use directories::BaseDirs;
 use serde::Deserialize;
 
-use crate::domain::model::{display_path::DisplayPath, path_like::PathLike};
+use crate::domain::model::{path_like::PathLike, pretty_path::PrettyPath};
 
 #[derive(Debug, Default, Clone)]
-pub(in super::super) struct TildePath(DisplayPath);
+pub(in super::super) struct TildePath(PrettyPath);
 
-impl From<TildePath> for DisplayPath {
+impl From<TildePath> for PrettyPath {
     fn from(path: TildePath) -> Self {
         path.0
     }
 }
 
-impl From<&TildePath> for DisplayPath {
+impl From<&TildePath> for PrettyPath {
     fn from(path: &TildePath) -> Self {
         path.0.clone()
     }
@@ -55,7 +55,7 @@ impl TildePath {
             })
             .unwrap_or_else(|| display_path.clone());
 
-        let path = DisplayPath::from_pair(real_path, display_path);
+        let path = PrettyPath::from_pair(real_path, display_path);
 
         Self(path)
     }
@@ -66,7 +66,7 @@ impl TildePath {
             .map(|rest| Path::new("~").join(rest))
             .unwrap_or_else(|| real_path.clone());
 
-        let path = DisplayPath::from_pair(real_path, display_path);
+        let path = PrettyPath::from_pair(real_path, display_path);
         Self(path)
     }
 

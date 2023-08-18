@@ -3,12 +3,12 @@ use std::path::{Path, PathBuf};
 use super::path_like::PathLike;
 
 #[derive(Debug, Default, Clone)]
-pub(crate) struct DisplayPath {
+pub(crate) struct PrettyPath {
     real_path: PathBuf,
     display_path: PathBuf,
 }
 
-impl DisplayPath {
+impl PrettyPath {
     pub(crate) fn from_real_path(real_path: PathBuf) -> Self {
         let display_path = real_path.clone();
         Self {
@@ -32,7 +32,7 @@ impl DisplayPath {
     }
 }
 
-impl PathLike for DisplayPath {
+impl PathLike for PrettyPath {
     fn as_display_path(&self) -> &Path {
         &self.display_path
     }

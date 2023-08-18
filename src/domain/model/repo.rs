@@ -1,16 +1,16 @@
 use std::path::{Path, PathBuf};
 
-use super::{display_path::DisplayPath, query::Query, root::Root};
+use super::{pretty_path::PrettyPath, query::Query, root::Root};
 
 #[derive(Debug, Clone)]
 pub(crate) struct Repo {
-    relative_path: DisplayPath,
-    path: DisplayPath,
+    relative_path: PrettyPath,
+    path: PrettyPath,
     bare: bool,
 }
 
 impl Repo {
-    pub(crate) fn from_relative_path(root: &Root, relative_path: DisplayPath, bare: bool) -> Self {
+    pub(crate) fn from_relative_path(root: &Root, relative_path: PrettyPath, bare: bool) -> Self {
         let path = root.path().join(&relative_path);
         Self {
             relative_path,
@@ -42,15 +42,15 @@ impl Repo {
             }
         }
 
-        let relative_path = DisplayPath::from_real_path(relative_path);
+        let relative_path = PrettyPath::from_real_path(relative_path);
         Self::from_relative_path(root, relative_path, bare)
     }
 
-    pub(crate) fn relative_path(&self) -> &DisplayPath {
+    pub(crate) fn relative_path(&self) -> &PrettyPath {
         &self.relative_path
     }
 
-    pub(crate) fn path(&self) -> &DisplayPath {
+    pub(crate) fn path(&self) -> &PrettyPath {
         &self.path
     }
 
@@ -73,11 +73,11 @@ impl CanonicalRepo {
         }
     }
 
-    pub(crate) fn relative_path(&self) -> &DisplayPath {
+    pub(crate) fn relative_path(&self) -> &PrettyPath {
         self.inner.relative_path()
     }
 
-    pub(crate) fn path(&self) -> &DisplayPath {
+    pub(crate) fn path(&self) -> &PrettyPath {
         self.inner.path()
     }
 
@@ -95,7 +95,7 @@ mod tests {
     use std::path::Path;
 
     use super::*;
-    use crate::domain::model::{display_path::DisplayPath, path_like::PathLike, query};
+    use crate::domain::model::{path_like::PathLike, query};
 
     #[test]
     fn from_query() {
@@ -103,7 +103,7 @@ mod tests {
         let root_display_path = PathBuf::from("~/test");
         let root = Root::new(
             "test".into(),
-            DisplayPath::from_pair(root_path, root_display_path),
+            PrettyPath::from_pair(root_path, root_display_path),
         );
 
         let parse_option = query::ParseOption::default();
