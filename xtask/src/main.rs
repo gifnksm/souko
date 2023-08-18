@@ -1,14 +1,14 @@
 use cli_xtask::{
-    clap::CommandFactory,
     config::{ConfigBuilder, DistConfigBuilder},
     workspace, Result, Xtask,
 };
+use souko::Souko;
 
 fn main() -> Result<()> {
     <Xtask>::main_with_config(|| {
         let workspace = workspace::current();
         let (dist, package) = DistConfigBuilder::from_root_package(workspace)?;
-        let command = souko::App::command();
+        let command = Souko::command();
         let target = package
             .binary_by_name(command.get_name())?
             .command(command)

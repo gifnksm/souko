@@ -1,22 +1,14 @@
 use std::env;
 
-use clap::Parser;
 use color_eyre::eyre::{eyre, Result};
-use souko::App;
-use tracing::Level;
+use souko::Souko;
 
 fn main() -> Result<()> {
-    let app = App::parse();
+    let app = Souko::from_env();
 
     if env::var_os("RUST_LOG").is_none() {
-        match app.verbosity() {
-            Some(Level::ERROR) => env::set_var("RUST_LOG", "error"),
-            Some(Level::WARN) => env::set_var("RUST_LOG", "warn"),
-            Some(Level::INFO) => env::set_var("RUST_LOG", "info"),
-            Some(Level::DEBUG) => env::set_var("RUST_LOG", "debug"),
-            Some(Level::TRACE) => env::set_var("RUST_LOG", "trace"),
-            None => env::set_var("RUST_LOG", "off"),
-        }
+        let level_str = app.verbosity().map(|level| level.as_str()).unwrap_or("off");
+        env::set_var("RUST_LOG", level_str)
     }
 
     color_eyre::install()?;
@@ -27,5 +19,5 @@ fn main() -> Result<()> {
         .try_init()
         .map_err(|e| eyre!(e))?;
 
-    souko::main(&app)
+    app.main()
 }

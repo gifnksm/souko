@@ -11,27 +11,46 @@
 
 #![doc(html_root_url = "https://docs.rs/souko/0.0.0")]
 
-use color_eyre::eyre::Result;
+pub use color_eyre::eyre::Result;
 
-mod cli;
-mod command;
-mod config;
-mod fs;
-mod optional_param;
-mod project_dirs;
-mod query;
-mod scheme;
-mod template;
-mod tilde_path;
-mod walk_repo;
+pub use crate::souko::Souko;
 
-pub use self::cli::app::App;
-use self::{
-    config::Config, optional_param::OptionalParam, project_dirs::ProjectDirs, query::Query,
-};
+#[macro_use]
+mod macros;
 
-pub fn main(app: &App) -> Result<()> {
-    ProjectDirs::init()?;
-    command::run(app)?;
-    Ok(())
+mod application;
+mod domain;
+mod infrastructure;
+mod presentation;
+
+mod souko {
+    use color_eyre::eyre::Result;
+
+    use crate::{application::service::Service, infrastructure, presentation::Presentation};
+
+    #[derive(Debug)]
+    pub struct Souko {
+        presentation: Presentation,
+    }
+
+    impl Souko {
+        pub fn from_env() -> Self {
+            let presentation = Presentation::from_env();
+            Self { presentation }
+        }
+
+        pub fn command() -> clap::Command {
+            Presentation::command()
+        }
+
+        pub fn verbosity(&self) -> Option<tracing::Level> {
+            self.presentation.verbosity()
+        }
+
+        pub fn main(self) -> Result<()> {
+            let repository = infrastructure::repository();
+            let service = Service::new(&repository);
+            self.presentation.main(&service)
+        }
+    }
 }
