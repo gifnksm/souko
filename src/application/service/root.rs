@@ -3,6 +3,7 @@ use std::sync::Arc;
 use super::helper::workdir::Workdir;
 use crate::domain::{
     model::{
+        path_like::PathLike,
         query::Query,
         repo::Repo,
         root::{Root, RootSpec},
@@ -49,8 +50,7 @@ impl RootService {
         bare: bool,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
         let repo = Repo::from_query(root, query, bare);
-
-        let clone_path = repo.absolute_path();
+        let clone_path = repo.path();
 
         let edit_dir = Arc::clone(&self.edit_dir);
         let mut workdir = Workdir::create(edit_dir, clone_path)?;
@@ -110,15 +110,12 @@ impl Iterator for FindRepos {
             }
             match repo {
                 Some(repo) if self.skip_bare && repo.bare() => {
-                    tracing::trace!("skipping bare repo: {}", repo.absolute_path().display());
+                    tracing::trace!("skipping bare repo: {}", repo.path().display());
                     continue;
                 }
                 Some(repo) => return Some(Ok(repo)),
                 None => {
-                    tracing::trace!(
-                        "skipping non-git-repository: {}",
-                        entry.absolute_path().display()
-                    );
+                    tracing::trace!("skipping non-git-repository: {}", entry.path().display());
                     continue;
                 }
             }

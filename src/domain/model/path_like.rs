@@ -35,7 +35,7 @@ impl PathLike for Path {
 
 impl<T> PathLike for &T
 where
-    T: PathLike,
+    T: PathLike + ?Sized,
 {
     fn as_display_path(&self) -> &Path {
         (*self).as_display_path()

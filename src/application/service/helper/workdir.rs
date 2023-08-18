@@ -1,9 +1,9 @@
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-};
+use std::{path::PathBuf, sync::Arc};
 
-use crate::domain::repository::edit_dir::{EditDir, EnsureDirExistError};
+use crate::domain::{
+    model::path_like::PathLike,
+    repository::edit_dir::{EditDir, EnsureDirExistError},
+};
 
 #[derive(Debug)]
 pub(in super::super) struct Workdir {
@@ -15,13 +15,14 @@ pub(in super::super) struct Workdir {
 impl Workdir {
     pub(in super::super) fn create(
         edit_dir: Arc<dyn EditDir>,
-        path: &Path,
+        path: &dyn PathLike,
     ) -> Result<Self, Box<dyn std::error::Error + Send + Sync + 'static>> {
         let mut workdir = Self {
             edit_dir: Arc::clone(&edit_dir),
             created_dirs: vec![],
             erase_leaf_content: false,
         };
+        let path = path.as_path();
         let leaf_path = path;
         let mut to_create = vec![path];
         while let Some(path) = to_create.last().copied() {
@@ -96,7 +97,7 @@ mod test {
         let test_dir = TempDir::new().unwrap();
         test_dir.child("dir1/").create_dir_all().unwrap();
         let workdir_path = test_dir.child("dir1/a/b/c");
-        let mut workdir = Workdir::create(Arc::clone(&edit_dir), &workdir_path).unwrap();
+        let mut workdir = Workdir::create(Arc::clone(&edit_dir), &workdir_path.path()).unwrap();
         assert!(workdir_path.is_dir());
         workdir_path.child("file").touch().unwrap();
         // `persist()` prevents workdir and its content from being removed on drop.
@@ -120,7 +121,7 @@ mod test {
         // when some directories created by `Workdir` are removed on drop
         test_dir.child("dir1/").create_dir_all().unwrap();
         let workdir_path = test_dir.child("dir1/a/b/c");
-        let workdir = Workdir::create(Arc::clone(&edit_dir), &workdir_path).unwrap();
+        let workdir = Workdir::create(Arc::clone(&edit_dir), &workdir_path.path()).unwrap();
         assert!(workdir_path.is_dir());
         workdir_path.child("file").touch().unwrap();
         // drop removes the workdir and its content.
@@ -133,7 +134,7 @@ mod test {
         // when no directory is created by `Workdir`, nothing is removed on drop.
         test_dir.child("dir2/a/b/c").create_dir_all().unwrap();
         let workdir_path = test_dir.child("dir2/a/b/c");
-        let workdir = Workdir::create(Arc::clone(&edit_dir), &workdir_path).unwrap();
+        let workdir = Workdir::create(Arc::clone(&edit_dir), &workdir_path.path()).unwrap();
         assert!(workdir_path.is_dir());
         workdir_path.child("file").touch().unwrap();
         // drop removes nothing

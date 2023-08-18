@@ -4,7 +4,7 @@ use color_eyre::eyre::{eyre, Result, WrapErr};
 
 use crate::{
     application::service::Service,
-    domain::model::{query::Query, root::Root},
+    domain::model::{display_path::DisplayPath, path_like::PathLike, query::Query, root::Root},
     presentation::{args::GlobalArgs, config::Config},
 };
 
@@ -32,7 +32,7 @@ pub(super) struct Args {
 impl Args {
     fn root(&self, config: &Config) -> Root {
         match &self.root_path {
-            Some(path) => Root::new("arg".to_string(), path.clone(), path.clone()),
+            Some(path) => Root::new("arg".to_string(), DisplayPath::from_expanded(path.clone())),
             None => config.default_root().clone(),
         }
     }
@@ -58,7 +58,7 @@ impl Args {
         tracing::info!(
             "Cloning {} into {}",
             query.original_query(),
-            root.display_path().display()
+            root.path().display()
         );
 
         root_service

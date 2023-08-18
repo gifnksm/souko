@@ -9,6 +9,7 @@ use serde::Serialize;
 use crate::{
     application::service::Service,
     domain::model::{
+        path_like::PathLike,
         repo::Repo,
         root::{Root, RootSpec},
     },
@@ -104,8 +105,8 @@ where
         roots: roots
             .map(|root| JsonRoot {
                 name: root.name().to_owned(),
-                display_path: root.display_path().to_owned(),
-                absolute_path: root.absolute_path().to_owned(),
+                path: root.path().as_path().to_owned(),
+                display_path: root.path().as_display_path().to_owned(),
                 repos: repos_in_root(&root).map(JsonRepo::from).collect(),
             })
             .collect(),
@@ -126,7 +127,7 @@ where
 {
     for root in roots {
         for repo in repos_in_root(&root) {
-            println!("{}", repo.absolute_path().display());
+            println!("{}", repo.path().as_path().display());
         }
     }
 
@@ -144,7 +145,7 @@ struct JsonList {
 struct JsonRoot {
     name: String,
     display_path: PathBuf,
-    absolute_path: PathBuf,
+    path: PathBuf,
     repos: Vec<JsonRepo>,
 }
 
@@ -152,16 +153,16 @@ struct JsonRoot {
 #[serde(rename_all = "camelCase")]
 struct JsonRepo {
     relative_path: PathBuf,
-    display_absolute_path: PathBuf,
-    absolute_path: PathBuf,
+    display_path: PathBuf,
+    path: PathBuf,
 }
 
 impl From<Repo> for JsonRepo {
     fn from(value: Repo) -> Self {
         Self {
-            relative_path: value.relative_path().to_owned(),
-            display_absolute_path: value.display_absolute_path().to_owned(),
-            absolute_path: value.absolute_path().to_owned(),
+            relative_path: value.relative_path().as_path().to_owned(),
+            display_path: value.path().as_display_path().to_owned(),
+            path: value.path().as_path().to_owned(),
         }
     }
 }

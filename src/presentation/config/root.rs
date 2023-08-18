@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Deserializer};
 
 use crate::{
-    domain::model::{self, root::RootSpec},
+    domain::model::{self, display_path::DisplayPath, root::RootSpec},
     presentation::util::{
         optional_param::OptionalParam, project_dirs::ProjectDirs, tilde_path::TildePath,
     },
@@ -57,13 +57,8 @@ impl RootMap {
             .get(name)
             .expect("BUG: default root not found")
             .path()
-            .value()
-            .clone();
-        model::root::Root::new(
-            name.to_string(),
-            path.as_display_path().to_owned(),
-            path.as_path().to_owned(),
-        )
+            .value();
+        model::root::Root::new(name.to_string(), DisplayPath::from_pathlike(&path))
     }
 
     pub(super) fn specs(&self) -> Vec<OptionalParam<RootSpec>> {

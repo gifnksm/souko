@@ -1,7 +1,7 @@
 use git2_credentials::CredentialHandler;
 use url::Url;
 
-use crate::domain::repository::clone_repo::CloneRepo;
+use crate::domain::{model::path_like::PathLike, repository::clone_repo::CloneRepo};
 
 #[derive(Debug)]
 pub(super) struct FsCloneRepo {}
@@ -31,7 +31,7 @@ impl CloneRepo for FsCloneRepo {
     fn clone_repo(
         &self,
         url: &url::Url,
-        path: &std::path::Path,
+        path: &dyn PathLike,
         bare: bool,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
         let mut cb = git2::RemoteCallbacks::new();
@@ -54,7 +54,7 @@ impl CloneRepo for FsCloneRepo {
         let _repo = git2::build::RepoBuilder::new()
             .bare(bare)
             .fetch_options(fo)
-            .clone(url.as_str(), path)
+            .clone(url.as_str(), path.as_path())
             .map_err(|err| Error::Clone {
                 url: url.clone(),
                 source: err,

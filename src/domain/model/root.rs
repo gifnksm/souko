@@ -1,6 +1,4 @@
-use std::path::{Path, PathBuf};
-
-use super::path_like::PathLike;
+use super::{display_path::DisplayPath, path_like::PathLike};
 
 #[derive(Debug)]
 pub(crate) struct RootSpec {
@@ -25,29 +23,19 @@ impl RootSpec {
 #[derive(Debug, Clone)]
 pub(crate) struct Root {
     name: String,
-    display_path: PathBuf,
-    absolute_path: PathBuf,
+    path: DisplayPath,
 }
 
 impl Root {
-    pub(crate) fn new(name: String, display_path: PathBuf, absolute_path: PathBuf) -> Self {
-        assert!(absolute_path.is_absolute());
-        Self {
-            name,
-            display_path,
-            absolute_path,
-        }
+    pub(crate) fn new(name: String, path: DisplayPath) -> Self {
+        Self { name, path }
     }
 
     pub(crate) fn name(&self) -> &str {
         self.name.as_ref()
     }
 
-    pub(crate) fn display_path(&self) -> &Path {
-        &self.display_path
-    }
-
-    pub(crate) fn absolute_path(&self) -> &Path {
-        &self.absolute_path
+    pub(crate) fn path(&self) -> &DisplayPath {
+        &self.path
     }
 }

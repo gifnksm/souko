@@ -1,7 +1,7 @@
-use std::{path::Path, sync::Arc};
+use std::sync::Arc;
 
 use crate::domain::{
-    model::{repo::Repo, root::Root},
+    model::{display_path::DisplayPath, path_like::PathLike, repo::Repo, root::Root},
     repository::walk_repo::{Entry, FilterPredicate, Repos, WalkRepo},
 };
 
@@ -31,7 +31,7 @@ pub(super) struct FsRepos {
 impl FsRepos {
     pub(super) fn new(root: &Root) -> Self {
         let root = Arc::new(root.clone());
-        let iter = walkdir::WalkDir::new(root.absolute_path())
+        let iter = walkdir::WalkDir::new(root.path().as_path())
             .sort_by_file_name()
             .into_iter();
         Self {
@@ -78,17 +78,11 @@ impl Iterator for FsRepos {
                 continue;
             }
 
-            let entry = FsEntry {
-                root: Arc::clone(&self.root),
-                inner: entry,
-            };
+            let entry = FsEntry::new(Arc::clone(&self.root), entry);
 
             if let Some(filter) = &mut self.filter {
                 if !filter(&entry) {
-                    tracing::trace!(
-                        "skipping filtered entry: {}",
-                        entry.absolute_path().display()
-                    );
+                    tracing::trace!("skipping filtered entry: {}", entry.path().display());
                     self.iter.skip_current_dir();
                     continue;
                 }
@@ -102,36 +96,48 @@ impl Iterator for FsRepos {
 #[derive(Debug)]
 struct FsEntry {
     root: Arc<Root>,
-    inner: walkdir::DirEntry,
+    relative_path: DisplayPath,
+    path: DisplayPath,
+}
+
+impl FsEntry {
+    fn new(root: Arc<Root>, entry: walkdir::DirEntry) -> Self {
+        let relative_path = entry
+            .path()
+            .strip_prefix(root.path().as_path())
+            .unwrap() // never panic because the path starts with the root path
+            .to_owned();
+        let relative_path = DisplayPath::from_expanded(relative_path);
+        let path = root.path().join(&relative_path);
+
+        Self {
+            root,
+            relative_path,
+            path,
+        }
+    }
 }
 
 impl Entry for FsEntry {
-    fn absolute_path(&self) -> &Path {
-        assert!(self.inner.path().is_absolute());
-        self.inner.path()
+    fn path(&self) -> &DisplayPath {
+        &self.path
     }
 
     fn is_hidden(&self) -> bool {
-        self.absolute_path()
+        self.path()
+            .as_path()
             .file_name()
             .and_then(|file_name| file_name.to_str().map(|s| s.starts_with('.')))
             .unwrap_or(false)
     }
 
     fn to_repo(&self) -> Result<Option<Repo>, Box<dyn std::error::Error>> {
-        let git2_repo = match git2::Repository::open(self.absolute_path()) {
+        let git2_repo = match git2::Repository::open(self.path().as_path()) {
             Ok(repo) => repo,
             Err(_e) => return Ok(None),
         };
         let bare = git2_repo.is_bare();
-
-        let relative_path = self
-            .absolute_path()
-            .strip_prefix(self.root.absolute_path())
-            .unwrap() // never panic because the path starts with the root path
-            .to_owned();
-
-        let repo = Repo::from_relative_path(&self.root, relative_path, bare);
+        let repo = Repo::from_relative_path(&self.root, self.relative_path.clone(), bare);
         Ok(Some(repo))
     }
 }

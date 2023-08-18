@@ -1,7 +1,10 @@
 use std::{io, path::PathBuf};
 
 use crate::domain::{
-    model::root::{Root, RootSpec},
+    model::{
+        display_path::DisplayPath,
+        root::{Root, RootSpec},
+    },
     repository::resolve_root::ResolveRoot,
 };
 
@@ -43,7 +46,7 @@ impl ResolveRoot for FsResolveRoot {
             }),
         };
 
-        let root = Root::new(name, display_path, absolute_path);
+        let root = Root::new(name, DisplayPath::from_pair(absolute_path, display_path));
         Ok(Some(root))
     }
 }

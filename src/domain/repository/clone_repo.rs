@@ -1,12 +1,14 @@
-use std::{fmt::Debug, path::Path};
+use std::fmt::Debug;
 
 use url::Url;
+
+use crate::domain::model::path_like::PathLike;
 
 pub(crate) trait CloneRepo: Debug {
     fn clone_repo(
         &self,
         url: &Url,
-        path: &Path,
+        path: &dyn PathLike,
         bare: bool,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>;
 }
