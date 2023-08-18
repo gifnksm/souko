@@ -1,18 +1,20 @@
-use std::path::PathBuf;
-
 use color_eyre::eyre::{eyre, Result, WrapErr};
 
 use crate::{
     application::service::Service,
-    domain::model::{display_path::DisplayPath, path_like::PathLike, query::Query, root::Root},
-    presentation::{args::GlobalArgs, config::Config, util::optional_param::OptionalParam},
+    domain::model::{path_like::PathLike, query::Query, root::Root},
+    presentation::{
+        args::GlobalArgs,
+        config::Config,
+        util::{optional_param::OptionalParam, tilde_path::TildePath},
+    },
 };
 
 #[derive(Debug, Clone, Default, clap::Args)]
 pub(super) struct Args {
     /// Path of the root directory under which the repository will be cloned
-    #[clap(long = "root")]
-    root_path: Option<PathBuf>,
+    #[clap(long = "root", value_parser = TildePath::parse_real_path)]
+    root_path: Option<TildePath>,
 
     /// Git repository to clone repository from
     ///
@@ -32,10 +34,9 @@ pub(super) struct Args {
 impl Args {
     fn root(&self, config: &Config) -> OptionalParam<Root> {
         match &self.root_path {
-            Some(path) => OptionalParam::new_explicit(
-                "root",
-                Root::new("arg".to_string(), DisplayPath::from_real_path(path.clone())),
-            ),
+            Some(path) => {
+                OptionalParam::new_explicit("root", Root::new("arg".to_string(), path.into()))
+            }
             None => config.default_root().clone(),
         }
     }

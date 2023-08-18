@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Deserializer};
 
 use crate::{
-    domain::model::{display_path::DisplayPath, root::Root},
+    domain::model::root::Root,
     presentation::util::{
         optional_param::OptionalParam, project_dirs::ProjectDirs, tilde_path::TildePath,
     },
@@ -74,7 +74,8 @@ struct RootConfig {
 impl Default for RootConfig {
     fn default() -> Self {
         let path = ProjectDirs::get().data_local_dir().join("root");
-        let path = OptionalParam::new_default("root", TildePath::from_expanded(path));
+        let path = TildePath::from_real_path(path);
+        let path = OptionalParam::new_default("root", path);
         Self { path }
     }
 }
@@ -87,8 +88,6 @@ impl RootConfig {
     }
 
     fn to_root(&self, name: String) -> OptionalParam<Root> {
-        self.path
-            .as_ref()
-            .map(|path| Root::new(name, DisplayPath::from_pathlike(path)))
+        self.path.as_ref().map(|path| Root::new(name, path.into()))
     }
 }

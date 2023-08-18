@@ -9,7 +9,6 @@ use serde::Serialize;
 use crate::{
     application::service::Service,
     domain::model::{
-        display_path::DisplayPath,
         path_like::PathLike,
         repo::CanonicalRepo,
         root::{CanonicalRoot, Root},
@@ -24,8 +23,8 @@ use crate::{
 #[derive(Debug, Clone, Default, clap::Args)]
 pub(super) struct Args {
     /// Path of the root directory under which the repository will be cloned
-    #[clap(long = "root")]
-    root_path: Option<Vec<PathBuf>>,
+    #[clap(long = "root", value_parser = TildePath::parse_real_path)]
+    root_path: Option<Vec<TildePath>>,
 
     /// Output as JSON
     #[clap(long)]
@@ -40,10 +39,7 @@ impl Args {
                 .enumerate()
                 .map(|(i, path)| {
                     let name = format!("arg{i}");
-                    let root = Root::new(
-                        name,
-                        DisplayPath::from_pathlike(&TildePath::from_expanded(path)),
-                    );
+                    let root = Root::new(name, path.into());
                     OptionalParam::new_explicit("root", root)
                 })
                 .collect()

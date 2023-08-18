@@ -1,12 +1,12 @@
-use std::path::PathBuf;
-
 use color_eyre::eyre::Result;
 use tracing::Level;
 
 use self::{subcommand::Subcommand, verbosity::Verbosity};
 use super::{
     config::Config,
-    util::{dwym_fs, optional_param::OptionalParam, project_dirs::ProjectDirs},
+    util::{
+        dwym_fs, optional_param::OptionalParam, project_dirs::ProjectDirs, tilde_path::TildePath,
+    },
 };
 use crate::application::service::Service;
 
@@ -29,14 +29,14 @@ struct GlobalArgs {
     verbosity: Verbosity,
 
     /// Path to souko config file
-    #[clap(long = "config", env = "SOUKO_CONFIG")]
-    config_path: Option<PathBuf>,
+    #[clap(long = "config", env = "SOUKO_CONFIG", value_parser = TildePath::parse_real_path)]
+    config_path: Option<TildePath>,
 }
 
 impl GlobalArgs {
-    fn config_path(&'_ self) -> OptionalParam<PathBuf> {
+    fn config_path(&'_ self) -> OptionalParam<TildePath> {
         OptionalParam::new("config", self.config_path.clone(), || {
-            ProjectDirs::get().config_dir().join("config.toml")
+            TildePath::from_real_path(ProjectDirs::get().config_dir().join("config.toml"))
         })
     }
 

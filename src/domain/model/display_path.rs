@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use super::path_like::PathLike;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub(crate) struct DisplayPath {
     real_path: PathBuf,
     display_path: PathBuf,
@@ -17,14 +17,6 @@ impl DisplayPath {
         }
     }
 
-    pub(crate) fn from_pathlike(path: &dyn PathLike) -> Self {
-        Self {
-            real_path: path.as_real_path().to_owned(),
-            display_path: path.as_display_path().to_owned(),
-        }
-    }
-
-    #[cfg(test)]
     pub(crate) fn from_pair(real_path: PathBuf, display_path: PathBuf) -> Self {
         Self {
             real_path,
