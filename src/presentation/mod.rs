@@ -1,3 +1,5 @@
+use std::env;
+
 use clap::{CommandFactory as _, Parser as _};
 pub use color_eyre::eyre::Result;
 
@@ -15,17 +17,21 @@ pub(crate) struct Presentation {
 
 impl Presentation {
     pub(crate) fn from_env() -> Self {
-        Self {
-            args: Args::parse(),
+        let args = Args::parse();
+
+        if env::var_os("RUST_LOG").is_none() {
+            let level_str = args
+                .verbosity()
+                .map(|level| level.as_str())
+                .unwrap_or("off");
+            env::set_var("RUST_LOG", level_str)
         }
+
+        Self { args }
     }
 
     pub(crate) fn command() -> clap::Command {
         Args::command()
-    }
-
-    pub(crate) fn verbosity(&self) -> Option<tracing::Level> {
-        self.args.verbosity()
     }
 
     pub(crate) fn main(self, service: &Service) -> Result<()> {

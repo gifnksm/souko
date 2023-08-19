@@ -48,11 +48,11 @@ impl GlobalArgs {
 }
 
 impl Args {
-    pub fn verbosity(&self) -> Option<Level> {
+    pub(super) fn verbosity(&self) -> Option<Level> {
         self.global_args.verbosity.verbosity()
     }
 
-    pub(crate) fn run(&self, service: &Service) -> Result<()> {
+    pub(super) fn run(&self, service: &Service) -> Result<()> {
         match &self.subcommand {
             Some(subcommand) => subcommand.run(&self.global_args, service)?,
             None => <Args as clap::CommandFactory>::command().print_help()?,
