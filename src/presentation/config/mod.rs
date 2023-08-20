@@ -1,3 +1,5 @@
+use std::collections::BTreeMap;
+
 use serde::Deserialize;
 
 mod query;
@@ -17,7 +19,7 @@ pub(super) struct Config {
 }
 
 impl Config {
-    pub(super) fn roots(&self) -> Vec<OptionalParam<Root>> {
+    pub(super) fn roots(&self) -> BTreeMap<String, OptionalParam<Root>> {
         self.root_map.roots()
     }
 

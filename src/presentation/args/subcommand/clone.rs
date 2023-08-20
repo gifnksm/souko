@@ -3,18 +3,14 @@ use color_eyre::eyre::{eyre, Result, WrapErr};
 use crate::{
     application::service::Service,
     domain::model::{path_like::PathLike, query::Query, root::Root},
-    presentation::{
-        args::GlobalArgs,
-        config::Config,
-        util::{optional_param::OptionalParam, tilde_path::TildePath},
-    },
+    presentation::{args::GlobalArgs, config::Config, util::optional_param::OptionalParam},
 };
 
 #[derive(Debug, Clone, Default, clap::Args)]
 pub(super) struct Args {
-    /// Path of the root directory under which the repository will be cloned
-    #[clap(long = "root", value_parser = TildePath::parse_real_path)]
-    root_path: Option<TildePath>,
+    /// Name of the root under which the repository will be cloned
+    #[clap(long = "root")]
+    root_name: Option<String>,
 
     /// Git repository to clone repository from
     ///
@@ -32,13 +28,18 @@ pub(super) struct Args {
 }
 
 impl Args {
-    fn root(&self, config: &Config) -> OptionalParam<Root> {
-        match &self.root_path {
-            Some(path) => {
-                OptionalParam::new_explicit("root", Root::new("arg".to_string(), path.into()))
+    fn root(&self, config: &Config) -> Result<OptionalParam<Root>> {
+        let root = match &self.root_name {
+            Some(name) => {
+                let roots = config.roots();
+                roots
+                    .get(name)
+                    .cloned()
+                    .ok_or_else(|| eyre!("root `{name}` not found in config file"))?
             }
             None => config.default_root().clone(),
-        }
+        };
+        Ok(root)
     }
 
     fn query(&self, config: &Config) -> Result<Query> {
@@ -52,7 +53,7 @@ impl Args {
     pub(super) fn run(&self, global_args: &GlobalArgs, service: &Service) -> Result<()> {
         let config = global_args.config()?;
 
-        let root = self.root(&config);
+        let root = self.root(&config)?;
         let query = self.query(&config)?;
 
         let root_service = service.root();
