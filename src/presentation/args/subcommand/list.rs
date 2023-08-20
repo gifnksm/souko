@@ -3,7 +3,7 @@ use std::{
     path::PathBuf,
 };
 
-use color_eyre::eyre::Result;
+use color_eyre::eyre::{eyre, Result};
 use serde::Serialize;
 
 use crate::{
@@ -13,18 +13,14 @@ use crate::{
         repo::CanonicalRepo,
         root::{CanonicalRoot, Root},
     },
-    presentation::{
-        args::GlobalArgs,
-        config::Config,
-        util::{optional_param::OptionalParam, tilde_path::TildePath},
-    },
+    presentation::{args::GlobalArgs, config::Config, util::optional_param::OptionalParam},
 };
 
 #[derive(Debug, Clone, Default, clap::Args)]
 pub(super) struct Args {
-    /// Path of the root directory under which the repository will be cloned
-    #[clap(long = "root", value_parser = TildePath::parse_real_path)]
-    root_path: Option<Vec<TildePath>>,
+    /// Name of the root under which the repository will be listed
+    #[clap(long = "root")]
+    root_name: Option<Vec<String>>,
 
     /// Output as JSON
     #[clap(long)]
@@ -32,25 +28,27 @@ pub(super) struct Args {
 }
 
 impl Args {
-    fn roots(&self, config: &Config) -> Vec<OptionalParam<Root>> {
-        if let Some(root_paths) = &self.root_path {
-            root_paths
+    fn roots(&self, config: &Config) -> Result<Vec<OptionalParam<Root>>> {
+        let roots = if let Some(root_names) = &self.root_name {
+            let roots = config.roots();
+            root_names
                 .iter()
-                .enumerate()
-                .map(|(i, path)| {
-                    let name = format!("arg{i}");
-                    let root = Root::new(name, path.into());
-                    OptionalParam::new_explicit("root", root)
+                .map(|name| {
+                    roots
+                        .get(name)
+                        .cloned()
+                        .ok_or_else(|| eyre!("root `{name}` not found in config file"))
                 })
-                .collect()
+                .collect::<Result<_>>()?
         } else {
-            config.roots()
-        }
+            config.roots().values().cloned().collect()
+        };
+        Ok(roots)
     }
 
     pub(super) fn run(&self, global_args: &GlobalArgs, service: &Service) -> Result<()> {
         let config = global_args.config()?;
-        let roots = self.roots(&config);
+        let roots = self.roots(&config)?;
 
         let root_service = service.root();
         let roots = roots.into_iter().filter_map(|root| {

@@ -58,10 +58,10 @@ impl RootMap {
             .to_root(name.to_owned())
     }
 
-    pub(super) fn roots(&self) -> Vec<OptionalParam<Root>> {
+    pub(super) fn roots(&self) -> BTreeMap<String, OptionalParam<Root>> {
         self.map
             .iter()
-            .map(|(name, root)| root.to_root(name.clone()))
+            .map(|(name, root)| (name.clone(), root.to_root(name.clone())))
             .collect()
     }
 }
