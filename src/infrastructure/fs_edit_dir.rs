@@ -189,17 +189,17 @@ mod tests {
         assert!(!call(&normal_dir2).unwrap());
 
         // Returns `Err` if the directory is not empty
-        assert!(matches!(call(&non_empty_dir), Err(_)));
+        assert!(call(&non_empty_dir).is_err());
 
         // Returns `Err` if the given `path` is not a directory
-        assert!(matches!(call(&not_a_directory), Err(_)));
+        assert!(call(&not_a_directory).is_err());
 
         // Returns `Err` if the parent of the given `path` does not exist
-        assert!(matches!(call(&test_dir.child("parent/child")), Err(_)));
+        assert!(call(&test_dir.child("parent/child")).is_err());
 
         // Returns `Err` if the user does not have permission to remove the directory
         #[cfg(unix)]
-        assert!(matches!(call(&undeletable_dir), Err(_)));
+        assert!(call(&undeletable_dir).is_err());
 
         // Ensure `test_dir` and its contents are deleted
         readonly_dir.set_readonly(false).unwrap();
@@ -253,12 +253,12 @@ mod tests {
         assert!(!call(&empty_dir).unwrap());
 
         // Returns `Err` if `path` is not a directory or does not exist
-        assert!(matches!(call(&not_a_directory), Err(_)));
-        assert!(matches!(call(&not_exist), Err(_)));
+        assert!(call(&not_a_directory).is_err());
+        assert!(call(&not_exist).is_err());
 
         // Returns `Err` if the user does not have permission to remove the contents of the directory
         #[cfg(unix)]
-        assert!(matches!(call(&readonly_dir), Err(_)));
+        assert!(call(&readonly_dir).is_err());
 
         // Ensure `test_dir` and its contents are deleted
         readonly_dir.set_readonly(false).unwrap();
