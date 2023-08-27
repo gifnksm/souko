@@ -27,6 +27,11 @@ rust-version = true
 github-actions = { workflows = ["ci.yml"] }
 codecov = true
 
+[package.metadata.binstall]
+pkg-url = "{ repo }/releases/download/v{ version }/{ name }-v{ version }-{ target }.{ archive-format }"
+bin-dir = "{ bin }{ binary-ext }"
+pkg-fmt = "tgz"
+
 [dependencies]
 clap = { version = "4.4.0", features = ["derive", "env"] }
 color-eyre = "0.6.2"
