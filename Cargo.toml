@@ -33,7 +33,7 @@ bin-dir = "{ bin }{ binary-ext }"
 pkg-fmt = "tgz"
 
 [dependencies]
-clap = { version = "4.4.0", features = ["derive", "env"] }
+clap = { version = "4.4.1", features = ["derive", "env"] }
 color-eyre = "0.6.2"
 custom_debug_derive = "0.5.1"
 directories = "5.0.1"
