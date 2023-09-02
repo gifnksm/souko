@@ -12,9 +12,9 @@ use crate::domain::model::{query::ParseOption, root::Root};
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(super) struct Config {
-    #[serde(rename = "root")]
+    #[serde(rename = "root", default)]
     root_map: RootMap,
-    #[serde(rename = "query")]
+    #[serde(rename = "query", default)]
     query_config: QueryConfig,
 }
 
