@@ -3,7 +3,7 @@ members = ["xtask"]
 
 [package]
 name = "souko"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 rust-version = "1.70.0"
 description = "A simple command line utility that provides an easy way to organize clones of remote git repositories"
