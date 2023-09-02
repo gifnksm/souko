@@ -63,7 +63,15 @@ Choose any one of the methods below that best suits your needs.
 
 Executable binaries are available for download on the [GitHub Release page].
 
+You can also install the binary with [`cargo-binstall`] command.
+
+```console
+# Install pre-built binary
+$ cargo binstall souko
+```
+
 [GitHub Release page]: https://github.com/gifnksm/souko/releases/
+[`cargo-binstall`]: https://github.com/cargo-bins/cargo-binstall
 
 ### Build from source using Rust
 
