@@ -13,6 +13,10 @@
 
 Souko is a simple command line utility that provides an easy way to organize clones of remote git repositories.
 
+VS Code extension [souko-vscode] is also available.
+
+[souko-vscode]: https://marketplace.visualstudio.com/items?itemName=gifnksm.souko
+
 When you clone a remote repository with souko, souko creates a directory under a specific root directory (`~/.local/share/souko/root` by default) containing the hostname and path of the remote repository's URL.
 
 ```console
@@ -58,6 +62,12 @@ gitlab = "https://gitlab.com/{path}.git"
 
 There are multiple ways to install souko.
 Choose any one of the methods below that best suits your needs.
+
+### Distribution packages
+
+Following packages are available:
+
+* Arch Linux (AUR): [souko](https://aur.archlinux.org/packages/souko/) or [souko-bin](https://aur.archlinux.org/packages/souko-bin/)
 
 ### Pre-built binaries
 
