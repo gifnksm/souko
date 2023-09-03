@@ -3,6 +3,7 @@ use std::{
     path::PathBuf,
 };
 
+use chrono::{Duration, Utc};
 use color_eyre::eyre::{eyre, Result};
 use serde::Serialize;
 
@@ -62,9 +63,11 @@ impl Args {
             }
         });
 
+        // TODO: make this configurable
         let skip_hidden = true;
         let skip_bare = true;
         let no_recursive = true;
+
         let repos_in_root = move |root: &CanonicalRoot| {
             let repos = match root_service.find_repos(root, skip_hidden, skip_bare, no_recursive) {
                 Ok(repos) => Some(repos),
@@ -83,13 +86,22 @@ impl Args {
             })
         };
 
-        if self.json {
-            emit_json(roots, repos_in_root)?;
-        } else {
-            emit_text(roots, repos_in_root)?;
-        }
+        // TODO: make this configurable
+        let now = Utc::now();
+        let cache_expire_duration = Duration::days(3);
 
-        Ok(())
+        let repo_cache_path = global_args.repo_cache_path();
+        root_service.load_repo_cache(repo_cache_path.value(), now, cache_expire_duration);
+
+        let res = if self.json {
+            emit_json(roots, repos_in_root)
+        } else {
+            emit_text(roots, repos_in_root)
+        };
+
+        root_service.store_repo_cache(repo_cache_path.value());
+
+        res
     }
 }
 

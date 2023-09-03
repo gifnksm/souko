@@ -29,12 +29,22 @@ struct GlobalArgs {
     /// Path to souko config file
     #[clap(long = "config", env = "SOUKO_CONFIG", value_parser = TildePath::parse_real_path)]
     config_path: Option<TildePath>,
+
+    /// Path to souko repository cache directory
+    #[clap(long = "repo-cache", env = "SOUKO_REPO_CACHE", value_parser = TildePath::parse_real_path)]
+    repo_cache_path: Option<TildePath>,
 }
 
 impl GlobalArgs {
     fn config_path(&'_ self) -> OptionalParam<TildePath> {
         OptionalParam::new("config", self.config_path.clone(), || {
             TildePath::from_real_path(ProjectDirs::get().config_dir().join("config.toml"))
+        })
+    }
+
+    fn repo_cache_path(&'_ self) -> OptionalParam<TildePath> {
+        OptionalParam::new("repo-cache", self.repo_cache_path.clone(), || {
+            TildePath::from_real_path(ProjectDirs::get().cache_dir().join("repos.json"))
         })
     }
 

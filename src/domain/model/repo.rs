@@ -4,13 +4,13 @@ use super::{pretty_path::PrettyPath, query::Query, root::Root};
 
 #[derive(Debug, Clone)]
 pub(crate) struct Repo {
-    relative_path: PrettyPath,
+    relative_path: PathBuf,
     path: PrettyPath,
     bare: bool,
 }
 
 impl Repo {
-    pub(crate) fn from_relative_path(root: &Root, relative_path: PrettyPath, bare: bool) -> Self {
+    pub(crate) fn from_relative_path(root: &Root, relative_path: PathBuf, bare: bool) -> Self {
         let path = root.path().join(&relative_path);
         Self {
             relative_path,
@@ -42,11 +42,10 @@ impl Repo {
             }
         }
 
-        let relative_path = PrettyPath::from_real_path(relative_path);
         Self::from_relative_path(root, relative_path, bare)
     }
 
-    pub(crate) fn relative_path(&self) -> &PrettyPath {
+    pub(crate) fn relative_path(&self) -> &Path {
         &self.relative_path
     }
 
@@ -73,7 +72,7 @@ impl CanonicalRepo {
         }
     }
 
-    pub(crate) fn relative_path(&self) -> &PrettyPath {
+    pub(crate) fn relative_path(&self) -> &Path {
         self.inner.relative_path()
     }
 

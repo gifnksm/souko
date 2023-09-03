@@ -9,14 +9,6 @@ pub(crate) struct PrettyPath {
 }
 
 impl PrettyPath {
-    pub(crate) fn from_real_path(real_path: PathBuf) -> Self {
-        let display_path = real_path.clone();
-        Self {
-            real_path,
-            display_path,
-        }
-    }
-
     pub(crate) fn from_pair(real_path: PathBuf, display_path: PathBuf) -> Self {
         Self {
             real_path,
