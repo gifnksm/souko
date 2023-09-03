@@ -6,7 +6,7 @@ mod query;
 mod root;
 
 use self::{query::QueryConfig, root::RootMap};
-use super::util::optional_param::OptionalParam;
+use super::model::optional_param::OptionalParam;
 use crate::domain::model::{query::ParseOption, root::Root};
 
 #[derive(Debug, Clone, Default, Deserialize)]

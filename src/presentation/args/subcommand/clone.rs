@@ -3,7 +3,7 @@ use color_eyre::eyre::{eyre, Result, WrapErr};
 use crate::{
     application::service::Service,
     domain::model::{path_like::PathLike, query::Query, root::Root},
-    presentation::{args::GlobalArgs, config::Config, util::optional_param::OptionalParam},
+    presentation::{args::GlobalArgs, config::Config, model::optional_param::OptionalParam},
 };
 
 #[derive(Debug, Clone, Default, clap::Args)]

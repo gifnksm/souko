@@ -13,7 +13,7 @@ use crate::{
         repo::CanonicalRepo,
         root::{CanonicalRoot, Root},
     },
-    presentation::{args::GlobalArgs, config::Config, util::optional_param::OptionalParam},
+    presentation::{args::GlobalArgs, config::Config, model::optional_param::OptionalParam},
 };
 
 #[derive(Debug, Clone, Default, clap::Args)]

@@ -22,5 +22,6 @@ mod application;
 mod domain;
 mod infrastructure;
 mod presentation;
+mod util;
 
 mod souko;

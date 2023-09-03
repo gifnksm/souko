@@ -9,7 +9,7 @@ use toml_edit::Document;
 
 use crate::domain::model::path_like::PathLike;
 
-pub(in super::super) fn open(name: &str, path: &impl PathLike) -> Result<Option<File>> {
+pub(crate) fn open(name: &str, path: &impl PathLike) -> Result<Option<File>> {
     let file = match File::open(path.as_real_path()) {
         Ok(file) => Some(file),
         Err(e) if e.kind() == io::ErrorKind::NotFound => None,
@@ -20,7 +20,7 @@ pub(in super::super) fn open(name: &str, path: &impl PathLike) -> Result<Option<
     Ok(file)
 }
 
-// pub(in super::super) fn load_json<T>(name: &str, path: &impl PathLike) -> Result<Option<T>>
+// pub(crate) fn load_json<T>(name: &str, path: &impl PathLike) -> Result<Option<T>>
 // where
 //     T: for<'de> Deserialize<'de>,
 // {
@@ -35,7 +35,7 @@ pub(in super::super) fn open(name: &str, path: &impl PathLike) -> Result<Option<
 //     Ok(Some(value))
 // }
 
-// pub(in super::super) fn store_json<T>(name: &str, path: &impl PathLike, value: &T) -> Result<()>
+// pub(crate) fn store_json<T>(name: &str, path: &impl PathLike, value: &T) -> Result<()>
 // where
 //     T: Serialize,
 // {
@@ -63,10 +63,7 @@ pub(in super::super) fn open(name: &str, path: &impl PathLike) -> Result<Option<
 //     Ok(())
 // }
 
-pub(in super::super) fn load_toml_document(
-    name: &str,
-    path: &impl PathLike,
-) -> Result<Option<Document>> {
+pub(crate) fn load_toml_document(name: &str, path: &impl PathLike) -> Result<Option<Document>> {
     let mut file = match open(name, path)? {
         Some(file) => file,
         None => return Ok(None),
@@ -83,7 +80,7 @@ pub(in super::super) fn load_toml_document(
     Ok(Some(doc))
 }
 
-pub(in super::super) fn load_toml<T>(name: &str, path: &impl PathLike) -> Result<Option<T>>
+pub(crate) fn load_toml<T>(name: &str, path: &impl PathLike) -> Result<Option<T>>
 where
     T: for<'de> Deserialize<'de>,
 {

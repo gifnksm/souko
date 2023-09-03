@@ -4,7 +4,7 @@ use serde::{Deserialize, Deserializer};
 
 use crate::{
     domain::model::root::Root,
-    presentation::util::{
+    presentation::model::{
         optional_param::OptionalParam, project_dirs::ProjectDirs, tilde_path::TildePath,
     },
 };
