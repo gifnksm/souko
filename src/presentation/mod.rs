@@ -3,12 +3,12 @@ use std::env;
 use clap::{CommandFactory as _, Parser as _};
 pub use color_eyre::eyre::Result;
 
-use self::{args::Args, util::project_dirs::ProjectDirs};
+use self::{args::Args, model::project_dirs::ProjectDirs};
 use crate::application::service::Service;
 
 mod args;
 mod config;
-mod util;
+mod model;
 
 #[derive(Debug)]
 pub(crate) struct Presentation {

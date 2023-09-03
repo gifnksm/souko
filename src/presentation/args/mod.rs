@@ -1,14 +1,12 @@
-use color_eyre::eyre::Result;
+use color_eyre::eyre::{eyre, Result};
 use tracing::Level;
 
 use self::{subcommand::Subcommand, verbosity::Verbosity};
 use super::{
     config::Config,
-    util::{
-        dwym_fs, optional_param::OptionalParam, project_dirs::ProjectDirs, tilde_path::TildePath,
-    },
+    model::{optional_param::OptionalParam, project_dirs::ProjectDirs, tilde_path::TildePath},
 };
-use crate::application::service::Service;
+use crate::{application::service::Service, domain::model::path_like::PathLike, util::file};
 
 mod subcommand;
 mod verbosity;
@@ -42,7 +40,14 @@ impl GlobalArgs {
 
     fn config(&self) -> Result<Config> {
         let config_path = self.config_path();
-        let config = dwym_fs::load_toml(&config_path)?.unwrap_or_default();
+        let config = match file::load_toml(config_path.name(), config_path.value())? {
+            Some(config) => config,
+            None if config_path.is_default() => Config::default(),
+            None => bail!(eyre!(
+                "config file not found: {}",
+                config_path.value().display()
+            )),
+        };
         Ok(config)
     }
 }
