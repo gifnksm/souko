@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, path::Path};
 
 use crate::domain::model::{pretty_path::PrettyPath, repo::CanonicalRepo, root::CanonicalRoot};
 
@@ -17,6 +17,8 @@ pub(crate) trait Repos:
 pub(crate) type FilterPredicate = Box<dyn FnMut(&dyn Entry) -> bool>;
 
 pub(crate) trait Entry: Debug {
+    fn root(&self) -> &CanonicalRoot;
+    fn relative_path(&self) -> &Path;
     fn path(&self) -> &PrettyPath;
     fn is_hidden(&self) -> bool;
     fn to_repo(&self) -> Result<Option<CanonicalRepo>, Box<dyn std::error::Error>>;

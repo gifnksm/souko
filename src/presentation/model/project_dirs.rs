@@ -12,6 +12,7 @@ static PROJECT_DIRS: OnceCell<ProjectDirs> = OnceCell::new();
 pub(in super::super) struct ProjectDirs {
     config_dir: Option<PathBuf>,
     data_local_dir: Option<PathBuf>,
+    cache_dir: Option<PathBuf>,
     inner: directories::ProjectDirs,
 }
 
@@ -43,10 +44,15 @@ impl ProjectDirs {
             let home = env::var_os("HOME").expect("BUG: missing HOME");
             Path::new(&home).join(r"AppData\Local\souko\data")
         });
+        let cache_dir = (integration_test && cfg!(target_os = "windows")).then(|| {
+            let home = env::var_os("HOME").expect("BUG: missing HOME");
+            Path::new(&home).join(r"AppData\Local\souko\cache")
+        });
 
         Ok(Self {
             config_dir,
             data_local_dir,
+            cache_dir,
             inner,
         })
     }
@@ -61,5 +67,11 @@ impl ProjectDirs {
         self.data_local_dir
             .as_deref()
             .unwrap_or_else(|| self.inner.data_local_dir())
+    }
+
+    pub(in super::super) fn cache_dir(&self) -> &Path {
+        self.cache_dir
+            .as_deref()
+            .unwrap_or_else(|| self.inner.cache_dir())
     }
 }

@@ -1,10 +1,11 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 use crate::domain::repository::Repository;
 
 mod fs_canonicalize_root;
 mod fs_clone_repo;
 mod fs_edit_dir;
+mod fs_repo_cache;
 mod fs_walk_repo;
 
 pub(crate) fn repository() -> Repository {
@@ -13,5 +14,6 @@ pub(crate) fn repository() -> Repository {
         walk_repo: Arc::new(fs_walk_repo::FsWalkRepo::new()),
         clone_repo: Arc::new(fs_clone_repo::FsCloneRepo::new()),
         edit_dir: Arc::new(fs_edit_dir::FsEditDir::new()),
+        repo_cache: Arc::new(Mutex::new(fs_repo_cache::FsRepoCache::new())),
     }
 }

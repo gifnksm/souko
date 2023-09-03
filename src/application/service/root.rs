@@ -1,4 +1,6 @@
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
+
+use chrono::{DateTime, Duration, Utc};
 
 use super::helper::workdir::Workdir;
 use crate::domain::{
@@ -12,7 +14,8 @@ use crate::domain::{
         canonicalize_root::CanonicalizeRoot,
         clone_repo::CloneRepo,
         edit_dir::EditDir,
-        walk_repo::{Repos, WalkRepo},
+        repo_cache::RepoCache,
+        walk_repo::{Entry, Repos, WalkRepo},
         Repository,
     },
 };
@@ -23,6 +26,7 @@ pub(crate) struct RootService {
     walk_repo: Arc<dyn WalkRepo>,
     clone_repo: Arc<dyn CloneRepo>,
     edit_dir: Arc<dyn EditDir>,
+    repo_cache: Arc<Mutex<dyn RepoCache>>,
 }
 
 impl RootService {
@@ -32,6 +36,7 @@ impl RootService {
             walk_repo: Arc::clone(&repository.walk_repo),
             clone_repo: Arc::clone(&repository.clone_repo),
             edit_dir: Arc::clone(&repository.edit_dir),
+            repo_cache: Arc::clone(&repository.repo_cache),
         }
     }
 
@@ -60,6 +65,26 @@ impl RootService {
         Ok(())
     }
 
+    pub(crate) fn load_repo_cache(
+        &self,
+        path: &dyn PathLike,
+        now: DateTime<Utc>,
+        expire_duration: Duration,
+    ) {
+        let mut repo_cache = self.repo_cache.lock().unwrap();
+        if let Err(err) = repo_cache.load(path, now, expire_duration) {
+            tracing::warn!("failed to load repo cache: {err} ({})", path.display());
+            repo_cache.clear(now);
+        }
+    }
+
+    pub(crate) fn store_repo_cache(&self, path: &dyn PathLike) {
+        let mut repo_cache = self.repo_cache.lock().unwrap();
+        if let Err(err) = repo_cache.store(path) {
+            tracing::warn!("failed to store repo cache: {err} ({})", path.display());
+        }
+    }
+
     pub(crate) fn find_repos(
         &self,
         root: &CanonicalRoot,
@@ -67,19 +92,28 @@ impl RootService {
         skip_bare: bool,
         no_recursive: bool,
     ) -> Result<FindRepos, Box<dyn std::error::Error>> {
-        FindRepos::new(&*self.walk_repo, root, skip_hidden, skip_bare, no_recursive)
+        FindRepos::new(
+            Arc::clone(&self.repo_cache),
+            &*self.walk_repo,
+            root,
+            skip_hidden,
+            skip_bare,
+            no_recursive,
+        )
     }
 }
 
 #[derive(Debug)]
 pub(crate) struct FindRepos {
+    repo_cache: Arc<Mutex<dyn RepoCache>>,
+    walker: Box<dyn Repos>,
     skip_bare: bool,
     no_recursive: bool,
-    walker: Box<dyn Repos>,
 }
 
 impl FindRepos {
     fn new(
+        repo_cache: Arc<Mutex<dyn RepoCache>>,
         walk_repo: &dyn WalkRepo,
         root: &CanonicalRoot,
         skip_hidden: bool,
@@ -91,10 +125,26 @@ impl FindRepos {
             walker.filter_entry(Box::new(|e| !e.is_hidden()));
         }
         Ok(FindRepos {
+            repo_cache,
+            walker,
             skip_bare,
             no_recursive,
-            walker,
         })
+    }
+
+    fn entry_to_repo(
+        &self,
+        entry: &dyn Entry,
+    ) -> Result<Option<CanonicalRepo>, Box<dyn std::error::Error>> {
+        let mut cache_service = self.repo_cache.lock().unwrap();
+        if let Some(repo) = cache_service.get(entry.root(), entry.relative_path()) {
+            return Ok(Some(repo));
+        }
+        let repo = entry.to_repo()?;
+        if let Some(repo) = &repo {
+            cache_service.insert(entry.root(), repo);
+        }
+        Ok(repo)
     }
 }
 
@@ -104,21 +154,18 @@ impl Iterator for FindRepos {
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             let entry = itry!(self.walker.next()?);
-            let repo = itry!(entry.to_repo());
-            if self.no_recursive && repo.is_some() {
+            let Some(repo) = itry!(self.entry_to_repo(&*entry)) else {
+                tracing::trace!("skipping non-git-repository: {}", entry.path().display());
+                continue;
+            };
+            if self.no_recursive {
                 self.walker.skip_subdir();
             }
-            match repo {
-                Some(repo) if self.skip_bare && repo.bare() => {
-                    tracing::trace!("skipping bare repo: {}", repo.path().display());
-                    continue;
-                }
-                Some(repo) => return Some(Ok(repo)),
-                None => {
-                    tracing::trace!("skipping non-git-repository: {}", entry.path().display());
-                    continue;
-                }
+            if self.skip_bare && repo.bare() {
+                tracing::trace!("skipping bare repo: {}", repo.path().display());
+                continue;
             }
+            return Some(Ok(repo));
         }
     }
 }
