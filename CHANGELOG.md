@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - ReleaseDate
 
+### Changed
+
+* (breaking change) Use system `libgit2` and `libopenssl` by default
+  * If you want to use `souko` command without system dependencies, please build `souko` with`--features vendored-libgit2,vendored-libopenssl` flag.
+
 ## [0.1.2] - 2023-09-03
 
 ### Added
