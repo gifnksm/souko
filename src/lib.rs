@@ -6,10 +6,10 @@
 //!
 //! ```toml
 //! [dependencies]
-//! souko = "0.1.2"
+//! souko = "0.2.0"
 //! ```
 
-#![doc(html_root_url = "https://docs.rs/souko/0.1.2")]
+#![doc(html_root_url = "https://docs.rs/souko/0.2.0")]
 
 pub use color_eyre::eyre::Result;
 

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - ReleaseDate
 
+## [0.2.0] - 2023-09-17
+
 ### Changed
 
 * (breaking change) Use system `libgit2` and `libopenssl` by default
@@ -31,7 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * First release
 
 <!-- next-url -->
-[Unreleased]: https://github.com/gifnksm/souko/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/gifnksm/souko/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/gifnksm/souko/compare/v0.1.2...v0.2.0
 [0.1.2]: https://github.com/gifnksm/souko/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/gifnksm/souko/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/gifnksm/souko/commits/v0.1.0
