@@ -60,7 +60,7 @@ predicates = "3.0.3"
 [build-dependencies]
 
 [features]
-default = ["vendored-libgit2", "vendored-openssl"]
+default = []
 vendored-libgit2 = ["git2/vendored-libgit2"]
 vendored-openssl = ["git2/vendored-openssl"]
 

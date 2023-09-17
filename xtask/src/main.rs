@@ -12,6 +12,7 @@ fn main() -> Result<()> {
         let target = package
             .binary_by_name(command.get_name())?
             .command(command)
+            .cargo_build_options(vec!["--features", "vendored-libgit2,vendored-openssl"])
             .build()?;
         let dist = dist.package(package.target(target).build()?).build()?;
         let config = ConfigBuilder::new().dist(dist).build()?;
