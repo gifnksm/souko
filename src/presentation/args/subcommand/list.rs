@@ -88,7 +88,7 @@ impl Args {
 
         // TODO: make this configurable
         let now = Utc::now();
-        let cache_expire_duration = Duration::days(3);
+        let cache_expire_duration = Duration::try_days(3).unwrap();
 
         let repo_cache_path = global_args.repo_cache_path();
         root_service.load_repo_cache(repo_cache_path.value(), now, cache_expire_duration);
