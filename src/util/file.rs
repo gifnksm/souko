@@ -6,7 +6,7 @@ use std::{
 use color_eyre::eyre::{eyre, Error, Result, WrapErr};
 use serde::{Deserialize, Serialize};
 use tempfile::NamedTempFile;
-use toml_edit::Document;
+use toml_edit::DocumentMut;
 
 use crate::domain::model::path_like::PathLike;
 
@@ -64,7 +64,7 @@ where
     Ok(())
 }
 
-pub(crate) fn load_toml_document(name: &str, path: &impl PathLike) -> Result<Option<Document>> {
+pub(crate) fn load_toml_document(name: &str, path: &impl PathLike) -> Result<Option<DocumentMut>> {
     let mut file = match open(name, path)? {
         Some(file) => file,
         None => return Ok(None),
