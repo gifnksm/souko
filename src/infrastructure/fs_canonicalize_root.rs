@@ -35,7 +35,7 @@ impl CanonicalizeRoot for FsCanonicalizeRoot {
         should_exist: bool,
     ) -> Result<Option<CanonicalRoot>, Box<dyn std::error::Error>> {
         let real_path = root.path().as_real_path();
-        let canonical_path = match real_path.canonicalize() {
+        let canonical_path = match dunce::canonicalize(real_path) {
             Ok(path) => path,
             Err(err) if !should_exist && err.kind() == io::ErrorKind::NotFound => return Ok(None),
             Err(err) => bail!(Error::Canonicalize {

@@ -57,11 +57,12 @@ fn clone_and_list() {
         .success()
         .stdout(format!(
             "{}\n",
-            data_local_dir(&home)
-                .child("root/github.com/gifnksm/souko")
-                .path()
-                .canonicalize()
-                .unwrap()
-                .display()
+            dunce::canonicalize(
+                data_local_dir(&home)
+                    .child("root/github.com/gifnksm/souko")
+                    .path()
+            )
+            .unwrap()
+            .display()
         ));
 }
