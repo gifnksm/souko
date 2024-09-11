@@ -167,13 +167,10 @@ impl Entry for FsEntry {
         let repo = Repo::from_relative_path(self.root.as_root(), self.relative_path.clone(), bare);
 
         let canonical_path =
-            self.entry
-                .path()
-                .canonicalize()
-                .map_err(|err| Error::Canonicalize {
-                    path: self.entry.path().to_owned(),
-                    source: err,
-                })?;
+            dunce::canonicalize(self.entry.path()).map_err(|err| Error::Canonicalize {
+                path: self.entry.path().to_owned(),
+                source: err,
+            })?;
 
         let canonical_repo = CanonicalRepo::new(repo, canonical_path);
 
