@@ -32,7 +32,7 @@ bin-dir = "{ bin }{ binary-ext }"
 pkg-fmt = "tgz"
 
 [dependencies]
-chrono = { version = "0.4.38", features = ["clock", "serde"], default-features = false }
+chrono = { version = "0.4.39", features = ["clock", "serde"], default-features = false }
 clap = { version = "4.5.23", features = ["derive", "env"] }
 color-eyre = "0.6.3"
 custom_debug_derive = "0.6.2"
