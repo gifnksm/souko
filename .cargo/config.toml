@@ -1,2 +1,2 @@
 [alias]
-xtask = "run --package xtask --target-dir target/xask/run --"
+xtask = "run --package xtask --target-dir target/xtask/run --"
