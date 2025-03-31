@@ -40,7 +40,7 @@ directories = "6.0.0"
 dunce = "1.0.5"
 git2 = { version = "0.20.1" }
 git2_credentials = "0.15.0"
-once_cell = "1.21.1"
+once_cell = "1.21.3"
 regex = "1.11.1"
 remove_dir_all = "1.0.0"
 serde = { version = "1.0.219", features = ["derive"] }
