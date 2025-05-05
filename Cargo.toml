@@ -34,7 +34,7 @@ pkg-fmt = "tgz"
 [dependencies]
 chrono = { version = "0.4.40", features = ["clock", "serde"], default-features = false }
 clap = { version = "4.5.35", features = ["derive", "env"] }
-color-eyre = "0.6.3"
+color-eyre = "0.6.4"
 custom_debug_derive = "0.6.2"
 directories = "6.0.0"
 dunce = "1.0.5"
