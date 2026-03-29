@@ -45,7 +45,7 @@ where
         .parent()
         .ok_or_else(|| eyre!("failed to get parent directory: {}", path.display()))?;
     fs::create_dir_all(dir)
-        .wrap_err_with(|| format!("failed to create diretory: {}", dir.display()))?;
+        .wrap_err_with(|| format!("failed to create directory: {}", dir.display()))?;
 
     let file = NamedTempFile::new_in(dir)
         .wrap_err_with(|| format!("failed to create temporary file in {}", dir.display(),))?;
