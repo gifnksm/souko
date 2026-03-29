@@ -34,26 +34,27 @@ impl CloneRepo for FsCloneRepo {
         path: &dyn PathLike,
         bare: bool,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
-        let mut cb = git2::RemoteCallbacks::new();
+        let mut callback = git2::RemoteCallbacks::new();
         let git_config =
             git2::Config::open_default().map_err(|err| Error::OpenConfig { source: err })?;
-        let mut ch = CredentialHandler::new(git_config);
-        cb.credentials(move |url, username, allowed| {
-            ch.try_next_credential(url, username, allowed)
+        let mut credential_handler = CredentialHandler::new(git_config);
+        callback.credentials(move |url, username, allowed| {
+            credential_handler.try_next_credential(url, username, allowed)
         });
 
-        let mut po = git2::ProxyOptions::new();
-        po.auto();
+        let mut proxy_opt = git2::ProxyOptions::new();
+        proxy_opt.auto();
 
-        let mut fo = git2::FetchOptions::new();
-        fo.remote_callbacks(cb)
-            .proxy_options(po)
+        let mut fetch_opt = git2::FetchOptions::new();
+        fetch_opt
+            .remote_callbacks(callback)
+            .proxy_options(proxy_opt)
             .download_tags(git2::AutotagOption::All)
             .update_fetchhead(true);
 
         let _repo = git2::build::RepoBuilder::new()
             .bare(bare)
-            .fetch_options(fo)
+            .fetch_options(fetch_opt)
             .clone(url.as_str(), path.as_real_path())
             .map_err(|err| Error::Clone {
                 url: url.clone(),

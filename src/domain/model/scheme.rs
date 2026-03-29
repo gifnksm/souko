@@ -69,8 +69,8 @@ mod tests {
     #[test]
     fn test_parse() {
         assert!(Scheme::from_str("foo123").is_ok());
-        assert!(Scheme::from_str("fo").is_ok());
-        assert!(Scheme::from_str("fo+.-").is_ok());
+        assert!(Scheme::from_str("foo").is_ok());
+        assert!(Scheme::from_str("foo+.-").is_ok());
         assert!(Scheme::from_str("foo_bar").is_err());
         assert!(Scheme::from_str("23foo").is_err());
     }
