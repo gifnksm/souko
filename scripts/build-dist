@@ -5,10 +5,10 @@ set -euxo pipefail
 DIST_DIR="target/dist"
 BUILD_DIR="target/dist-build"
 
-ROOT_PACKAGE="souko"
-DIST_PACKAGES=("souko")
+ROOT_PACKAGE="cargo-sync-rdm"
+DIST_PACKAGES=("cargo-sync-rdme")
 declare -A PACKAGE_BUILD_OPTIONS=(
-    ["souko"]="--features vendored-libgit2,vendored-openssl"
+    ["cargo-sync-rdme"]=""
 )
 
 TEMPORARY_FILES=()
@@ -67,16 +67,19 @@ main() {
             "${cargo_build[@]}" --release -p "${pkg}" --bin "${bin_name}" "${target_option[@]}" "${build_options[@]}"
             cp "${release_bin_dir}/${bin_name}" "${BUILD_DIR}"
 
+            local env_prefix="${bin_name^^}"
+            env_prefix="${env_prefix//-/_}"
+
             mkdir -p "${BUILD_DIR}/completion"
-            env "${bin_name^^}_PRINT_COMPLETION=bash" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/${bin_name}.bash"
-            env "${bin_name^^}_PRINT_COMPLETION=elvish" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/${bin_name}.elv"
-            env "${bin_name^^}_PRINT_COMPLETION=fish" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/${bin_name}.fish"
-            env "${bin_name^^}_PRINT_COMPLETION=powershell" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/_${bin_name}.ps1"
-            env "${bin_name^^}_PRINT_COMPLETION=zsh" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/_${bin_name}"
-            env "${bin_name^^}_PRINT_COMPLETION=nushell" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/${bin_name}.nu"
+            env "${env_prefix}_PRINT_COMPLETION=bash" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/${bin_name}.bash"
+            env "${env_prefix}_PRINT_COMPLETION=elvish" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/${bin_name}.elv"
+            env "${env_prefix}_PRINT_COMPLETION=fish" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/${bin_name}.fish"
+            env "${env_prefix}_PRINT_COMPLETION=powershell" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/_${bin_name}.ps1"
+            env "${env_prefix}_PRINT_COMPLETION=zsh" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/_${bin_name}"
+            env "${env_prefix}_PRINT_COMPLETION=nushell" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/${bin_name}.nu"
 
             mkdir -p "${BUILD_DIR}/man"
-            env "${bin_name^^}_GENERATE_MAN_TO=${BUILD_DIR}/man" cargo run -p "${pkg}" --bin "${bin_name}"
+            env "${env_prefix}_GENERATE_MAN_TO=${BUILD_DIR}/man" cargo run -p "${pkg}" --bin "${bin_name}"
         done
     done
 
