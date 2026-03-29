@@ -10,8 +10,8 @@ impl Souko {
         Presentation::command()
     }
 
-    pub fn main() -> Result<()> {
-        let presentation = Presentation::from_env();
+    pub fn main(bin_name: &str) -> Result<()> {
+        let presentation = Presentation::from_env(bin_name);
 
         color_eyre::install()?;
 
