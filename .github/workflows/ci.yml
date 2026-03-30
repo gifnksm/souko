@@ -280,6 +280,13 @@ jobs:
       - name: Check spelling of entire workspace
         run: typos
 
+  markdownlint:
+    name: Markdownlint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - run: npx markdownlint-cli .
+
   ci-complete:
     needs:
       - set-matrix
@@ -295,6 +302,7 @@ jobs:
       - release-dry-run
       - actionlint
       - typos
+      - markdownlint
     runs-on: ubuntu-latest
     if: ${{ always() }}
     permissions: {}
