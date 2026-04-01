@@ -11,14 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* `souko list --template <FORMAT>`: new template-based output format for customizing list output
+* `souko list --template <FORMAT>`: new template-based output format for customizing list output ([#643](https://github.com/gifnksm/souko/pull/643), [#644](https://github.com/gifnksm/souko/pull/644))
   * Useful for integrating with picker tools such as fzf and skim
   * Available template variables include `root_name`, `repo_relative_path`, `repo_canonical_path`, etc.
   * Unknown variable names in templates are detected and reported as errors at startup
 
 ### Fixed
 
-* `query.scheme_alias` and `query.custom_scheme` fields in `config.toml` can now be omitted without causing a parse error
+* `query.scheme_alias` and `query.custom_scheme` fields in `config.toml` can now be omitted without causing a parse error ([#645](https://github.com/gifnksm/souko/pull/645))
 
 ### Changed
 
@@ -29,42 +29,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* Minimum Supported Rust Version (MSRV) bumped to 1.78.0 (was 1.74.0)
+* Minimum Supported Rust Version (MSRV) bumped to 1.78.0 (was 1.74.0) ([#491](https://github.com/gifnksm/souko/pull/491))
 * Updated dependencies
 
 ## [0.2.1] - 2024-09-11
 
 ### Fixed
 
-* Output paths on Windows no longer include the UNC prefix (`\\?\`)
+* Output paths on Windows no longer include the UNC prefix (`\\?\`) ([#462](https://github.com/gifnksm/souko/pull/462))
 
 ### Changed
 
-* Minimum Supported Rust Version (MSRV) bumped to 1.74.0 (was 1.70.0)
+* Minimum Supported Rust Version (MSRV) bumped to 1.74.0 (was 1.70.0) ([#463](https://github.com/gifnksm/souko/pull/463))
 * Updated dependencies
 
 ## [0.2.0] - 2023-09-17
 
 ### Added
 
-* `vendored-libgit2` and `vendored-openssl` feature flags, which allow building without system libraries
+* `vendored-libgit2` and `vendored-openssl` feature flags, which allow building without system libraries ([#297](https://github.com/gifnksm/souko/pull/297))
 
 ### Changed
 
-* **(Breaking)** System `libgit2` and `openssl` are now used by default instead of vendored copies
+* **(Breaking)** System `libgit2` and `openssl` are now used by default instead of vendored copies ([#308](https://github.com/gifnksm/souko/pull/308))
   * To build without system dependencies, pass `--features vendored-libgit2,vendored-openssl`
 
 ## [0.1.2] - 2023-09-03
 
 ### Added
 
-* Repository cache
+* Repository cache ([#295](https://github.com/gifnksm/souko/pull/295))
 
 ## [0.1.1] - 2023-09-02
 
 ### Fixed
 
-* `query` and `root` sections in `config.toml` are now optional
+* `query` and `root` sections in `config.toml` are now optional ([#293](https://github.com/gifnksm/souko/pull/293))
 
 ## [0.1.0] - 2023-09-02
 
