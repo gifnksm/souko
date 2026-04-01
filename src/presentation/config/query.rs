@@ -49,7 +49,9 @@ impl Default for QueryConfig {
 #[serde(deny_unknown_fields)]
 struct ConfigRepr {
     default_scheme: Option<Scheme>,
+    #[serde(default)]
     scheme_alias: HashMap<Scheme, Scheme>,
+    #[serde(default)]
     custom_scheme: HashMap<Scheme, Template>,
 }
 
@@ -90,5 +92,34 @@ impl From<QueryConfig> for ParseOption {
             scheme_alias,
             custom_scheme,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn deserialize_query_config_without_scheme_alias() {
+        let input = r#"
+            default_scheme = "gh"
+
+            [custom_scheme]
+            github = "https://github.com/{path}.git"
+        "#;
+
+        let config: QueryConfig = toml_edit::de::from_str(input).unwrap();
+        let option: ParseOption = config.into();
+
+        assert_eq!(option.default_scheme, Some("gh".parse().unwrap()));
+        assert_eq!(
+            option.scheme_alias.get("gh"),
+            Some(&"github".parse().unwrap())
+        );
+        assert_eq!(
+            option.scheme_alias.get("gl"),
+            Some(&"gitlab".parse().unwrap())
+        );
+        assert!(option.custom_scheme.contains_key("github"));
     }
 }
