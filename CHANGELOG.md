@@ -21,16 +21,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* Minimum Supported Rust Version (MSRV) bumped to 1.88.0 (was 1.82.0)
+* Migrated to Rust edition 2024; Minimum Supported Rust Version (MSRV) bumped to 1.88.0 (was 1.78.0)
 * Updated dependencies
 
 ## [0.2.2] - 2024-12-27
 
 ### Changed
 
+* Minimum Supported Rust Version (MSRV) bumped to 1.78.0
 * Updated dependencies
 
 ## [0.2.1] - 2024-09-11
+
+### Fixed
+
+* Fixed output paths on Windows to no longer include UNC prefix (`\\?\`)
 
 ### Changed
 
