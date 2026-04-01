@@ -1,6 +1,7 @@
 use std::{
+    fmt::Display,
     io::{self, Write},
-    path::{Path, PathBuf},
+    path::PathBuf,
 };
 
 use chrono::{Duration, Utc};
@@ -57,7 +58,7 @@ impl FormatArgs {
         if *json {
             Ok(Format::Json)
         } else if let Some(template) = template {
-            template.validate::<RepoListTemplateContext<'_>>()?;
+            template.validate::<RepoListTemplateContext>()?;
             Ok(Format::Template(template.clone()))
         } else {
             Ok(Format::Default)
@@ -191,48 +192,42 @@ where
     Ok(())
 }
 
-#[derive(Debug, Clone, Serialize)]
-struct RepoListTemplateContext<'a> {
-    root_name: &'a str,
-    root_display_path: &'a Path,
-    root_real_path: &'a Path,
-    root_canonical_path: &'a Path,
-    repo_relative_path: &'a Path,
-    repo_display_path: &'a Path,
-    repo_real_path: &'a Path,
-    repo_canonical_path: &'a Path,
+#[derive(Debug, Clone, Default, Serialize)]
+struct RepoListTemplateContext {
+    root_name: String,
+    // Store paths as already-formatted strings.
+    // This avoids serialization failures for non-UTF8 paths when converting
+    // template context into JSON-backed string maps.
+    root_display_path: String,
+    root_real_path: String,
+    root_canonical_path: String,
+    repo_relative_path: String,
+    repo_display_path: String,
+    repo_real_path: String,
+    repo_canonical_path: String,
 }
 
-impl<'a> Default for RepoListTemplateContext<'a> {
-    fn default() -> Self {
+impl TemplateContext for RepoListTemplateContext {}
+
+impl RepoListTemplateContext {
+    fn new(root: &CanonicalRoot, repo: &CanonicalRepo) -> Self {
         Self {
-            root_name: Default::default(),
-            root_display_path: Path::new(""),
-            root_real_path: Path::new(""),
-            root_canonical_path: Path::new(""),
-            repo_relative_path: Path::new(""),
-            repo_display_path: Path::new(""),
-            repo_real_path: Path::new(""),
-            repo_canonical_path: Path::new(""),
+            root_name: root.name().to_owned(),
+            root_display_path: format_displayable_path(root.path().as_display_path().display()),
+            root_real_path: format_displayable_path(root.path().as_real_path().display()),
+            root_canonical_path: format_displayable_path(root.canonical_path().display()),
+            repo_relative_path: format_displayable_path(
+                repo.relative_path().as_real_path().display(),
+            ),
+            repo_display_path: format_displayable_path(repo.path().as_display_path().display()),
+            repo_real_path: format_displayable_path(repo.path().as_real_path().display()),
+            repo_canonical_path: format_displayable_path(repo.canonical_path().display()),
         }
     }
 }
 
-impl<'a> TemplateContext for RepoListTemplateContext<'a> {}
-
-impl<'a> RepoListTemplateContext<'a> {
-    fn new(root: &'a CanonicalRoot, repo: &'a CanonicalRepo) -> Self {
-        Self {
-            root_name: root.name(),
-            root_display_path: root.path().as_display_path(),
-            root_real_path: root.path().as_real_path(),
-            root_canonical_path: root.canonical_path(),
-            repo_relative_path: repo.relative_path(),
-            repo_display_path: repo.path().as_display_path(),
-            repo_real_path: repo.path().as_real_path(),
-            repo_canonical_path: repo.canonical_path(),
-        }
-    }
+fn format_displayable_path(path: impl Display) -> String {
+    path.to_string()
 }
 
 fn emit_template<Roots, F, Repos>(roots: Roots, repos_in_root: F, template: Template) -> Result<()>
