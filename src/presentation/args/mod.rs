@@ -12,26 +12,27 @@ mod subcommand;
 mod verbosity;
 
 #[derive(Debug, Clone, Default, clap::Parser)]
-#[clap(author, version, about)]
+#[command(author, version, about)]
+#[command(propagate_version = true)]
 pub struct Args {
-    #[clap(flatten)]
+    #[command(flatten)]
     global_args: GlobalArgs,
 
-    #[clap(subcommand)]
+    #[command(subcommand)]
     subcommand: Option<Subcommand>,
 }
 
 #[derive(Debug, Clone, Default, clap::Args)]
 struct GlobalArgs {
-    #[clap(flatten)]
+    #[command(flatten)]
     verbosity: Verbosity,
 
     /// Path to souko config file
-    #[clap(long = "config", env = "SOUKO_CONFIG", value_parser = TildePath::parse_real_path)]
+    #[arg(long = "config", env = "SOUKO_CONFIG", value_parser = TildePath::parse_real_path)]
     config_path: Option<TildePath>,
 
     /// Path to souko repository cache directory
-    #[clap(long = "repo-cache", env = "SOUKO_REPO_CACHE", value_parser = TildePath::parse_real_path)]
+    #[arg(long = "repo-cache", env = "SOUKO_REPO_CACHE", value_parser = TildePath::parse_real_path)]
     repo_cache_path: Option<TildePath>,
 }
 

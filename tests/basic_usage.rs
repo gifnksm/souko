@@ -1,8 +1,8 @@
-use std::{path::Path, process::Command};
-
 use assert_cmd::prelude::*;
 use assert_fs::{fixture::ChildPath, prelude::*, TempDir};
 use predicates::prelude::*;
+
+mod common;
 
 fn data_local_dir(home_dir: &impl PathChild) -> ChildPath {
     if cfg!(target_os = "linux") {
@@ -17,20 +17,11 @@ fn data_local_dir(home_dir: &impl PathChild) -> ChildPath {
     panic!("unsupported platform");
 }
 
-fn souko_cmd(home_dir: &Path) -> Command {
-    let mut cmd = Command::cargo_bin("souko").unwrap();
-    cmd.envs([
-        ("HOME", home_dir.as_os_str()),
-        ("SOUKO_INTEGRATION_TEST", "true".as_ref()),
-    ]);
-    cmd
-}
-
 #[test]
 fn show_help_message() {
     let home = TempDir::new().unwrap();
 
-    souko_cmd(home.path())
+    common::souko_cmd(home.path())
         .args(["--help"])
         .assert()
         .success()
@@ -41,7 +32,7 @@ fn show_help_message() {
 fn clone_and_list() {
     let home = TempDir::new().unwrap();
 
-    souko_cmd(home.path())
+    common::souko_cmd(home.path())
         .args(["clone", "gifnksm/souko"])
         .assert()
         .success()
@@ -51,7 +42,7 @@ fn clone_and_list() {
         .child("root/github.com/gifnksm/souko/.git")
         .assert(predicate::path::is_dir());
 
-    souko_cmd(home.path())
+    common::souko_cmd(home.path())
         .args(["list"])
         .assert()
         .success()

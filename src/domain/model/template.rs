@@ -153,6 +153,8 @@ mod tests {
         assert!(is_valid_variable("foo123"));
         assert!(is_valid_variable("foo_bar"));
         assert!(is_valid_variable("foo_bar_baz"));
+        assert!(is_valid_variable("a"));
+        assert!(is_valid_variable("_"));
         assert!(!is_valid_variable(""));
         assert!(!is_valid_variable("foo bar"));
         assert!(!is_valid_variable("foo-bar"));

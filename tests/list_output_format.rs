@@ -1,30 +1,23 @@
-use std::{path::Path, process::Command};
+use std::path::Path;
 
 use assert_cmd::prelude::*;
 use assert_fs::TempDir;
 use predicates::prelude::*;
 use serde_json::Value;
 
-fn souko_cmd(home_dir: &Path) -> Command {
-    let mut cmd = Command::cargo_bin("souko").unwrap();
-    cmd.envs([
-        ("HOME", home_dir.as_os_str()),
-        ("SOUKO_INTEGRATION_TEST", "true".as_ref()),
-    ]);
-    cmd
-}
+mod common;
 
 #[test]
 fn list_with_template_output() {
     let home = TempDir::new().unwrap();
 
-    souko_cmd(home.path())
+    common::souko_cmd(home.path())
         .args(["clone", "gifnksm/souko"])
         .assert()
         .success()
         .stdout(predicate::str::is_empty());
 
-    let output = souko_cmd(home.path())
+    let output = common::souko_cmd(home.path())
         .args([
             "list",
             "--template",
@@ -59,7 +52,7 @@ fn list_with_template_output() {
 fn list_template_and_json_are_mutually_exclusive() {
     let home = TempDir::new().unwrap();
 
-    souko_cmd(home.path())
+    common::souko_cmd(home.path())
         .args(["list", "--json", "--template", "{root_name}"])
         .assert()
         .failure()
@@ -71,13 +64,13 @@ fn list_template_and_json_are_mutually_exclusive() {
 fn list_json_output_is_valid_json_after_template_addition() {
     let home = TempDir::new().unwrap();
 
-    souko_cmd(home.path())
+    common::souko_cmd(home.path())
         .args(["clone", "gifnksm/souko"])
         .assert()
         .success()
         .stdout(predicate::str::is_empty());
 
-    let output = souko_cmd(home.path())
+    let output = common::souko_cmd(home.path())
         .args(["list", "--json"])
         .assert()
         .success()
