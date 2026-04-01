@@ -1,6 +1,7 @@
 use std::{
+    collections::HashMap,
     io::{self, Write},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 use chrono::{Duration, Utc};
@@ -13,19 +14,51 @@ use crate::{
         path_like::PathLike,
         repo::CanonicalRepo,
         root::{CanonicalRoot, Root},
+        template::Template,
     },
     presentation::{args::GlobalArgs, config::Config, model::optional_param::OptionalParam},
 };
 
 #[derive(Debug, Clone, Default, clap::Args)]
 pub(super) struct Args {
-    /// Name of the root under which the repository will be listed
-    #[clap(long = "root")]
+    /// List repositories only under the specified root (repeatable)
+    #[arg(long = "root")]
     root_name: Option<Vec<String>>,
 
-    /// Output as JSON
-    #[clap(long)]
+    #[command(flatten)]
+    format: FormatArgs,
+}
+
+#[derive(Debug, Clone, Default, clap::Args)]
+#[group(id = "format", multiple = false)]
+struct FormatArgs {
+    /// Output repositories as JSON
+    #[arg(long)]
     json: bool,
+    /// Output each repository using a template string
+    #[arg(long)]
+    template: Option<Template>,
+}
+
+#[derive(Debug, Clone, Default)]
+enum Format {
+    #[default]
+    Default,
+    Json,
+    Template(Template),
+}
+
+impl From<FormatArgs> for Format {
+    fn from(value: FormatArgs) -> Self {
+        let FormatArgs { json, template } = value;
+        if json {
+            Self::Json
+        } else if let Some(template) = template {
+            Self::Template(template)
+        } else {
+            Self::Default
+        }
+    }
 }
 
 impl Args {
@@ -93,10 +126,10 @@ impl Args {
         let repo_cache_path = global_args.repo_cache_path();
         root_service.load_repo_cache(repo_cache_path.value(), now, cache_expire_duration);
 
-        let res = if self.json {
-            emit_json(roots, repos_in_root)
-        } else {
-            emit_text(roots, repos_in_root)
+        let res = match self.format.clone().into() {
+            Format::Default => emit_text(roots, repos_in_root),
+            Format::Json => emit_json(roots, repos_in_root),
+            Format::Template(template) => emit_template(roots, repos_in_root, template),
         };
 
         root_service.store_repo_cache(repo_cache_path.value());
@@ -141,7 +174,47 @@ where
             println!("{}", repo.canonical_path().display());
         }
     }
+    Ok(())
+}
 
+fn format_path(path: &Path) -> String {
+    path.display().to_string()
+}
+
+fn template_variables(root: &CanonicalRoot, repo: &CanonicalRepo) -> HashMap<&'static str, String> {
+    HashMap::from_iter([
+        ("root_name", root.name().to_string()),
+        (
+            "root_display_path",
+            format_path(root.path().as_display_path()),
+        ),
+        ("root_real_path", format_path(root.path().as_real_path())),
+        ("root_canonical_path", format_path(root.canonical_path())),
+        (
+            "repo_relative_path",
+            format_path(repo.relative_path().as_real_path()),
+        ),
+        (
+            "repo_display_path",
+            format_path(repo.path().as_display_path()),
+        ),
+        ("repo_real_path", format_path(repo.path().as_real_path())),
+        ("repo_canonical_path", format_path(repo.canonical_path())),
+    ])
+}
+
+fn emit_template<Roots, F, Repos>(roots: Roots, repos_in_root: F, template: Template) -> Result<()>
+where
+    Roots: Iterator<Item = CanonicalRoot>,
+    F: Fn(&CanonicalRoot) -> Repos,
+    Repos: Iterator<Item = CanonicalRepo>,
+{
+    for root in roots {
+        for repo in repos_in_root(&root) {
+            let variables = template_variables(&root, &repo);
+            println!("{}", template.expand(&variables));
+        }
+    }
     Ok(())
 }
 

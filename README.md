@@ -31,7 +31,61 @@ $ souko list
 # => list of absolute paths of all repositories cloned with souko
 ```
 
-By combining souko, fuzzy finder, and shell functions, you can easily jump between repositories (TODO: add shell script example).
+For picker tools such as fzf/skim, you can customize each output line with `--template`.
+
+```console
+$ souko list --template $'{root_name}\t{repo_relative_path}\t{repo_canonical_path}'
+# => default    github.com/gifnksm/souko    /home/you/.local/share/souko/root/github.com/gifnksm/souko
+```
+
+`--template` uses souko's template variables (no extra escape-sequence processing is done by souko itself; quoting/escaping is handled by your shell).
+
+Terminology:
+
+- `root`: one `[[root]]` entry in config (for example, `default` or `repos`)
+- `repo`: each Git repository found under a root
+
+Available variables:
+
+- `{root_name}`
+- `{root_display_path}`
+- `{root_real_path}`
+- `{root_canonical_path}`
+- `{repo_relative_path}`
+- `{repo_display_path}`
+- `{repo_real_path}`
+- `{repo_canonical_path}`
+
+Path variable semantics:
+
+- `relative_path`: path relative to the selected root (for repositories, this is `{repo_relative_path}`)
+- `display_path`: user-facing path representation (may include `~` and may not be absolute)
+- `real_path`: absolute path before canonicalization (symlinks are not resolved)
+- `canonical_path`: canonical absolute path (symlinks resolved)
+
+By combining souko, fuzzy finder, and shell functions, you can easily jump between repositories.
+
+Example with skim (`sk`):
+
+```console
+$ repo_dir="$(
+    souko list --template $'{root_name} {repo_relative_path}\t{repo_canonical_path}' |
+      sk --delimiter $'\t' --with-nth 1 --nth 1 |
+      cut -f2
+  )"
+$ printf '%s\n' "$repo_dir"
+```
+
+Example with fzf:
+
+```console
+$ repo_dir="$(
+    souko list --template $'{root_name} {repo_relative_path}\t{repo_canonical_path}' |
+      fzf --delimiter=$'\t' --with-nth=1 |
+      cut -f2
+  )"
+$ printf '%s\n' "$repo_dir"
+```
 
 ## Configuration
 
@@ -67,7 +121,7 @@ Choose any one of the methods below that best suits your needs.
 
 Following packages are available:
 
-* Arch Linux (AUR): [souko](https://aur.archlinux.org/packages/souko/) or [souko-bin](https://aur.archlinux.org/packages/souko-bin/)
+- Arch Linux (AUR): [souko](https://aur.archlinux.org/packages/souko/) or [souko-bin](https://aur.archlinux.org/packages/souko-bin/)
 
 ### Pre-built binaries
 
@@ -110,9 +164,9 @@ Once a crate has reached 1.x, any MSRV bump will be accompanied by a new minor v
 
 This project is licensed under either of
 
-* Apache License, Version 2.0
+- Apache License, Version 2.0
    ([LICENSE-APACHE](LICENSE-APACHE) or <http://www.apache.org/licenses/LICENSE-2.0>)
-* MIT license
+- MIT license
    ([LICENSE-MIT](LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
 
 at your option.
