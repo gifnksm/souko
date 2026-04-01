@@ -72,13 +72,13 @@ pub(crate) struct ParseOption {
 }
 
 #[derive(Debug, Default, Serialize)]
-struct CustomSchemaTemplateContext<'a> {
+struct CustomSchemeTemplateContext<'a> {
     path: &'a str,
 }
 
-impl<'a> TemplateContext for CustomSchemaTemplateContext<'a> {}
+impl<'a> TemplateContext for CustomSchemeTemplateContext<'a> {}
 
-impl<'a> CustomSchemaTemplateContext<'a> {
+impl<'a> CustomSchemeTemplateContext<'a> {
     fn new(path: &'a str) -> Self {
         Self { path }
     }
@@ -140,7 +140,7 @@ impl Query {
 
                 // custom scheme
                 if let Some(template) = option.custom_scheme.get(scheme) {
-                    let context = CustomSchemaTemplateContext::new(rest);
+                    let context = CustomSchemeTemplateContext::new(rest);
                     query = template.validate_and_expand(&context).map_err(|source| {
                         ParseError::TemplateValidation {
                             source,

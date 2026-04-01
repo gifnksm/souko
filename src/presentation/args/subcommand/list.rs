@@ -57,7 +57,7 @@ impl FormatArgs {
         if *json {
             Ok(Format::Json)
         } else if let Some(template) = template {
-            template.validate::<RepoListTemplateContext>()?;
+            template.validate::<RepoListTemplateContext<'_>>()?;
             Ok(Format::Template(template.clone()))
         } else {
             Ok(Format::Default)
