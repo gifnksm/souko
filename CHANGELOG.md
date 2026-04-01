@@ -9,9 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - ReleaseDate
 
+### Added
+
+* `souko list --template <FORMAT>`: new template-based output format for customizing list output
+  * Useful for integrating with picker tools such as fzf and skim
+  * Available variables include `root_name`, `repo_relative_path`, `repo_canonical_path`, etc.
+
+### Fixed
+
+* `query.scheme_alias` and `query.custom_scheme` fields in `config.toml` can now be omitted without causing a parse error
+
+### Changed
+
+* Minimum Supported Rust Version (MSRV) bumped to 1.88.0 (was 1.82.0)
+* Updated dependencies
+
 ## [0.2.2] - 2024-12-27
 
+### Changed
+
+* Updated dependencies
+
 ## [0.2.1] - 2024-09-11
+
+### Changed
+
+* Updated dependencies
 
 ## [0.2.0] - 2023-09-17
 
