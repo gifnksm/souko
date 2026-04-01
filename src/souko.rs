@@ -11,9 +11,9 @@ impl Souko {
     }
 
     pub fn main(bin_name: &str) -> Result<()> {
-        let presentation = Presentation::from_env(bin_name);
-
         color_eyre::install()?;
+
+        let presentation = Presentation::from_env(bin_name)?;
 
         tracing_subscriber::fmt()
             .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())

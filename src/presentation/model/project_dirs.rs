@@ -4,9 +4,6 @@ use std::{
 };
 
 use color_eyre::eyre::{eyre, Result};
-use once_cell::sync::OnceCell;
-
-static PROJECT_DIRS: OnceCell<ProjectDirs> = OnceCell::new();
 
 #[derive(Debug, Clone)]
 pub(in super::super) struct ProjectDirs {
@@ -17,21 +14,7 @@ pub(in super::super) struct ProjectDirs {
 }
 
 impl ProjectDirs {
-    pub(in super::super) fn init() -> Result<()> {
-        let project_dirs = ProjectDirs::new()?;
-        PROJECT_DIRS
-            .set(project_dirs)
-            .expect("BUG: failed to set project directories");
-        Ok(())
-    }
-
-    pub(in super::super) fn get() -> &'static Self {
-        PROJECT_DIRS
-            .get()
-            .expect("BUG: ProjectDirs::get() called before ProjectDirs::init()")
-    }
-
-    fn new() -> Result<Self> {
+    pub(in super::super) fn new() -> Result<Self> {
         let integration_test = env::var_os("SOUKO_INTEGRATION_TEST").is_some();
         let inner = directories::ProjectDirs::from("", "", env!("CARGO_PKG_NAME"))
             .ok_or_else(|| eyre!("failed to get project directories"))?;
@@ -53,6 +36,23 @@ impl ProjectDirs {
             config_dir,
             data_local_dir,
             cache_dir,
+            inner,
+        })
+    }
+
+    #[cfg(test)]
+    pub(in super::super) fn new_for_test(
+        config_dir: impl Into<PathBuf>,
+        data_local_dir: impl Into<PathBuf>,
+        cache_dir: impl Into<PathBuf>,
+    ) -> Result<Self> {
+        let inner = directories::ProjectDirs::from("", "", env!("CARGO_PKG_NAME"))
+            .ok_or_else(|| eyre!("failed to get project directories"))?;
+
+        Ok(Self {
+            config_dir: Some(config_dir.into()),
+            data_local_dir: Some(data_local_dir.into()),
+            cache_dir: Some(cache_dir.into()),
             inner,
         })
     }

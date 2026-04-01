@@ -1,7 +1,7 @@
 use color_eyre::eyre::Result;
 
 use super::GlobalArgs;
-use crate::application::service::Service;
+use crate::{application::service::Service, presentation::model::project_dirs::ProjectDirs};
 
 mod clone;
 mod list;
@@ -15,10 +15,15 @@ pub(super) enum Subcommand {
 }
 
 impl Subcommand {
-    pub(super) fn run(&self, global_args: &GlobalArgs, service: &Service) -> Result<()> {
+    pub(super) fn run(
+        &self,
+        global_args: &GlobalArgs,
+        service: &Service,
+        project_dirs: &ProjectDirs,
+    ) -> Result<()> {
         match self {
-            Self::Clone(args) => args.inner.run(global_args, service),
-            Self::List(args) => args.inner.run(global_args, service),
+            Self::Clone(args) => args.inner.run(global_args, service, project_dirs),
+            Self::List(args) => args.inner.run(global_args, service, project_dirs),
         }
     }
 }

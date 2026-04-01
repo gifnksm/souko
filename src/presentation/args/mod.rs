@@ -37,20 +37,23 @@ struct GlobalArgs {
 }
 
 impl GlobalArgs {
-    fn config_path(&'_ self) -> OptionalParam<TildePath> {
+    pub(super) fn config_path(&'_ self, project_dirs: &ProjectDirs) -> OptionalParam<TildePath> {
         OptionalParam::new("config", self.config_path.clone(), || {
-            TildePath::from_real_path(ProjectDirs::get().config_dir().join("config.toml"))
+            TildePath::from_real_path(project_dirs.config_dir().join("config.toml"))
         })
     }
 
-    fn repo_cache_path(&'_ self) -> OptionalParam<TildePath> {
+    pub(super) fn repo_cache_path(
+        &'_ self,
+        project_dirs: &ProjectDirs,
+    ) -> OptionalParam<TildePath> {
         OptionalParam::new("repo-cache", self.repo_cache_path.clone(), || {
-            TildePath::from_real_path(ProjectDirs::get().cache_dir().join("repos.json"))
+            TildePath::from_real_path(project_dirs.cache_dir().join("repos.json"))
         })
     }
 
-    fn config(&self) -> Result<Config> {
-        let config_path = self.config_path();
+    pub(super) fn config(&self, project_dirs: &ProjectDirs) -> Result<Config> {
+        let config_path = self.config_path(project_dirs);
         let config = match file::load_toml(config_path.name(), config_path.value())? {
             Some(config) => config,
             None if config_path.is_default() => Config::default(),
@@ -68,9 +71,9 @@ impl Args {
         self.global_args.verbosity.verbosity()
     }
 
-    pub(super) fn run(&self, service: &Service) -> Result<()> {
+    pub(super) fn run(&self, service: &Service, project_dirs: &ProjectDirs) -> Result<()> {
         match &self.subcommand {
-            Some(subcommand) => subcommand.run(&self.global_args, service)?,
+            Some(subcommand) => subcommand.run(&self.global_args, service, project_dirs)?,
             None => <Args as clap::CommandFactory>::command().print_help()?,
         }
         Ok(())

@@ -3,7 +3,11 @@ use color_eyre::eyre::{eyre, Result, WrapErr};
 use crate::{
     application::service::Service,
     domain::model::{path_like::PathLike, query::Query, root::Root},
-    presentation::{args::GlobalArgs, config::Config, model::optional_param::OptionalParam},
+    presentation::{
+        args::GlobalArgs,
+        config::Config,
+        model::{optional_param::OptionalParam, project_dirs::ProjectDirs},
+    },
 };
 
 #[derive(Debug, Clone, Default, clap::Args)]
@@ -28,16 +32,16 @@ pub(super) struct Args {
 }
 
 impl Args {
-    fn root(&self, config: &Config) -> Result<OptionalParam<Root>> {
+    fn root(&self, config: &Config, project_dirs: &ProjectDirs) -> Result<OptionalParam<Root>> {
         let root = match &self.root_name {
             Some(name) => {
-                let roots = config.roots();
+                let roots = config.roots(project_dirs);
                 roots
                     .get(name)
                     .cloned()
                     .ok_or_else(|| eyre!("root `{name}` not found in config file"))?
             }
-            None => config.default_root().clone(),
+            None => config.default_root(project_dirs).clone(),
         };
         Ok(root)
     }
@@ -50,10 +54,15 @@ impl Args {
         Ok(query)
     }
 
-    pub(super) fn run(&self, global_args: &GlobalArgs, service: &Service) -> Result<()> {
-        let config = global_args.config()?;
+    pub(super) fn run(
+        &self,
+        global_args: &GlobalArgs,
+        service: &Service,
+        project_dirs: &ProjectDirs,
+    ) -> Result<()> {
+        let config = global_args.config(project_dirs)?;
 
-        let root = self.root(&config)?;
+        let root = self.root(&config, project_dirs)?;
         let query = self.query(&config)?;
 
         let root_service = service.root();

@@ -14,10 +14,11 @@ mod model;
 #[derive(Debug)]
 pub(crate) struct Presentation {
     args: Args,
+    project_dirs: ProjectDirs,
 }
 
 impl Presentation {
-    pub(crate) fn from_env(bin_name: &str) -> Self {
+    pub(crate) fn from_env(bin_name: &str) -> Result<Self> {
         let env_prefix = bin_name.to_uppercase().replace("-", "_");
         if let Ok(shell) = env::var(format!("{env_prefix}_PRINT_COMPLETION")) {
             Self::print_completion(bin_name, &shell);
@@ -38,7 +39,8 @@ impl Presentation {
             env::set_var("RUST_LOG", level_str)
         }
 
-        Self { args }
+        let project_dirs = ProjectDirs::new()?;
+        Ok(Self { args, project_dirs })
     }
 
     pub(crate) fn command() -> clap::Command {
@@ -46,8 +48,7 @@ impl Presentation {
     }
 
     pub(crate) fn main(self, service: &Service) -> Result<()> {
-        ProjectDirs::init()?;
-        self.args.run(service)?;
+        self.args.run(service, &self.project_dirs)?;
         Ok(())
     }
 
