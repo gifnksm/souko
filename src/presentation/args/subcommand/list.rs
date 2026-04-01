@@ -1,5 +1,4 @@
 use std::{
-    collections::HashMap,
     io::{self, Write},
     path::{Path, PathBuf},
 };
@@ -14,7 +13,7 @@ use crate::{
         path_like::PathLike,
         repo::CanonicalRepo,
         root::{CanonicalRoot, Root},
-        template::Template,
+        template::{Template, TemplateContext},
     },
     presentation::{
         args::GlobalArgs,
@@ -52,15 +51,16 @@ enum Format {
     Template(Template),
 }
 
-impl From<FormatArgs> for Format {
-    fn from(value: FormatArgs) -> Self {
-        let FormatArgs { json, template } = value;
-        if json {
-            Self::Json
+impl FormatArgs {
+    fn validate(&self) -> Result<Format> {
+        let FormatArgs { json, template } = self;
+        if *json {
+            Ok(Format::Json)
         } else if let Some(template) = template {
-            Self::Template(template)
+            template.validate::<RepoListTemplateContext>()?;
+            Ok(Format::Template(template.clone()))
         } else {
-            Self::Default
+            Ok(Format::Default)
         }
     }
 }
@@ -94,6 +94,7 @@ impl Args {
         service: &Service,
         project_dirs: &ProjectDirs,
     ) -> Result<()> {
+        let format = self.format.validate()?;
         let config = global_args.config(project_dirs)?;
         let roots = self.roots(&config, project_dirs)?;
 
@@ -139,7 +140,7 @@ impl Args {
         let repo_cache_path = global_args.repo_cache_path(project_dirs);
         root_service.load_repo_cache(repo_cache_path.value(), now, cache_expire_duration);
 
-        let res = match self.format.clone().into() {
+        let res = match format {
             Format::Default => emit_text(roots, repos_in_root),
             Format::Json => emit_json(roots, repos_in_root),
             Format::Template(template) => emit_template(roots, repos_in_root, template),
@@ -190,30 +191,48 @@ where
     Ok(())
 }
 
-fn format_path(path: &Path) -> String {
-    path.display().to_string()
+#[derive(Debug, Clone, Serialize)]
+struct RepoListTemplateContext<'a> {
+    root_name: &'a str,
+    root_display_path: &'a Path,
+    root_real_path: &'a Path,
+    root_canonical_path: &'a Path,
+    repo_relative_path: &'a Path,
+    repo_display_path: &'a Path,
+    repo_real_path: &'a Path,
+    repo_canonical_path: &'a Path,
 }
 
-fn template_variables(root: &CanonicalRoot, repo: &CanonicalRepo) -> HashMap<&'static str, String> {
-    HashMap::from_iter([
-        ("root_name", root.name().to_string()),
-        (
-            "root_display_path",
-            format_path(root.path().as_display_path()),
-        ),
-        ("root_real_path", format_path(root.path().as_real_path())),
-        ("root_canonical_path", format_path(root.canonical_path())),
-        (
-            "repo_relative_path",
-            format_path(repo.relative_path().as_real_path()),
-        ),
-        (
-            "repo_display_path",
-            format_path(repo.path().as_display_path()),
-        ),
-        ("repo_real_path", format_path(repo.path().as_real_path())),
-        ("repo_canonical_path", format_path(repo.canonical_path())),
-    ])
+impl<'a> Default for RepoListTemplateContext<'a> {
+    fn default() -> Self {
+        Self {
+            root_name: Default::default(),
+            root_display_path: Path::new(""),
+            root_real_path: Path::new(""),
+            root_canonical_path: Path::new(""),
+            repo_relative_path: Path::new(""),
+            repo_display_path: Path::new(""),
+            repo_real_path: Path::new(""),
+            repo_canonical_path: Path::new(""),
+        }
+    }
+}
+
+impl<'a> TemplateContext for RepoListTemplateContext<'a> {}
+
+impl<'a> RepoListTemplateContext<'a> {
+    fn new(root: &'a CanonicalRoot, repo: &'a CanonicalRepo) -> Self {
+        Self {
+            root_name: root.name(),
+            root_display_path: root.path().as_display_path(),
+            root_real_path: root.path().as_real_path(),
+            root_canonical_path: root.canonical_path(),
+            repo_relative_path: repo.relative_path(),
+            repo_display_path: repo.path().as_display_path(),
+            repo_real_path: repo.path().as_real_path(),
+            repo_canonical_path: repo.canonical_path(),
+        }
+    }
 }
 
 fn emit_template<Roots, F, Repos>(roots: Roots, repos_in_root: F, template: Template) -> Result<()>
@@ -224,8 +243,8 @@ where
 {
     for root in roots {
         for repo in repos_in_root(&root) {
-            let variables = template_variables(&root, &repo);
-            println!("{}", template.expand(&variables));
+            let context = RepoListTemplateContext::new(&root, &repo);
+            println!("{}", template.expand(&context));
         }
     }
     Ok(())

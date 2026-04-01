@@ -1,14 +1,14 @@
 use std::{
-    borrow::Borrow,
-    collections::HashMap,
-    fmt::{Display, Write},
-    hash::Hash,
+    any,
+    collections::{HashMap, HashSet},
+    fmt::{self, Display, Write},
     str::FromStr,
 };
 
 use once_cell::sync::Lazy;
 use regex::Regex;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use thiserror::Error;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -17,13 +17,48 @@ pub(crate) struct Template {
     parts: Vec<Parts>,
 }
 
+#[derive(Debug, Error)]
+pub(crate) enum TemplateValidateError {
+    #[error("unknown template variable: {0:?}")]
+    UnknownTemplateVariable(String),
+}
+
 impl Template {
-    pub(crate) fn expand<K, V>(&self, variables: &HashMap<K, V>) -> String
+    pub(crate) fn validate_and_expand<C>(
+        &self,
+        context: &C,
+    ) -> Result<String, TemplateValidateError>
     where
-        K: Borrow<str> + Eq + Hash,
-        V: Display,
+        C: TemplateContext,
+    {
+        self.validate::<C>()?;
+        Ok(self.expand(context))
+    }
+
+    pub(crate) fn validate<C>(&self) -> Result<(), TemplateValidateError>
+    where
+        C: TemplateContext,
+    {
+        let valid_names = C::variable_names();
+        for part in &self.parts {
+            match part {
+                Parts::Text(_) => {}
+                Parts::Variable(name) => {
+                    if !valid_names.contains(name) {
+                        return Err(TemplateValidateError::UnknownTemplateVariable(name.clone()));
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
+    pub(crate) fn expand<C>(&self, context: &C) -> String
+    where
+        C: TemplateContext,
     {
         let mut result = String::new();
+        let variables = context.to_hashmap();
         for part in &self.parts {
             match part {
                 Parts::Variable(name) => {
@@ -35,6 +70,40 @@ impl Template {
             }
         }
         result
+    }
+}
+
+pub(crate) trait TemplateContext: Serialize + Default + fmt::Debug {
+    fn to_hashmap(&self) -> HashMap<String, String> {
+        let Ok(Value::Object(obj)) = serde_json::to_value(self) else {
+            panic!(
+                "TemplateContext invariant violated: context must serialize to a JSON object (type: {})",
+                any::type_name::<Self>()
+            );
+        };
+        obj.into_iter()
+            .map(|(k, v)| {
+                let Some(v) = v.as_str() else {
+                    panic!(
+                        "TemplateContext invariant violated: all template values must serialize to JSON string (type: {}, key: {})",
+                        any::type_name::<Self>(),
+                        k
+                    );
+                };
+                (k, v.to_owned())
+            })
+            .collect()
+    }
+
+    fn variable_names() -> HashSet<String> {
+        let value = Self::default();
+        let Ok(Value::Object(obj)) = serde_json::to_value(&value) else {
+            panic!(
+                "TemplateContext invariant violated: TemplateContext::default() must serialize to a JSON object (type: {})",
+                any::type_name::<Self>()
+            );
+        };
+        obj.keys().cloned().collect()
     }
 }
 
@@ -148,6 +217,25 @@ impl TryFrom<&str> for Template {
 mod tests {
     use super::*;
 
+    #[derive(Debug, Default, Serialize)]
+    struct TestTemplateContext {
+        food: String,
+        frequency: String,
+        drink: String,
+    }
+
+    impl TestTemplateContext {
+        fn new(food: &str, frequency: &str, drink: &str) -> Self {
+            Self {
+                food: food.to_owned(),
+                frequency: frequency.to_owned(),
+                drink: drink.to_owned(),
+            }
+        }
+    }
+
+    impl TemplateContext for TestTemplateContext {}
+
     #[test]
     fn test_is_valid_variable() {
         assert!(is_valid_variable("foo123"));
@@ -213,33 +301,56 @@ mod tests {
     }
 
     #[test]
+    fn test_validate_ok() {
+        let temp = Template::from_str("I like {food} very much").unwrap();
+        assert!(temp.validate::<TestTemplateContext>().is_ok());
+
+        let temp = Template::from_str("{food} {frequency} {drink}").unwrap();
+        assert!(temp.validate::<TestTemplateContext>().is_ok());
+    }
+
+    #[test]
+    fn test_validate_err_unknown_template_variable() {
+        let temp = Template::from_str("I like {food} and {dessert}").unwrap();
+        let err = temp.validate::<TestTemplateContext>().unwrap_err();
+        assert!(matches!(
+            err,
+            TemplateValidateError::UnknownTemplateVariable(s) if s == "dessert"
+        ));
+    }
+
+    #[test]
+    fn test_validate_and_expand() {
+        let temp = Template::from_str("{food} {frequency}").unwrap();
+        assert_eq!(
+            temp.validate_and_expand(&TestTemplateContext::new("sushi", "everyday", "tea"))
+                .unwrap(),
+            "sushi everyday"
+        );
+    }
+
+    #[test]
     fn test_expand() {
         let temp = Template::from_str("I like {food} very much").unwrap();
         assert_eq!(
-            temp.expand(&HashMap::from_iter([("food", "sushi")])),
+            temp.expand(&TestTemplateContext::new("sushi", "", "")),
             "I like sushi very much"
         );
         assert_eq!(
-            temp.expand(&HashMap::from_iter([("food", "ramen")])),
+            temp.expand(&TestTemplateContext::new("ramen", "", "")),
             "I like ramen very much"
         );
 
         let temp = Template::from_str("no variable template").unwrap();
         assert_eq!(
-            temp.expand(&HashMap::from_iter([
-                ("food", "sushi"),
-                ("drink", "green tea")
-            ])),
+            temp.expand(&TestTemplateContext::new("sushi", "", "green tea")),
             "no variable template"
         );
 
         let temp =
             Template::from_str("{food} is my favorite food. I eat {food} {frequency}").unwrap();
         assert_eq!(
-            temp.expand(&HashMap::from_iter([
-                ("food", "sushi"),
-                ("frequency", "everyday")
-            ])),
+            temp.expand(&TestTemplateContext::new("sushi", "everyday", "")),
             "sushi is my favorite food. I eat sushi everyday"
         );
     }
