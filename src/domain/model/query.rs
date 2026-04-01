@@ -3,8 +3,11 @@ use std::{
     fmt::{self, Display},
 };
 
+use serde::Serialize;
 use thiserror::Error;
 use url::Url;
+
+use crate::domain::model::template::{TemplateContext, TemplateValidateError};
 
 use super::{scheme::Scheme, template::Template};
 
@@ -29,6 +32,13 @@ pub(crate) enum ParseError {
     },
     #[error("invalid option: circular alias {}", ErrorDisplayHelper { original_query, expanded_query })]
     CircularAlias {
+        original_query: String,
+        expanded_query: String,
+    },
+    #[error("template validation error in custom scheme {}", ErrorDisplayHelper { original_query, expanded_query })]
+    TemplateValidation {
+        #[source]
+        source: TemplateValidateError,
         original_query: String,
         expanded_query: String,
     },
@@ -59,6 +69,19 @@ pub(crate) struct ParseOption {
     pub(crate) default_scheme: Option<Scheme>,
     pub(crate) scheme_alias: HashMap<Scheme, Scheme>,
     pub(crate) custom_scheme: HashMap<Scheme, Template>,
+}
+
+#[derive(Debug, Default, Serialize)]
+struct CustomSchemeTemplateContext<'a> {
+    path: &'a str,
+}
+
+impl<'a> TemplateContext for CustomSchemeTemplateContext<'a> {}
+
+impl<'a> CustomSchemeTemplateContext<'a> {
+    fn new(path: &'a str) -> Self {
+        Self { path }
+    }
 }
 
 impl Query {
@@ -117,7 +140,14 @@ impl Query {
 
                 // custom scheme
                 if let Some(template) = option.custom_scheme.get(scheme) {
-                    query = template.expand(&HashMap::from_iter([("path", rest)]));
+                    let context = CustomSchemeTemplateContext::new(rest);
+                    query = template.validate_and_expand(&context).map_err(|source| {
+                        ParseError::TemplateValidation {
+                            source,
+                            original_query: original_query.clone(),
+                            expanded_query: query,
+                        }
+                    })?;
                     continue;
                 }
 
@@ -243,5 +273,30 @@ mod tests {
             err.to_string(),
             "invalid option: circular alias `d4:test` (expanded to `d4:xytest`)"
         );
+    }
+
+    #[test]
+    fn test_parse_with_invalid_custom_scheme_template() {
+        let option = ParseOption {
+            default_scheme: None,
+            scheme_alias: HashMap::new(),
+            custom_scheme: HashMap::from_iter([(
+                "github".parse().unwrap(),
+                "https://github.com/{owner}/{repo}.git".parse().unwrap(),
+            )]),
+        };
+
+        let err = Query::parse("github:gifnksm/souko", &option).unwrap_err();
+        assert_eq!(
+            err.to_string(),
+            "template validation error in custom scheme `github:gifnksm/souko`"
+        );
+        assert!(matches!(
+            err,
+            ParseError::TemplateValidation {
+                source: TemplateValidateError::UnknownTemplateVariable(s),
+                ..
+            } if s == "owner"
+        ));
     }
 }
