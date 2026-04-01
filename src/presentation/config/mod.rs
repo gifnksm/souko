@@ -48,29 +48,6 @@ mod tests {
     use super::*;
     use crate::domain::model::path_like::PathLike;
 
-    // We intentionally deserialize only the `[query]` subtree in these tests.
-    //
-    // Why not deserialize top-level `Config`?
-    // - `Config` includes `root_map`.
-    // - `root_map` default construction depends on `ProjectDirs::get()`, which
-    //   requires global initialization and is unrelated to query-map regression coverage.
-    //
-    // This wrapper keeps the test focused on the real failure mode:
-    // deserializing nested `[query]` / `[query.custom_scheme]` when some query
-    // fields are omitted.
-    #[derive(Debug, Deserialize)]
-    #[serde(deny_unknown_fields)]
-    struct QueryOnlyWrapper {
-        #[serde(rename = "query")]
-        query_config: QueryConfig,
-    }
-
-    impl QueryOnlyWrapper {
-        fn into_parse_option(self) -> ParseOption {
-            self.query_config.into()
-        }
-    }
-
     #[test]
     fn deserialize_query_without_scheme_alias_applies_overrides_and_merges_defaults() {
         let input = r#"
@@ -82,8 +59,8 @@ mod tests {
             sourcehut = "https://git.sr.ht/~{path}"
         "#;
 
-        let wrapper: QueryOnlyWrapper = toml_edit::de::from_str(input).unwrap();
-        let option = wrapper.into_parse_option();
+        let config: Config = toml_edit::de::from_str(input).unwrap();
+        let option = config.query_parse_option();
 
         assert_eq!(option.default_scheme, Some("gl".parse().unwrap()));
         assert_eq!(
@@ -114,8 +91,8 @@ mod tests {
             default_scheme = "gh"
         "#;
 
-        let wrapper: QueryOnlyWrapper = toml_edit::de::from_str(input).unwrap();
-        let option = wrapper.into_parse_option();
+        let config: Config = toml_edit::de::from_str(input).unwrap();
+        let option = config.query_parse_option();
 
         assert_eq!(option.default_scheme, Some("gh".parse().unwrap()));
 
