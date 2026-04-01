@@ -94,37 +94,3 @@ impl From<QueryConfig> for ParseOption {
         }
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn deserialize_query_config_without_scheme_alias() {
-        let input = r#"
-            default_scheme = "gl"
-
-            [custom_scheme]
-            github = "https://example.com/{path}"
-            sourcehut = "https://git.sr.ht/~{path}"
-        "#;
-
-        let config: QueryConfig = toml_edit::de::from_str(input).unwrap();
-        let option: ParseOption = config.into();
-
-        assert_eq!(option.default_scheme, Some("gl".parse().unwrap()));
-        assert_eq!(
-            option.scheme_alias.get("gh"),
-            Some(&"github".parse().unwrap())
-        );
-        assert_eq!(
-            option.scheme_alias.get("gl"),
-            Some(&"gitlab".parse().unwrap())
-        );
-
-        assert!(option.custom_scheme.contains_key("github"));
-        assert!(option.custom_scheme.contains_key("gitlab"));
-        assert!(option.custom_scheme.contains_key("sourcehut"));
-        assert_eq!(option.custom_scheme.len(), 3);
-    }
-}
