@@ -49,7 +49,9 @@ impl Default for QueryConfig {
 #[serde(deny_unknown_fields)]
 struct ConfigRepr {
     default_scheme: Option<Scheme>,
+    #[serde(default)]
     scheme_alias: HashMap<Scheme, Scheme>,
+    #[serde(default)]
     custom_scheme: HashMap<Scheme, Template>,
 }
 
