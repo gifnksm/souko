@@ -16,7 +16,11 @@ use crate::{
         root::{CanonicalRoot, Root},
         template::Template,
     },
-    presentation::{args::GlobalArgs, config::Config, model::optional_param::OptionalParam},
+    presentation::{
+        args::GlobalArgs,
+        config::Config,
+        model::{optional_param::OptionalParam, project_dirs::ProjectDirs},
+    },
 };
 
 #[derive(Debug, Clone, Default, clap::Args)]
@@ -62,9 +66,13 @@ impl From<FormatArgs> for Format {
 }
 
 impl Args {
-    fn roots(&self, config: &Config) -> Result<Vec<OptionalParam<Root>>> {
+    fn roots(
+        &self,
+        config: &Config,
+        project_dirs: &ProjectDirs,
+    ) -> Result<Vec<OptionalParam<Root>>> {
         let roots = if let Some(root_names) = &self.root_name {
-            let roots = config.roots();
+            let roots = config.roots(project_dirs);
             root_names
                 .iter()
                 .map(|name| {
@@ -75,14 +83,19 @@ impl Args {
                 })
                 .collect::<Result<_>>()?
         } else {
-            config.roots().values().cloned().collect()
+            config.roots(project_dirs).values().cloned().collect()
         };
         Ok(roots)
     }
 
-    pub(super) fn run(&self, global_args: &GlobalArgs, service: &Service) -> Result<()> {
-        let config = global_args.config()?;
-        let roots = self.roots(&config)?;
+    pub(super) fn run(
+        &self,
+        global_args: &GlobalArgs,
+        service: &Service,
+        project_dirs: &ProjectDirs,
+    ) -> Result<()> {
+        let config = global_args.config(project_dirs)?;
+        let roots = self.roots(&config, project_dirs)?;
 
         let root_service = service.root();
         let roots = roots.into_iter().filter_map(|root| {
@@ -123,7 +136,7 @@ impl Args {
         let now = Utc::now();
         let cache_expire_duration = Duration::try_days(3).unwrap();
 
-        let repo_cache_path = global_args.repo_cache_path();
+        let repo_cache_path = global_args.repo_cache_path(project_dirs);
         root_service.load_repo_cache(repo_cache_path.value(), now, cache_expire_duration);
 
         let res = match self.format.clone().into() {
