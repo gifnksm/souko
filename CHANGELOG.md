@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * `souko list --template <FORMAT>`: new template-based output format for customizing list output
   * Useful for integrating with picker tools such as fzf and skim
-  * Available variables include `root_name`, `repo_relative_path`, `repo_canonical_path`, etc.
+  * Available template variables include `root_name`, `repo_relative_path`, `repo_canonical_path`, etc.
+  * Unknown variable names in templates are detected and reported as errors at startup
 
 ### Fixed
 
@@ -21,32 +22,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* Migrated to Rust edition 2024; Minimum Supported Rust Version (MSRV) bumped to 1.88.0 (was 1.78.0)
+* Minimum Supported Rust Version (MSRV) bumped to 1.88.0 (was 1.78.0)
 * Updated dependencies
 
 ## [0.2.2] - 2024-12-27
 
 ### Changed
 
-* Minimum Supported Rust Version (MSRV) bumped to 1.78.0
+* Minimum Supported Rust Version (MSRV) bumped to 1.78.0 (was 1.74.0)
 * Updated dependencies
 
 ## [0.2.1] - 2024-09-11
 
 ### Fixed
 
-* Fixed output paths on Windows to no longer include UNC prefix (`\\?\`)
+* Output paths on Windows no longer include the UNC prefix (`\\?\`)
 
 ### Changed
 
+* Minimum Supported Rust Version (MSRV) bumped to 1.74.0 (was 1.70.0)
 * Updated dependencies
 
 ## [0.2.0] - 2023-09-17
 
+### Added
+
+* `vendored-libgit2` and `vendored-openssl` feature flags, which allow building without system libraries
+
 ### Changed
 
-* (breaking change) Use system `libgit2` and `libopenssl` by default
-  * If you want to use `souko` command without system dependencies, please build `souko` with`--features vendored-libgit2,vendored-libopenssl` flag.
+* **(Breaking)** System `libgit2` and `openssl` are now used by default instead of vendored copies
+  * To build without system dependencies, pass `--features vendored-libgit2,vendored-openssl`
 
 ## [0.1.2] - 2023-09-03
 
@@ -58,7 +64,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-* config.toml: `query` and `root` are now optional.
+* `query` and `root` sections in `config.toml` are now optional
 
 ## [0.1.0] - 2023-09-02
 
