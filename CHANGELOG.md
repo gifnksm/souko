@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * `souko list --template <FORMAT>`: new template-based output format for customizing list output ([#643](https://github.com/gifnksm/souko/pull/643), [#644](https://github.com/gifnksm/souko/pull/644))
   * Useful for integrating with picker tools such as fzf and skim
   * Available template variables include `root_name`, `repo_relative_path`, `repo_canonical_path`, etc.
-  * Unknown variable names in templates are detected and reported as errors at startup
+  * Unknown variable names in templates are detected and reported as errors when running `souko list` (during `--template` argument validation)
 
 ### Fixed
 
