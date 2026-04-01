@@ -4,10 +4,10 @@ use tracing::Level;
 #[derive(Debug, Clone, Default, clap::Args)]
 pub(super) struct Verbosity {
     /// More output per occurrence
-    #[clap(long, short = 'v', action = ArgAction::Count, global = true)]
+    #[arg(long, short = 'v', action = ArgAction::Count, global = true)]
     verbose: u8,
     /// Less output per occurrence
-    #[clap(
+    #[arg(
         long,
         short = 'q',
         action = ArgAction::Count,

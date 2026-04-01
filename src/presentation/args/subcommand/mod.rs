@@ -26,11 +26,11 @@ impl Subcommand {
 // To prevent leak of clone::Args and list::Args, we wrap them with our own Args
 #[derive(Debug, Clone, clap::Args)]
 pub(super) struct CloneArgs {
-    #[clap(flatten)]
+    #[command(flatten)]
     inner: clone::Args,
 }
 #[derive(Debug, Clone, clap::Args)]
 pub(super) struct ListArgs {
-    #[clap(flatten)]
+    #[command(flatten)]
     inner: list::Args,
 }

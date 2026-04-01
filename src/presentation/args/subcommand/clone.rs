@@ -9,7 +9,7 @@ use crate::{
 #[derive(Debug, Clone, Default, clap::Args)]
 pub(super) struct Args {
     /// Name of the root under which the repository will be cloned
-    #[clap(long = "root")]
+    #[arg(long = "root")]
     root_name: Option<String>,
 
     /// Git repository to clone repository from
@@ -23,7 +23,7 @@ pub(super) struct Args {
     /// * SSH URL: `ssh://git@github.com/gifnksm/souko.git`
     /// * Git URL: `git://github.com/gifnksm/souko.git`
     /// * scp-like: `git@github.com:gifnksm/souko.git`
-    #[clap(verbatim_doc_comment)]
+    #[arg(verbatim_doc_comment)]
     query: String,
 }
 

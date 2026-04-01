@@ -124,7 +124,7 @@ fn push_str(parts: &mut Vec<Parts>, s: &str) {
 
 fn is_valid_variable(s: &str) -> bool {
     static VARIABLE_RE: Lazy<Regex> =
-        Lazy::new(|| Regex::new(r"^[a-zA-Z_][a-zA-Z0-9_]+$").unwrap());
+        Lazy::new(|| Regex::new(r"^[a-zA-Z_][a-zA-Z0-9_]*$").unwrap());
     VARIABLE_RE.is_match(s)
 }
 
@@ -153,6 +153,8 @@ mod tests {
         assert!(is_valid_variable("foo123"));
         assert!(is_valid_variable("foo_bar"));
         assert!(is_valid_variable("foo_bar_baz"));
+        assert!(is_valid_variable("a"));
+        assert!(is_valid_variable("_"));
         assert!(!is_valid_variable(""));
         assert!(!is_valid_variable("foo bar"));
         assert!(!is_valid_variable("foo-bar"));
