@@ -1,6 +1,6 @@
 use std::{
     any,
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     fmt::{self, Display, Write},
     str::FromStr,
 };
@@ -39,12 +39,12 @@ impl Template {
     where
         C: TemplateContext,
     {
-        let valid_names = C::variable_names();
+        let valid_variables = C::default().to_hashmap();
         for part in &self.parts {
             match part {
                 Parts::Text(_) => {}
                 Parts::Variable(name) => {
-                    if !valid_names.contains(name) {
+                    if !valid_variables.contains_key(name) {
                         return Err(TemplateValidateError::UnknownTemplateVariable(name.clone()));
                     }
                 }
@@ -93,17 +93,6 @@ pub(crate) trait TemplateContext: Serialize + Default + fmt::Debug {
                 (k, v.to_owned())
             })
             .collect()
-    }
-
-    fn variable_names() -> HashSet<String> {
-        let value = Self::default();
-        let Ok(Value::Object(obj)) = serde_json::to_value(&value) else {
-            panic!(
-                "TemplateContext invariant violated: TemplateContext::default() must serialize to a JSON object (type: {})",
-                any::type_name::<Self>()
-            );
-        };
-        obj.keys().cloned().collect()
     }
 }
 
