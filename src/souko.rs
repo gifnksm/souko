@@ -1,6 +1,7 @@
 use std::env;
 
 use color_eyre::eyre::{Result, eyre};
+use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
 use crate::{application::service::Service, infrastructure, presentation::Presentation};
@@ -20,11 +21,13 @@ impl Souko {
         let env_filter = if env::var_os("RUST_LOG").is_some() {
             EnvFilter::from_default_env()
         } else {
-            let mut builder = EnvFilter::builder();
-            if let Some(level) = presentation.verbosity() {
-                builder = builder.with_default_directive(level.into());
-            }
-            builder.from_env_lossy()
+            let default_directive = presentation
+                .verbosity()
+                .map(Into::into)
+                .unwrap_or(LevelFilter::OFF.into());
+            EnvFilter::builder()
+                .with_default_directive(default_directive)
+                .from_env_lossy()
         };
 
         tracing_subscriber::fmt()
