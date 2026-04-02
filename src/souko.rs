@@ -27,7 +27,7 @@ impl Souko {
         }
 
         let project_dirs = ProjectDirs::new()?;
-        let presentation = Presentation::from_args(project_dirs, env::args());
+        let presentation = Presentation::from_args(project_dirs, env::args_os());
         let env_filter = if env::var_os("RUST_LOG").is_some() {
             EnvFilter::from_default_env()
         } else {
