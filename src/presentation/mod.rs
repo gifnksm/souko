@@ -15,22 +15,21 @@ mod model;
 #[derive(Debug)]
 pub(crate) struct Presentation {
     args: Args,
-    project_dirs: ProjectDirs,
 }
 
 impl Presentation {
-    pub(crate) fn from_args<I, T>(project_dirs: ProjectDirs, args: I) -> Self
+    pub(crate) fn from_args<I, T>(args: I) -> Self
     where
         I: IntoIterator<Item = T>,
         T: Into<OsString> + Clone,
     {
         let args = Args::parse_from(args);
-        Self { args, project_dirs }
+        Self { args }
     }
 
-    pub(crate) fn main(self, service: &Service) -> Result<()> {
-        let Self { args, project_dirs } = self;
-        args.run(service, &project_dirs)?;
+    pub(crate) fn main(self, service: &Service, project_dirs: &ProjectDirs) -> Result<()> {
+        let Self { args } = self;
+        args.run(service, project_dirs)?;
         Ok(())
     }
 
