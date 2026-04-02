@@ -5,10 +5,10 @@ set -euxo pipefail
 DIST_DIR="target/dist"
 BUILD_DIR="target/dist-build"
 
-ROOT_PACKAGE="cargo-sync-rdm"
-DIST_PACKAGES=("cargo-sync-rdme")
+ROOT_PACKAGE="souko"
+DIST_PACKAGES=("souko")
 declare -A PACKAGE_BUILD_OPTIONS=(
-    ["cargo-sync-rdme"]=""
+    ["souko"]="--features vendored-libgit2,vendored-openssl"
 )
 
 TEMPORARY_FILES=()
