@@ -75,12 +75,12 @@ main() {
             env_prefix="${env_prefix//-/_}"
 
             mkdir -p "${BUILD_DIR}/completion"
-            env "${env_prefix}_PRINT_COMPLETION=bash" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/${bin_name}.bash"
-            env "${env_prefix}_PRINT_COMPLETION=elvish" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/${bin_name}.elv"
-            env "${env_prefix}_PRINT_COMPLETION=fish" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/${bin_name}.fish"
-            env "${env_prefix}_PRINT_COMPLETION=powershell" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/_${bin_name}.ps1"
-            env "${env_prefix}_PRINT_COMPLETION=zsh" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/_${bin_name}"
-            env "${env_prefix}_PRINT_COMPLETION=nushell" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/${bin_name}.nu"
+            env "${env_prefix}_COMPLETE=bash" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/${bin_name}.bash"
+            env "${env_prefix}_COMPLETE=elvish" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/${bin_name}.elv"
+            env "${env_prefix}_COMPLETE=fish" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/${bin_name}.fish"
+            env "${env_prefix}_COMPLETE=powershell" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/_${bin_name}.ps1"
+            env "${env_prefix}_COMPLETE=zsh" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/_${bin_name}"
+            env "${env_prefix}_COMPLETE=nushell" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/${bin_name}.nu"
 
             mkdir -p "${BUILD_DIR}/man"
             env "${env_prefix}_GENERATE_MAN_TO=${BUILD_DIR}/man" cargo run -p "${pkg}" --bin "${bin_name}"

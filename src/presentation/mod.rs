@@ -1,11 +1,11 @@
-use std::{env, io, process};
+use std::{ffi::OsString, io};
 
 use clap::{CommandFactory as _, Parser as _};
 use clap_complete::{Generator, Shell};
 pub use color_eyre::eyre::Result;
 
-use self::{args::Args, model::project_dirs::ProjectDirs};
-use crate::application::service::Service;
+use self::args::Args;
+use crate::{application::service::Service, project_dirs::ProjectDirs};
 
 mod args;
 mod config;
@@ -18,25 +18,13 @@ pub(crate) struct Presentation {
 }
 
 impl Presentation {
-    pub(crate) fn from_env(bin_name: &str) -> Result<Self> {
-        let env_prefix = bin_name.to_uppercase().replace("-", "_");
-        if let Ok(shell) = env::var(format!("{env_prefix}_PRINT_COMPLETION")) {
-            Self::print_completion(bin_name, &shell);
-            process::exit(0);
-        }
-        if let Ok(output_dir) = env::var(format!("{env_prefix}_GENERATE_MAN_TO")) {
-            Self::generate_man(&output_dir);
-            process::exit(0);
-        }
-
-        let args = Args::parse();
-
-        let project_dirs = ProjectDirs::new()?;
-        Ok(Self { args, project_dirs })
-    }
-
-    pub(crate) fn command() -> clap::Command {
-        Args::command()
+    pub(crate) fn from_args<I, T>(project_dirs: ProjectDirs, args: I) -> Self
+    where
+        I: IntoIterator<Item = T>,
+        T: Into<OsString> + Clone,
+    {
+        let args = Args::parse_from(args);
+        Self { args, project_dirs }
     }
 
     pub(crate) fn main(self, service: &Service) -> Result<()> {
@@ -49,12 +37,12 @@ impl Presentation {
         self.args.verbosity()
     }
 
-    fn print_completion(bin_name: &str, shell: &str) {
+    pub(crate) fn print_completion(bin_name: &str, shell: &str) {
         fn generate_completion<G>(bin_name: &str, g: G)
         where
             G: Generator,
         {
-            clap_complete::generate(g, &mut Presentation::command(), bin_name, &mut io::stdout());
+            clap_complete::generate(g, &mut Args::command(), bin_name, &mut io::stdout());
         }
         match shell {
             "bash" => generate_completion(bin_name, Shell::Bash),
@@ -69,7 +57,7 @@ impl Presentation {
         }
     }
 
-    fn generate_man(output_dir: &str) {
-        clap_mangen::generate_to(Self::command(), output_dir).unwrap();
+    pub(crate) fn generate_man(output_dir: &str) {
+        clap_mangen::generate_to(Args::command(), output_dir).unwrap();
     }
 }

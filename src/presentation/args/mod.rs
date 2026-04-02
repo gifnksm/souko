@@ -4,9 +4,12 @@ use tracing::Level;
 use self::{subcommand::Subcommand, verbosity::Verbosity};
 use super::{
     config::Config,
-    model::{optional_param::OptionalParam, project_dirs::ProjectDirs, tilde_path::TildePath},
+    model::{optional_param::OptionalParam, tilde_path::TildePath},
 };
-use crate::{application::service::Service, domain::model::path_like::PathLike, util::file};
+use crate::{
+    application::service::Service, domain::model::path_like::PathLike, project_dirs::ProjectDirs,
+    util::file,
+};
 
 mod subcommand;
 mod verbosity;

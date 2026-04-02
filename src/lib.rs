@@ -24,4 +24,5 @@ mod infrastructure;
 mod presentation;
 mod util;
 
+mod project_dirs;
 mod souko;

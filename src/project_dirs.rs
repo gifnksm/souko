@@ -6,7 +6,7 @@ use std::{
 use color_eyre::eyre::{Result, eyre};
 
 #[derive(Debug, Clone)]
-pub(in super::super) struct ProjectDirs {
+pub(crate) struct ProjectDirs {
     config_dir: Option<PathBuf>,
     data_local_dir: Option<PathBuf>,
     cache_dir: Option<PathBuf>,
@@ -14,7 +14,7 @@ pub(in super::super) struct ProjectDirs {
 }
 
 impl ProjectDirs {
-    pub(in super::super) fn new() -> Result<Self> {
+    pub(crate) fn new() -> Result<Self> {
         let integration_test = env::var_os("SOUKO_INTEGRATION_TEST").is_some();
         let inner = directories::ProjectDirs::from("", "", env!("CARGO_PKG_NAME"))
             .ok_or_else(|| eyre!("failed to get project directories"))?;
@@ -41,7 +41,7 @@ impl ProjectDirs {
     }
 
     #[cfg(test)]
-    pub(in super::super) fn new_for_test(
+    pub(crate) fn new_for_test(
         config_dir: impl Into<PathBuf>,
         data_local_dir: impl Into<PathBuf>,
         cache_dir: impl Into<PathBuf>,
@@ -57,19 +57,19 @@ impl ProjectDirs {
         })
     }
 
-    pub(in super::super) fn config_dir(&self) -> &Path {
+    pub(crate) fn config_dir(&self) -> &Path {
         self.config_dir
             .as_deref()
             .unwrap_or_else(|| self.inner.config_dir())
     }
 
-    pub(in super::super) fn data_local_dir(&self) -> &Path {
+    pub(crate) fn data_local_dir(&self) -> &Path {
         self.data_local_dir
             .as_deref()
             .unwrap_or_else(|| self.inner.data_local_dir())
     }
 
-    pub(in super::super) fn cache_dir(&self) -> &Path {
+    pub(crate) fn cache_dir(&self) -> &Path {
         self.cache_dir
             .as_deref()
             .unwrap_or_else(|| self.inner.cache_dir())

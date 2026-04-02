@@ -1,23 +1,33 @@
-use std::env;
+use std::{env, process};
 
 use color_eyre::eyre::{Result, eyre};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
-use crate::{application::service::Service, infrastructure, presentation::Presentation};
+use crate::{
+    application::service::Service, infrastructure, presentation::Presentation,
+    project_dirs::ProjectDirs,
+};
 
 #[derive(Debug)]
 pub struct Souko {}
 
 impl Souko {
-    pub fn command() -> clap::Command {
-        Presentation::command()
-    }
-
     pub fn main(bin_name: &str) -> Result<()> {
         color_eyre::install()?;
 
-        let presentation = Presentation::from_env(bin_name)?;
+        let env_prefix = bin_name.to_uppercase().replace("-", "_");
+        if let Ok(shell) = env::var(format!("{env_prefix}_COMPLETE")) {
+            Presentation::print_completion(bin_name, &shell);
+            process::exit(0);
+        }
+        if let Ok(output_dir) = env::var(format!("{env_prefix}_GENERATE_MAN_TO")) {
+            Presentation::generate_man(&output_dir);
+            process::exit(0);
+        }
+
+        let project_dirs = ProjectDirs::new()?;
+        let presentation = Presentation::from_args(project_dirs, env::args());
         let env_filter = if env::var_os("RUST_LOG").is_some() {
             EnvFilter::from_default_env()
         } else {

@@ -1,7 +1,7 @@
 use color_eyre::eyre::Result;
 
 use super::GlobalArgs;
-use crate::{application::service::Service, presentation::model::project_dirs::ProjectDirs};
+use crate::{application::service::Service, project_dirs::ProjectDirs};
 
 mod clone;
 mod list;
