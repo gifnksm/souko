@@ -59,17 +59,20 @@ cargo test
 
 ### Useful Commands
 
-- Run the lightweight local lint suite during development:
+- Run lint and static checks during development:
 
   ```console
   just ci-lint
   ```
 
-- Run the main local verification suite before opening or updating a pull request:
+- Run the full CI-equivalent suite, including docs and tests, before opening or updating a pull request:
 
   ```console
   just ci
   ```
+
+  `just ci-lint` relies on additional tools such as `just`, `cargo-hack`,
+  `cargo-machete`, `actionlint`, `typos`, and `markdownlint-cli`.
 
 - Build and run release version:
 

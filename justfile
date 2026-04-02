@@ -78,11 +78,11 @@ typos *args:
 markdownlint *args:
     npx markdownlint-cli {{ args }} .
 
-# Run lightweight lint-focused checks.
-ci-lint: ci-rustfmt ci-check ci-clippy ci-sync-rdme ci-machete ci-actionlint ci-typos ci-markdownlint
+# Run lint and static checks used for day-to-day local verification.
+ci-lint: ci-rustfmt ci-check ci-clippy ci-machete ci-actionlint ci-typos ci-markdownlint
 
 # Run all CI-equivalent checks.
-ci: ci-lint ci-rustdoc ci-docs-rs ci-test ci-coverage
+ci: ci-lint ci-rustdoc ci-docs-rs ci-sync-rdme ci-test ci-coverage
 
 # CI: formatting must be clean.
 ci-rustfmt:
