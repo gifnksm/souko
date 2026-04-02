@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Rust edition bumped to 2024 ([#650](https://github.com/gifnksm/souko/pull/650))
 * Minimum Supported Rust Version (MSRV) bumped to 1.88.0 (was 1.78.0)
 * Updated dependencies
 

@@ -34,10 +34,10 @@ impl EditDir for FsEditDir {
         let removed = match fs::remove_dir(path) {
             Ok(()) => true,
             Err(err) if err.kind() == io::ErrorKind::NotFound => {
-                if let Some(parent) = path.parent() {
-                    if parent.is_dir() {
-                        return Ok(false);
-                    }
+                if let Some(parent) = path.parent()
+                    && parent.is_dir()
+                {
+                    return Ok(false);
                 }
                 bail!(err)
             }
@@ -65,7 +65,7 @@ impl EditDir for FsEditDir {
 
 #[cfg(test)]
 mod tests {
-    use assert_fs::{prelude::*, TempDir};
+    use assert_fs::{TempDir, prelude::*};
 
     use super::*;
 

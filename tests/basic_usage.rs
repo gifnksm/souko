@@ -1,5 +1,5 @@
 use assert_cmd::prelude::*;
-use assert_fs::{fixture::ChildPath, prelude::*, TempDir};
+use assert_fs::{TempDir, fixture::ChildPath, prelude::*};
 use predicates::prelude::*;
 
 mod common;

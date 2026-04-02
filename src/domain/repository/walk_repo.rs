@@ -4,7 +4,7 @@ use crate::domain::model::{pretty_path::PrettyPath, repo::CanonicalRepo, root::C
 
 pub(crate) trait WalkRepo: Debug {
     fn walk_repo(&self, root: &CanonicalRoot)
-        -> Result<Box<dyn Repos>, Box<dyn std::error::Error>>;
+    -> Result<Box<dyn Repos>, Box<dyn std::error::Error>>;
 }
 
 pub(crate) trait Repos:

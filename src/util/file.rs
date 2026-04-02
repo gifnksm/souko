@@ -3,7 +3,7 @@ use std::{
     io::{self, BufReader, BufWriter, Read},
 };
 
-use color_eyre::eyre::{eyre, Error, Result, WrapErr};
+use color_eyre::eyre::{Error, Result, WrapErr, eyre};
 use serde::{Deserialize, Serialize};
 use tempfile::NamedTempFile;
 use toml_edit::DocumentMut;

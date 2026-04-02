@@ -98,12 +98,12 @@ impl Iterator for FsRepos {
 
             let entry = FsEntry::new(Arc::clone(&self.root), entry);
 
-            if let Some(filter) = &mut self.filter {
-                if !filter(&entry) {
-                    tracing::trace!("skipping filtered entry: {}", entry.path().display());
-                    self.iter.skip_current_dir();
-                    continue;
-                }
+            if let Some(filter) = &mut self.filter
+                && !filter(&entry)
+            {
+                tracing::trace!("skipping filtered entry: {}", entry.path().display());
+                self.iter.skip_current_dir();
+                continue;
             }
 
             return Some(Ok(Box::new(entry)));

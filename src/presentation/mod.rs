@@ -31,14 +31,6 @@ impl Presentation {
 
         let args = Args::parse();
 
-        if env::var_os("RUST_LOG").is_none() {
-            let level_str = args
-                .verbosity()
-                .map(|level| level.as_str())
-                .unwrap_or("off");
-            env::set_var("RUST_LOG", level_str)
-        }
-
         let project_dirs = ProjectDirs::new()?;
         Ok(Self { args, project_dirs })
     }
@@ -48,25 +40,32 @@ impl Presentation {
     }
 
     pub(crate) fn main(self, service: &Service) -> Result<()> {
-        self.args.run(service, &self.project_dirs)?;
+        let Self { args, project_dirs } = self;
+        args.run(service, &project_dirs)?;
         Ok(())
     }
 
+    pub(crate) fn verbosity(&self) -> Option<tracing::Level> {
+        self.args.verbosity()
+    }
+
     fn print_completion(bin_name: &str, shell: &str) {
-        fn gen<G>(bin_name: &str, g: G)
+        fn generate_completion<G>(bin_name: &str, g: G)
         where
             G: Generator,
         {
             clap_complete::generate(g, &mut Presentation::command(), bin_name, &mut io::stdout());
         }
         match shell {
-            "bash" => gen(bin_name, Shell::Bash),
-            "elvish" => gen(bin_name, Shell::Elvish),
-            "fish" => gen(bin_name, Shell::Fish),
-            "powershell" => gen(bin_name, Shell::PowerShell),
-            "zsh" => gen(bin_name, Shell::Zsh),
-            "nushell" => gen(bin_name, clap_complete_nushell::Nushell),
-            _ => panic!("error: unknown shell `{shell}`, expected one of `bash`, `elvish`, `fish`, `powershell`, `zsh`, `nushell`"),
+            "bash" => generate_completion(bin_name, Shell::Bash),
+            "elvish" => generate_completion(bin_name, Shell::Elvish),
+            "fish" => generate_completion(bin_name, Shell::Fish),
+            "powershell" => generate_completion(bin_name, Shell::PowerShell),
+            "zsh" => generate_completion(bin_name, Shell::Zsh),
+            "nushell" => generate_completion(bin_name, clap_complete_nushell::Nushell),
+            _ => panic!(
+                "error: unknown shell `{shell}`, expected one of `bash`, `elvish`, `fish`, `powershell`, `zsh`, `nushell`"
+            ),
         }
     }
 

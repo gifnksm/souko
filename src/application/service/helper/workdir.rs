@@ -63,12 +63,12 @@ impl Workdir {
 
 impl Drop for Workdir {
     fn drop(&mut self) {
-        if self.erase_leaf_content {
-            if let Some(leaf_path) = self.created_dirs.last() {
-                let res = self.edit_dir.ensure_dir_empty(leaf_path);
-                if res.is_err() {
-                    return;
-                }
+        if self.erase_leaf_content
+            && let Some(leaf_path) = self.created_dirs.last()
+        {
+            let res = self.edit_dir.ensure_dir_empty(leaf_path);
+            if res.is_err() {
+                return;
             }
         }
 
@@ -83,7 +83,7 @@ impl Drop for Workdir {
 
 #[cfg(test)]
 mod test {
-    use assert_fs::{prelude::*, TempDir};
+    use assert_fs::{TempDir, prelude::*};
 
     use super::*;
     use crate::infrastructure;
