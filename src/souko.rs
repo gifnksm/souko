@@ -1,4 +1,7 @@
-use color_eyre::eyre::{eyre, Result};
+use std::env;
+
+use color_eyre::eyre::{Result, eyre};
+use tracing_subscriber::EnvFilter;
 
 use crate::{application::service::Service, infrastructure, presentation::Presentation};
 
@@ -14,9 +17,18 @@ impl Souko {
         color_eyre::install()?;
 
         let presentation = Presentation::from_env(bin_name)?;
+        let env_filter = if env::var_os("RUST_LOG").is_some() {
+            EnvFilter::from_default_env()
+        } else {
+            let mut builder = EnvFilter::builder();
+            if let Some(level) = presentation.verbosity() {
+                builder = builder.with_default_directive(level.into());
+            }
+            builder.from_env_lossy()
+        };
 
         tracing_subscriber::fmt()
-            .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
+            .with_env_filter(env_filter)
             .with_writer(std::io::stderr)
             .try_init()
             .map_err(|e| eyre!(e))?;

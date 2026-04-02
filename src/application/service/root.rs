@@ -11,12 +11,12 @@ use crate::domain::{
         root::{CanonicalRoot, Root},
     },
     repository::{
+        Repository,
         canonicalize_root::CanonicalizeRoot,
         clone_repo::CloneRepo,
         edit_dir::EditDir,
         repo_cache::RepoCache,
         walk_repo::{Entry, Repos, WalkRepo},
-        Repository,
     },
 };
 

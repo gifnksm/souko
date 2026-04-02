@@ -5,7 +5,7 @@ use std::{
 };
 
 use chrono::{Duration, Utc};
-use color_eyre::eyre::{eyre, Result};
+use color_eyre::eyre::{Result, eyre};
 use serde::Serialize;
 
 use crate::{
