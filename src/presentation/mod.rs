@@ -1,11 +1,11 @@
-use std::{env, io, process};
+use std::{ffi::OsString, io};
 
 use clap::{CommandFactory as _, Parser as _};
 use clap_complete::{Generator, Shell};
-pub use color_eyre::eyre::Result;
+use color_eyre::eyre::{Result, WrapErr as _, eyre};
 
-use self::{args::Args, model::project_dirs::ProjectDirs};
-use crate::application::service::Service;
+use self::args::Args;
+use crate::{application::service::Service, project_dirs::ProjectDirs};
 
 mod args;
 mod config;
@@ -14,34 +14,21 @@ mod model;
 #[derive(Debug)]
 pub(crate) struct Presentation {
     args: Args,
-    project_dirs: ProjectDirs,
 }
 
 impl Presentation {
-    pub(crate) fn from_env(bin_name: &str) -> Result<Self> {
-        let env_prefix = bin_name.to_uppercase().replace("-", "_");
-        if let Ok(shell) = env::var(format!("{env_prefix}_PRINT_COMPLETION")) {
-            Self::print_completion(bin_name, &shell);
-            process::exit(0);
-        }
-        if let Ok(output_dir) = env::var(format!("{env_prefix}_GENERATE_MAN_TO")) {
-            Self::generate_man(&output_dir);
-            process::exit(0);
-        }
-
-        let args = Args::parse();
-
-        let project_dirs = ProjectDirs::new()?;
-        Ok(Self { args, project_dirs })
+    pub(crate) fn from_args<I, T>(args: I) -> Self
+    where
+        I: IntoIterator<Item = T>,
+        T: Into<OsString> + Clone,
+    {
+        let args = Args::parse_from(args);
+        Self { args }
     }
 
-    pub(crate) fn command() -> clap::Command {
-        Args::command()
-    }
-
-    pub(crate) fn main(self, service: &Service) -> Result<()> {
-        let Self { args, project_dirs } = self;
-        args.run(service, &project_dirs)?;
+    pub(crate) fn main(self, service: &Service, project_dirs: &ProjectDirs) -> Result<()> {
+        let Self { args } = self;
+        args.run(service, project_dirs)?;
         Ok(())
     }
 
@@ -49,12 +36,12 @@ impl Presentation {
         self.args.verbosity()
     }
 
-    fn print_completion(bin_name: &str, shell: &str) {
+    pub(crate) fn print_completion(bin_name: &str, shell: &str) -> Result<()> {
         fn generate_completion<G>(bin_name: &str, g: G)
         where
             G: Generator,
         {
-            clap_complete::generate(g, &mut Presentation::command(), bin_name, &mut io::stdout());
+            clap_complete::generate(g, &mut Args::command(), bin_name, &mut io::stdout());
         }
         match shell {
             "bash" => generate_completion(bin_name, Shell::Bash),
@@ -63,13 +50,18 @@ impl Presentation {
             "powershell" => generate_completion(bin_name, Shell::PowerShell),
             "zsh" => generate_completion(bin_name, Shell::Zsh),
             "nushell" => generate_completion(bin_name, clap_complete_nushell::Nushell),
-            _ => panic!(
-                "error: unknown shell `{shell}`, expected one of `bash`, `elvish`, `fish`, `powershell`, `zsh`, `nushell`"
-            ),
+            _ => {
+                bail!(eyre!(
+                    "unknown shell `{shell}`, expected one of `bash`, `elvish`, `fish`, `powershell`, `zsh`, `nushell`"
+                ));
+            }
         }
+        Ok(())
     }
 
-    fn generate_man(output_dir: &str) {
-        clap_mangen::generate_to(Self::command(), output_dir).unwrap();
+    pub(crate) fn generate_man(output_dir: &str) -> Result<()> {
+        clap_mangen::generate_to(Args::command(), output_dir)
+            .wrap_err_with(|| format!("failed to generate man pages in {output_dir}"))?;
+        Ok(())
     }
 }

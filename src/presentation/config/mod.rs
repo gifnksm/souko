@@ -6,10 +6,11 @@ mod query;
 mod root;
 
 use self::{query::QueryConfig, root::RootMap};
-use super::model::{
-    optional_param::OptionalParam, project_dirs::ProjectDirs, tilde_path::TildePath,
+use super::model::{optional_param::OptionalParam, tilde_path::TildePath};
+use crate::{
+    domain::model::{query::ParseOption, root::Root},
+    project_dirs::ProjectDirs,
 };
-use crate::domain::model::{query::ParseOption, root::Root};
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -46,7 +47,7 @@ impl Config {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::model::path_like::PathLike;
+    use crate::{domain::model::path_like::PathLike, project_dirs::ProjectDirs};
 
     #[test]
     fn deserialize_query_without_scheme_alias_applies_overrides_and_merges_defaults() {
@@ -105,7 +106,7 @@ mod tests {
 
     #[test]
     fn default_config_resolves_default_root_from_injected_project_dirs() {
-        let project_dirs = crate::presentation::model::project_dirs::ProjectDirs::new_for_test(
+        let project_dirs = ProjectDirs::new_for_test(
             "target/test-config-dir-default-root",
             "target/test-data-local-dir-default-root",
             "target/test-cache-dir-default-root",
@@ -126,7 +127,7 @@ mod tests {
 
     #[test]
     fn explicit_default_root_in_config_overrides_injected_default_root_path() {
-        let project_dirs = crate::presentation::model::project_dirs::ProjectDirs::new_for_test(
+        let project_dirs = ProjectDirs::new_for_test(
             "target/test-config-dir-explicit-root",
             "target/test-data-local-dir-explicit-root",
             "target/test-cache-dir-explicit-root",

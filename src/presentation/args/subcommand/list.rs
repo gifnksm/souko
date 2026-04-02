@@ -16,11 +16,8 @@ use crate::{
         root::{CanonicalRoot, Root},
         template::{Template, TemplateContext},
     },
-    presentation::{
-        args::GlobalArgs,
-        config::Config,
-        model::{optional_param::OptionalParam, project_dirs::ProjectDirs},
-    },
+    presentation::{args::GlobalArgs, config::Config, model::optional_param::OptionalParam},
+    project_dirs::ProjectDirs,
 };
 
 #[derive(Debug, Clone, Default, clap::Args)]

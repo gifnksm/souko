@@ -11,8 +11,6 @@
 
 #![doc(html_root_url = "https://docs.rs/souko/0.2.2")]
 
-pub use color_eyre::eyre::Result;
-
 pub use crate::souko::Souko;
 
 #[macro_use]
@@ -24,4 +22,5 @@ mod infrastructure;
 mod presentation;
 mod util;
 
+mod project_dirs;
 mod souko;

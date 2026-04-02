@@ -3,11 +3,8 @@ use color_eyre::eyre::{Result, WrapErr, eyre};
 use crate::{
     application::service::Service,
     domain::model::{path_like::PathLike, query::Query, root::Root},
-    presentation::{
-        args::GlobalArgs,
-        config::Config,
-        model::{optional_param::OptionalParam, project_dirs::ProjectDirs},
-    },
+    presentation::{args::GlobalArgs, config::Config, model::optional_param::OptionalParam},
+    project_dirs::ProjectDirs,
 };
 
 #[derive(Debug, Clone, Default, clap::Args)]
