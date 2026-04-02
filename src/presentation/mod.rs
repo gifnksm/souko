@@ -2,8 +2,7 @@ use std::{ffi::OsString, io};
 
 use clap::{CommandFactory as _, Parser as _};
 use clap_complete::{Generator, Shell};
-use color_eyre::eyre::eyre;
-pub use color_eyre::eyre::{Result, WrapErr as _};
+use color_eyre::eyre::{Result, WrapErr as _, eyre};
 
 use self::args::Args;
 use crate::{application::service::Service, project_dirs::ProjectDirs};
