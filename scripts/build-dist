@@ -5,10 +5,10 @@ set -euxo pipefail
 DIST_DIR="target/dist"
 BUILD_DIR="target/dist-build"
 
-ROOT_PACKAGE="cargo-sync-rdm"
-DIST_PACKAGES=("cargo-sync-rdme")
+ROOT_PACKAGE="souko"
+DIST_PACKAGES=("souko")
 declare -A PACKAGE_BUILD_OPTIONS=(
-    ["cargo-sync-rdme"]=""
+    ["souko"]="--features vendored-libgit2,vendored-openssl"
 )
 
 TEMPORARY_FILES=()
@@ -74,16 +74,18 @@ main() {
             local env_prefix="${bin_name^^}"
             env_prefix="${env_prefix//-/_}"
 
+            local cargo_run=(cargo run -p "${pkg}" --bin "${bin_name}" "${build_options[@]}")
+
             mkdir -p "${BUILD_DIR}/completion"
-            env "${env_prefix}_COMPLETE=bash" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/${bin_name}.bash"
-            env "${env_prefix}_COMPLETE=elvish" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/${bin_name}.elv"
-            env "${env_prefix}_COMPLETE=fish" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/${bin_name}.fish"
-            env "${env_prefix}_COMPLETE=powershell" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/_${bin_name}.ps1"
-            env "${env_prefix}_COMPLETE=zsh" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/_${bin_name}"
-            env "${env_prefix}_COMPLETE=nushell" cargo run -p "${pkg}" --bin "${bin_name}" >"${BUILD_DIR}/completion/${bin_name}.nu"
+            env "${env_prefix}_COMPLETE=bash" "${cargo_run[@]}" >"${BUILD_DIR}/completion/${bin_name}.bash"
+            env "${env_prefix}_COMPLETE=elvish" "${cargo_run[@]}" >"${BUILD_DIR}/completion/${bin_name}.elv"
+            env "${env_prefix}_COMPLETE=fish" "${cargo_run[@]}" >"${BUILD_DIR}/completion/${bin_name}.fish"
+            env "${env_prefix}_COMPLETE=powershell" "${cargo_run[@]}" >"${BUILD_DIR}/completion/_${bin_name}.ps1"
+            env "${env_prefix}_COMPLETE=zsh" "${cargo_run[@]}" >"${BUILD_DIR}/completion/_${bin_name}"
+            env "${env_prefix}_COMPLETE=nushell" "${cargo_run[@]}" >"${BUILD_DIR}/completion/${bin_name}.nu"
 
             mkdir -p "${BUILD_DIR}/man"
-            env "${env_prefix}_GENERATE_MAN_TO=${BUILD_DIR}/man" cargo run -p "${pkg}" --bin "${bin_name}"
+            env "${env_prefix}_GENERATE_MAN_TO=${BUILD_DIR}/man" "${cargo_run[@]}"
         done
     done
 
