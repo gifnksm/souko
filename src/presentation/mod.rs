@@ -2,6 +2,7 @@ use std::{ffi::OsString, io};
 
 use clap::{CommandFactory as _, Parser as _};
 use clap_complete::{Generator, Shell};
+use color_eyre::eyre::eyre;
 pub use color_eyre::eyre::{Result, WrapErr as _};
 
 use self::args::Args;
@@ -37,7 +38,7 @@ impl Presentation {
         self.args.verbosity()
     }
 
-    pub(crate) fn print_completion(bin_name: &str, shell: &str) {
+    pub(crate) fn print_completion(bin_name: &str, shell: &str) -> Result<()> {
         fn generate_completion<G>(bin_name: &str, g: G)
         where
             G: Generator,
@@ -51,10 +52,13 @@ impl Presentation {
             "powershell" => generate_completion(bin_name, Shell::PowerShell),
             "zsh" => generate_completion(bin_name, Shell::Zsh),
             "nushell" => generate_completion(bin_name, clap_complete_nushell::Nushell),
-            _ => panic!(
-                "error: unknown shell `{shell}`, expected one of `bash`, `elvish`, `fish`, `powershell`, `zsh`, `nushell`"
-            ),
+            _ => {
+                bail!(eyre!(
+                    "unknown shell `{shell}`, expected one of `bash`, `elvish`, `fish`, `powershell`, `zsh`, `nushell`"
+                ));
+            }
         }
+        Ok(())
     }
 
     pub(crate) fn generate_man(output_dir: &str) -> Result<()> {

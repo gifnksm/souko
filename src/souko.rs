@@ -18,7 +18,7 @@ impl Souko {
 
         let env_prefix = bin_name.to_uppercase().replace("-", "_");
         if let Ok(shell) = env::var(format!("{env_prefix}_COMPLETE")) {
-            Presentation::print_completion(bin_name, &shell);
+            Presentation::print_completion(bin_name, &shell)?;
             return Ok(());
         }
         if let Ok(output_dir) = env::var(format!("{env_prefix}_GENERATE_MAN_TO")) {
