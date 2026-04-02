@@ -16,11 +16,21 @@ keywords.
 
 Try to do one pull request per change.
 
+Run `just ci` before opening or updating a pull request.
+
+When a pull request resolves an issue, reference it in the PR description with
+`Closes #<number>`. When it is related to an issue but does not resolve it,
+reference it with `Refs #<number>`.
+
 ### Updating the changelog
 
 Update the changes you have made in
 [CHANGELOG](https://github.com/gifnksm/souko/blob/main/CHANGELOG.md)
 file under the **Unreleased** section.
+
+Add the pull request number to changelog entries when available. If the pull
+request number is not known yet, update the changelog after creating the pull
+request.
 
 Add the changes of your pull request to one of the following subsections,
 depending on the types of changes defined by
@@ -44,10 +54,16 @@ This is no different than other Rust projects.
 ```console
 git clone https://github.com/gifnksm/souko
 cd souko
-cargo test
+just ci
 ```
 
 ### Useful Commands
+
+- Run the main local verification suite before opening a pull request:
+
+  ```console
+  just ci
+  ```
 
 - Build and run release version:
 
@@ -55,26 +71,49 @@ cargo test
   cargo build --release && cargo run --release
   ```
 
-- Run Clippy:
+- Run formatting checks:
 
   ```console
-  cargo clippy --all-targets --all-features --workspace
+  just fmt --check
+  ```
+
+- Format the code in the project:
+
+  ```console
+  just fmt
   ```
 
 - Run all tests:
 
   ```console
-  cargo test --all-features --workspace
+  just test-all
   ```
 
-- Check to see if there are code formatting issues
+- Run Clippy:
 
   ```console
-  cargo fmt --all -- --check
+  just clippy-all -- -D warnings
   ```
 
-- Format the code in the project
+### Error message policy
 
-  ```console
-  cargo fmt --all
-  ```
+User-visible error messages should be concise, but still understandable on
+their own.
+
+When an error has a source chain, prefer keeping the top-level message focused
+on the operation and context, and rely on the source chain for detailed causes.
+
+If a message becomes unclear without including the source error inline, first
+improve the message itself. Include source details in the message text only when
+that still is not enough to make the error understandable.
+
+Prefer `invalid ...` for invalid user input or configuration values, and
+`failed to ...` for operation failures.
+
+Examples:
+
+- `invalid query: gh:a/b`
+- `failed to clone git repository from https://github.com/a/b`
+
+Keep error messages lowercase and omit trailing periods unless punctuation
+improves clarity.

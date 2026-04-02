@@ -14,7 +14,7 @@ impl FsCloneRepo {
 
 #[derive(Debug, thiserror::Error)]
 enum Error {
-    #[error("failed to open git config: {source}")]
+    #[error("failed to open git config")]
     OpenConfig {
         #[source]
         source: git2::Error,

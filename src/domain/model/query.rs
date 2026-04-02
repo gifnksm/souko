@@ -19,7 +19,7 @@ pub(crate) struct Query {
 
 #[derive(Debug, Error)]
 pub(crate) enum ParseError {
-    #[error("invalid URL {}: {source}", ErrorDisplayHelper { original_query, expanded_query })]
+    #[error("invalid URL {}", ErrorDisplayHelper { original_query, expanded_query })]
     InvalidUrl {
         original_query: String,
         expanded_query: String,

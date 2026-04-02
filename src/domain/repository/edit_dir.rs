@@ -2,7 +2,7 @@ use std::{fmt::Debug, path::Path};
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum EnsureDirExistError {
-    #[error("parent directory not exist")]
+    #[error("parent directory does not exist")]
     ParentNotExist {
         #[source]
         source: Box<dyn std::error::Error + Send + Sync + 'static>,
