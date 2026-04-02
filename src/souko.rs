@@ -1,4 +1,4 @@
-use std::{env, process};
+use std::env;
 
 use color_eyre::eyre::{Result, eyre};
 use tracing::level_filters::LevelFilter;
@@ -19,11 +19,11 @@ impl Souko {
         let env_prefix = bin_name.to_uppercase().replace("-", "_");
         if let Ok(shell) = env::var(format!("{env_prefix}_COMPLETE")) {
             Presentation::print_completion(bin_name, &shell);
-            process::exit(0);
+            return Ok(());
         }
         if let Ok(output_dir) = env::var(format!("{env_prefix}_GENERATE_MAN_TO")) {
-            Presentation::generate_man(&output_dir);
-            process::exit(0);
+            Presentation::generate_man(&output_dir)?;
+            return Ok(());
         }
 
         let project_dirs = ProjectDirs::new()?;

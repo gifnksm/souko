@@ -2,7 +2,7 @@ use std::{ffi::OsString, io};
 
 use clap::{CommandFactory as _, Parser as _};
 use clap_complete::{Generator, Shell};
-pub use color_eyre::eyre::Result;
+pub use color_eyre::eyre::{Result, WrapErr as _};
 
 use self::args::Args;
 use crate::{application::service::Service, project_dirs::ProjectDirs};
@@ -57,7 +57,9 @@ impl Presentation {
         }
     }
 
-    pub(crate) fn generate_man(output_dir: &str) {
-        clap_mangen::generate_to(Args::command(), output_dir).unwrap();
+    pub(crate) fn generate_man(output_dir: &str) -> Result<()> {
+        clap_mangen::generate_to(Args::command(), output_dir)
+            .wrap_err_with(|| format!("failed to generate man pages in {output_dir}"))?;
+        Ok(())
     }
 }
