@@ -59,7 +59,13 @@ cargo test
 
 ### Useful Commands
 
-- Run the main local verification suite before opening a pull request:
+- Run the lightweight local lint suite during development:
+
+  ```console
+  just ci-lint
+  ```
+
+- Run the main local verification suite before opening or updating a pull request:
 
   ```console
   just ci
