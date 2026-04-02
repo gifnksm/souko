@@ -54,7 +54,7 @@ This is no different than other Rust projects.
 ```console
 git clone https://github.com/gifnksm/souko
 cd souko
-just ci
+cargo test
 ```
 
 ### Useful Commands
@@ -105,7 +105,7 @@ on the operation and context, and rely on the source chain for detailed causes.
 
 If a message becomes unclear without including the source error inline, first
 improve the message itself. Include source details in the message text only when
-that still is not enough to make the error understandable.
+that is still not enough to make the error understandable.
 
 Prefer `invalid ...` for invalid user input or configuration values, and
 `failed to ...` for operation failures.
