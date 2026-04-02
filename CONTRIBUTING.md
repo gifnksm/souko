@@ -72,7 +72,8 @@ cargo test
   ```
 
   `just ci-lint` relies on additional tools such as `just`, `cargo-hack`,
-  `cargo-machete`, `actionlint`, `typos`, and `markdownlint-cli`.
+  `cargo-machete`, `actionlint`, `typos`, and Node.js (providing `node`/`npx`
+  for `markdownlint-cli`).
 
 - Build and run release version:
 
