@@ -23,8 +23,15 @@ require_package() {
     local metadata_json="$1"
     local pkg="$2"
     local role="$3"
+    local package_exists
 
-    if ! jq -e '.packages[] | select(.name == $pkg)' --arg pkg "${pkg}" "${metadata_json}" >/dev/null; then
+    if ! package_exists="$(
+        jq -r 'any(.packages[]; .name == $pkg)' --arg pkg "${pkg}" "${metadata_json}"
+    )"; then
+        die "failed to query cargo metadata for ${role} package '${pkg}'"
+    fi
+
+    if [[ "${package_exists}" != "true" ]]; then
         die "${role} package '${pkg}' was not found in cargo metadata"
     fi
 }
