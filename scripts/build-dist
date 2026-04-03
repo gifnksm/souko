@@ -130,8 +130,10 @@ main() {
 
         local bin_name
         for bin_name in "${bin_names[@]}"; do
-            # shellcheck disable=SC2206
-            local build_options=(${PACKAGE_BUILD_OPTIONS["${pkg}"]})
+            local -a build_options=()
+            if [[ -n "${PACKAGE_BUILD_OPTIONS["${pkg}"]}" ]]; then
+                read -ra build_options <<<"${PACKAGE_BUILD_OPTIONS["${pkg}"]}"
+            fi
             "${cargo_build[@]}" --release -p "${pkg}" --bin "${bin_name}" "${target_option[@]}" "${build_options[@]}"
             local bin_file="${bin_name}${bin_suffix}"
             if [[ ! -f "${release_bin_dir}/${bin_file}" ]]; then
