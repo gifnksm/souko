@@ -14,6 +14,21 @@ declare -A PACKAGE_BUILD_OPTIONS=(
 TEMPORARY_FILES=()
 trap 'rm -f -- "${TEMPORARY_FILES[@]}"' EXIT
 
+die() {
+    echo "error: $*" >&2
+    exit 1
+}
+
+require_package() {
+    local metadata_json="$1"
+    local pkg="$2"
+    local role="$3"
+
+    if ! jq -e '.packages[] | select(.name == $pkg)' --arg pkg "${pkg}" "${metadata_json}" >/dev/null; then
+        die "${role} package '${pkg}' was not found in cargo metadata"
+    fi
+}
+
 main() {
     rm -rf "${BUILD_DIR}"
     mkdir -p "${BUILD_DIR}"
@@ -23,6 +38,12 @@ main() {
     TEMPORARY_FILES+=("${metadata_json}")
 
     cargo metadata --format-version 1 --no-deps | tr -d '\r' >"${metadata_json}"
+
+    require_package "${metadata_json}" "${ROOT_PACKAGE}" "root"
+    local pkg
+    for pkg in "${DIST_PACKAGES[@]}"; do
+        require_package "${metadata_json}" "${pkg}" "distribution"
+    done
 
     local host_triple
     host_triple="$(rustc -vV | sed -n 's/^host: //p')"
@@ -54,12 +75,15 @@ main() {
     cp README.md "${BUILD_DIR}"
     cp LICENSE-* "${BUILD_DIR}"
 
-    local pkg
     for pkg in "${DIST_PACKAGES[@]}"; do
         local bin_names
         readarray -t bin_names < <(
             jq -r '.packages[] | select(.name == $pkg) | .targets[] | select(.kind[] == "bin") | .name' --arg pkg "${pkg}" "${metadata_json}" | tr -d '\r'
         )
+        if [[ "${#bin_names[@]}" -eq 0 ]]; then
+            die "distribution package '${pkg}' has no binary targets"
+        fi
+
         local bin_name
         for bin_name in "${bin_names[@]}"; do
             # shellcheck disable=SC2206
@@ -68,6 +92,9 @@ main() {
             local bin_file="${bin_name}"
             if [[ "${target_triple}" == *"windows"* ]]; then
                 bin_file="${bin_name}.exe"
+            fi
+            if [[ ! -f "${release_bin_dir}/${bin_file}" ]]; then
+                die "built binary '${release_bin_dir}/${bin_file}' was not found"
             fi
             cp "${release_bin_dir}/${bin_file}" "${BUILD_DIR}"
 
@@ -91,6 +118,9 @@ main() {
 
     local version
     version="$(jq -r '.packages[] | select(.name == $pkg) | .version' --arg pkg "${ROOT_PACKAGE}" "${metadata_json}" | tr -d '\r')"
+    if [[ -z "${version}" || "${version}" == "null" ]]; then
+        die "failed to resolve version for root package '${ROOT_PACKAGE}'"
+    fi
     local archive_name="${ROOT_PACKAGE}-v${version}-${target_triple}.tar.gz"
 
     mkdir -p "${DIST_DIR}"
