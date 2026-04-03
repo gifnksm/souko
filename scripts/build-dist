@@ -114,10 +114,16 @@ main() {
     cp LICENSE-* "${BUILD_DIR}"
 
     for pkg in "${DIST_PACKAGES[@]}"; do
-        local bin_names
-        readarray -t bin_names < <(
+        local -a bin_names=()
+        local bin_names_output
+        if ! bin_names_output="$(
             jq -r '.packages[] | select(.name == $pkg) | .targets[] | select(.kind[] == "bin") | .name' --arg pkg "${pkg}" "${metadata_json}" | tr -d '\r'
-        )
+        )"; then
+            die "failed to resolve binary targets for distribution package '${pkg}'"
+        fi
+        if [[ -n "${bin_names_output}" ]]; then
+            readarray -t bin_names <<<"${bin_names_output}"
+        fi
         if [[ "${#bin_names[@]}" -eq 0 ]]; then
             die "distribution package '${pkg}' has no binary targets"
         fi
