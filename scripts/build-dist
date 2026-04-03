@@ -162,6 +162,9 @@ main() {
 
     cp README.md "${BUILD_DIR}"
     cp LICENSE-* "${BUILD_DIR}"
+    cp souko.plugin.zsh "${BUILD_DIR}"
+    mkdir -p "${BUILD_DIR}/shell"
+    cp shell/key-bindings.zsh "${BUILD_DIR}/shell/"
 
     for pkg in "${DIST_PACKAGES[@]}"; do
         local -a bin_names=()
