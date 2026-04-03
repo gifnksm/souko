@@ -158,7 +158,11 @@ main() {
     done
 
     local version
-    version="$(jq -r '.packages[] | select(.name == $pkg) | .version' --arg pkg "${ROOT_PACKAGE}" "${metadata_json}" | tr -d '\r')"
+    if ! version="$(
+        jq -r '.packages[] | select(.name == $pkg) | .version' --arg pkg "${ROOT_PACKAGE}" "${metadata_json}" | tr -d '\r'
+    )"; then
+        die "failed to query cargo metadata for root package '${ROOT_PACKAGE}' version"
+    fi
     if [[ -z "${version}" || "${version}" == "null" ]]; then
         die "failed to resolve version for root package '${ROOT_PACKAGE}'"
     fi
