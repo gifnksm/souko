@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   * Useful for integrating with picker tools such as fzf and skim
   * Available template variables include `root_name`, `repo_relative_path`, `repo_canonical_path`, etc.
   * Unknown variable names in templates are detected and reported as errors when running `souko list` (during `--template` argument validation)
+* Added shell integration documentation and a zsh plugin for selecting a repository with `sk` or `fzf` and changing to it from the current shell ([#658](https://github.com/gifnksm/souko/pull/658))
+  * Documented fuzzy-finder-based repository navigation in the README
+  * Added `souko.plugin.zsh` and `souko-cd-widget` with configurable selector and key binding options
 
 ### Fixed
 
