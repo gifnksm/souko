@@ -115,8 +115,8 @@ source /path/to/souko/souko.plugin.zsh
 #### sheldon
 
 ```zsh
-sheldon add --github gifnksm/souko
-sheldon sync
+sheldon add --github gifnksm/souko souko
+sheldon lock
 ```
 
 #### Behavior
