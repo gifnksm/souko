@@ -29,6 +29,31 @@ require_package() {
     fi
 }
 
+require_build_options() {
+    local pkg="$1"
+
+    if [[ ! -v PACKAGE_BUILD_OPTIONS["${pkg}"] ]]; then
+        die "distribution package '${pkg}' is missing a PACKAGE_BUILD_OPTIONS entry"
+    fi
+}
+
+require_known_build_option_keys() {
+    local pkg
+    for pkg in "${!PACKAGE_BUILD_OPTIONS[@]}"; do
+        local found=false
+        local dist_pkg
+        for dist_pkg in "${DIST_PACKAGES[@]}"; do
+            if [[ "${pkg}" == "${dist_pkg}" ]]; then
+                found=true
+                break
+            fi
+        done
+        if [[ "${found}" == false ]]; then
+            die "PACKAGE_BUILD_OPTIONS contains an unknown package key '${pkg}'"
+        fi
+    done
+}
+
 main() {
     rm -rf "${BUILD_DIR}"
     mkdir -p "${BUILD_DIR}"
@@ -40,9 +65,11 @@ main() {
     cargo metadata --format-version 1 --no-deps | tr -d '\r' >"${metadata_json}"
 
     require_package "${metadata_json}" "${ROOT_PACKAGE}" "root"
+    require_known_build_option_keys
     local pkg
     for pkg in "${DIST_PACKAGES[@]}"; do
         require_package "${metadata_json}" "${pkg}" "distribution"
+        require_build_options "${pkg}"
     done
 
     local host_triple
@@ -91,7 +118,7 @@ main() {
         local bin_name
         for bin_name in "${bin_names[@]}"; do
             # shellcheck disable=SC2206
-            local build_options=(${PACKAGE_BUILD_OPTIONS["${pkg}"]:-})
+            local build_options=(${PACKAGE_BUILD_OPTIONS["${pkg}"]})
             "${cargo_build[@]}" --release -p "${pkg}" --bin "${bin_name}" "${target_option[@]}" "${build_options[@]}"
             local bin_file="${bin_name}${bin_suffix}"
             if [[ ! -f "${release_bin_dir}/${bin_file}" ]]; then
