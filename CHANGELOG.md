@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - ReleaseDate
 
+### Fixed
+
+* Fix sheldon commands in README ([#659](https://github.com/gifnksm/souko/pull/659))
+
 ## [0.3.0] - 2026-04-03
 
 ### Added
@@ -29,7 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Rust edition bumped to 2024 ([#650](https://github.com/gifnksm/souko/pull/650))
 * Error message wording and contribution guidelines were updated to clarify the project's error display policy ([#651](https://github.com/gifnksm/souko/pull/651))
-* Added a `just ci-lint` workflow for lightweight local verification and updated contributor guidance accordingly ([#652](https://github.com/gifnksm/souko/pull/652))
+* **(Breaking)** Migrate from xtask to just-based task runner ([#632](https://github.com/gifnksm/souko/pull/632), [#633](https://github.com/gifnksm/souko/pull/633))
+* **(Breaking)** Replace xtask dist flow with dedicated build-dist script ([#634](https://github.com/gifnksm/souko/pull/634), [#652](https://github.com/gifnksm/souko/pull/652))
 * Minimum Supported Rust Version (MSRV) bumped to 1.88.0 (was 1.78.0)
 * Updated dependencies
 
