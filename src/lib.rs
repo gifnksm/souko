@@ -6,10 +6,10 @@
 //!
 //! ```toml
 //! [dependencies]
-//! souko = "0.2.2"
+//! souko = "0.3.0"
 //! ```
 
-#![doc(html_root_url = "https://docs.rs/souko/0.2.2")]
+#![doc(html_root_url = "https://docs.rs/souko/0.3.0")]
 
 pub use crate::souko::Souko;
 

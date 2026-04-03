@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - ReleaseDate
 
+## [0.3.0] - 2026-04-03
+
 ### Added
 
 * `souko list --template <FORMAT>`: new template-based output format for customizing list output ([#643](https://github.com/gifnksm/souko/pull/643), [#644](https://github.com/gifnksm/souko/pull/644))
@@ -77,7 +79,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * First release
 
 <!-- next-url -->
-[Unreleased]: https://github.com/gifnksm/souko/compare/v0.2.2...HEAD
+[Unreleased]: https://github.com/gifnksm/souko/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/gifnksm/souko/compare/v0.2.2...v0.3.0
 [0.2.2]: https://github.com/gifnksm/souko/compare/v0.2.1...v0.2.2
 [0.2.1]: https://github.com/gifnksm/souko/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/gifnksm/souko/compare/v0.1.2...v0.2.0
