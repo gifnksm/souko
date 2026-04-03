@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - ReleaseDate
 
+### Changed
+
+* The zsh `souko-cd-widget` now uses a path-first tab-separated selector format so labels can contain tabs without breaking path extraction ([#660](https://github.com/gifnksm/souko/pull/660))
+  * Default `SOUKO_LIST_TEMPLATE` changed from `label<TAB>path` to `path<TAB>label`
+  * `sk`/`fzf` integration now displays and searches all label fields after the first tab while extracting the destination path from the first field
+  * If you customized `SOUKO_LIST_TEMPLATE`, update it to the new `path<TAB>label` contract
+  * README shell integration examples were updated to match the new selector contract
+
 ## [0.3.1] - 2026-04-03
 
 ### Fixed
