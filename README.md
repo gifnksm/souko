@@ -75,9 +75,9 @@ Example with skim (`sk`):
 
 ```console
 $ repo_dir="$(
-    souko list --template $'{root_name} {repo_relative_path}\t{repo_canonical_path}' |
-      sk --delimiter $'\t' --with-nth 1 --nth 1 |
-      cut -f2
+    souko list --template $'{repo_canonical_path}\t{root_name} {repo_relative_path}' |
+      sk --delimiter $'\t' --with-nth 2.. --nth 1.. |
+      cut -f1
   )"
 $ printf '%s\n' "$repo_dir"
 ```
@@ -86,9 +86,9 @@ Example with fzf:
 
 ```console
 $ repo_dir="$(
-    souko list --template $'{root_name} {repo_relative_path}\t{repo_canonical_path}' |
-      fzf --delimiter=$'\t' --with-nth=1 |
-      cut -f2
+    souko list --template $'{repo_canonical_path}\t{root_name} {repo_relative_path}' |
+      fzf --delimiter=$'\t' --with-nth=2.. --nth=1.. |
+      cut -f1
   )"
 $ printf '%s\n' "$repo_dir"
 ```
@@ -131,23 +131,24 @@ When invoked, the widget:
 The default template is:
 
 ```zsh
-$'{root_name} {repo_relative_path}\t{repo_canonical_path}'
+$'{repo_canonical_path}\t{root_name} {repo_relative_path}'
 ```
 
 This means:
 
-- the text before the tab is displayed in the selector
-- the text after the tab is used as the destination path for `cd`
+- the text before the tab is used as the destination path for `cd`
+- the text after the tab is displayed and searched in the selector
+- if the label contains additional tabs, the selector continues to display and search the remaining label fields
 
 ##### Template contract
 
 `SOUKO_LIST_TEMPLATE` is customizable, but the widget expects each output line to follow this format:
 
 ```text
-label<TAB>path
+path<TAB>label
 ```
 
-If the selected line contains a tab, the part after the first tab is used as the destination path.
+If the selected line contains a tab, the part before the first tab is used as the destination path.
 If the selected line does not contain a tab, the entire line is treated as the path.
 
 #### Configuration
@@ -157,7 +158,7 @@ Set these before loading the plugin:
 ```zsh
 export SOUKO_COMMAND=souko
 export SOUKO_SELECTOR=auto                 # auto|sk|fzf
-export SOUKO_LIST_TEMPLATE=$'{root_name} {repo_relative_path}\t{repo_canonical_path}'
+export SOUKO_LIST_TEMPLATE=$'{repo_canonical_path}\t{root_name} {repo_relative_path}'
 export SOUKO_KEY_CD_REPO='^G'              # Ctrl-g; set empty to disable automatic bindkey
 export SOUKO_SK_OPTS='--ansi'
 export SOUKO_SK_TMUX_OPTS='center,80%'
@@ -186,7 +187,7 @@ bindkey '^G' souko-cd-widget
 Show a different label while preserving the required path format:
 
 ```zsh
-export SOUKO_LIST_TEMPLATE=$'{repo_relative_path}\t{repo_canonical_path}'
+export SOUKO_LIST_TEMPLATE=$'{repo_canonical_path}\t{repo_relative_path}'
 ```
 
 ## Configuration

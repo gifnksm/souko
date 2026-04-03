@@ -2,7 +2,7 @@
 # Customizable env vars (set before source):
 #     SOUKO_COMMAND          : souko command to execute (default: souko)
 #     SOUKO_SELECTOR         : auto|sk|fzf (default: auto)
-#     SOUKO_LIST_TEMPLATE    : template for `souko list --template` (default: '{root_name} {repo_relative_path}\t{repo_canonical_path}')
+#     SOUKO_LIST_TEMPLATE    : template for `souko list --template` (default: '{repo_canonical_path}\t{root_name} {repo_relative_path}')
 #     SOUKO_KEY_CD_REPO      : bind key for cd widget (default: '^G' = Ctrl-g)
 #     SOUKO_SK_OPTS          : extra args for sk
 #     SOUKO_SK_TMUX_OPTS     : sk --tmux option value (default: center,80%)
@@ -11,7 +11,7 @@
 
 : ${SOUKO_COMMAND:=souko}
 : ${SOUKO_SELECTOR:=auto}
-: ${SOUKO_LIST_TEMPLATE:=$'{root_name} {repo_relative_path}\t{repo_canonical_path}'}
+: ${SOUKO_LIST_TEMPLATE:=$'{repo_canonical_path}\t{root_name} {repo_relative_path}'}
 : ${SOUKO_KEY_CD_REPO='^G'}
 : ${SOUKO_SK_OPTS:=}
 : ${SOUKO_SK_TMUX_OPTS:=center,80%}
@@ -69,16 +69,16 @@
     case "${selector}" in
         sk)
             if [[ -n "${TMUX:-}" ]]; then
-                selected="$("${selector}" --delimiter $'\t' --with-nth 1 --nth 1 --tmux="${SOUKO_SK_TMUX_OPTS}" "${sk_opts[@]}")"
+                selected="$("${selector}" --delimiter $'\t' --with-nth 2.. --nth 1.. --tmux="${SOUKO_SK_TMUX_OPTS}" "${sk_opts[@]}")"
             else
-                selected="$("${selector}" --delimiter $'\t' --with-nth 1 --nth 1 "${sk_opts[@]}")"
+                selected="$("${selector}" --delimiter $'\t' --with-nth 2.. --nth 1.. "${sk_opts[@]}")"
             fi
             ;;
         fzf)
             if [[ -n "${TMUX:-}" ]]; then
-                selected="$("${selector}" --delimiter $'\t' --with-nth 1 --nth 1 --tmux="${SOUKO_FZF_TMUX_OPTS}" "${fzf_opts[@]}")"
+                selected="$("${selector}" --delimiter $'\t' --with-nth 2.. --nth 1.. --tmux="${SOUKO_FZF_TMUX_OPTS}" "${fzf_opts[@]}")"
             else
-                selected="$("${selector}" --delimiter $'\t' --with-nth 1 --nth 1 "${fzf_opts[@]}")"
+                selected="$("${selector}" --delimiter $'\t' --with-nth 2.. --nth 1.. "${fzf_opts[@]}")"
             fi
             ;;
         *)
@@ -109,14 +109,14 @@
     print -r -- "${selected}"
 }
 
-# default contract: template outputs "label<TAB>path"
+# default contract: template outputs "path<TAB>label"
 .souko_extract_path_from_line() {
     builtin emulate -L zsh ${=${options[xtrace]:#off}:+-o xtrace}
     builtin setopt extended_glob warn_create_global typeset_silent no_short_loops rc_quotes no_auto_pushd
 
     local line="$1"
     if [[ "${line}" == *$'\t'* ]]; then
-        print -r -- "${line#*$'\t'}"
+        print -r -- "${line%%$'\t'*}"
     else
         print -r -- "${line}"
     fi
