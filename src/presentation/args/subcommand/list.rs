@@ -18,6 +18,7 @@ use crate::{
     },
     presentation::{args::GlobalArgs, config::Config, model::optional_param::OptionalParam},
     project_dirs::ProjectDirs,
+    util::error::format_error_chain,
 };
 
 #[derive(Debug, Clone, Default, clap::Args)]
@@ -102,7 +103,7 @@ impl Args {
             match root_service.canonicalize_root(root.value(), should_exist) {
                 Ok(root) => root,
                 Err(e) => {
-                    tracing::warn!("{e}");
+                    tracing::warn!("{}", format_error_chain(&e));
                     None
                 }
             }
@@ -117,7 +118,7 @@ impl Args {
             let repos = match root_service.find_repos(root, skip_hidden, skip_bare, no_recursive) {
                 Ok(repos) => Some(repos),
                 Err(e) => {
-                    tracing::warn!("{e}");
+                    tracing::warn!("{}", format_error_chain(&e));
                     None
                 }
             };
@@ -125,7 +126,7 @@ impl Args {
             repos.into_iter().flatten().filter_map(|res| match res {
                 Ok(repo) => Some(repo),
                 Err(e) => {
-                    tracing::warn!("{e}");
+                    tracing::warn!("{}", format_error_chain(&e));
                     None
                 }
             })
