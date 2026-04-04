@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use chrono::{DateTime, Duration, Utc};
+use color_eyre::eyre::eyre;
 
 use super::helper::workdir::Workdir;
 use crate::domain::{
@@ -19,6 +20,7 @@ use crate::domain::{
         walk_repo::{Entry, Repos, WalkRepo},
     },
 };
+use crate::util::error::format_error_chain;
 
 #[derive(Debug, Clone)]
 pub(crate) struct RootService {
@@ -73,7 +75,9 @@ impl RootService {
     ) {
         let mut repo_cache = self.repo_cache.lock().unwrap();
         if let Err(err) = repo_cache.load(path, now, expire_duration) {
-            tracing::warn!("failed to load repo cache: {err} ({})", path.display());
+            let err =
+                eyre!(err).wrap_err(format!("failed to load repo cache ({})", path.display()));
+            tracing::warn!("{}", format_error_chain(&err));
             repo_cache.clear(now);
         }
     }
@@ -81,7 +85,9 @@ impl RootService {
     pub(crate) fn store_repo_cache(&self, path: &dyn PathLike) {
         let mut repo_cache = self.repo_cache.lock().unwrap();
         if let Err(err) = repo_cache.store(path) {
-            tracing::warn!("failed to store repo cache: {err} ({})", path.display());
+            let err =
+                eyre!(err).wrap_err(format!("failed to store repo cache ({})", path.display()));
+            tracing::warn!("{}", format_error_chain(&err));
         }
     }
 
