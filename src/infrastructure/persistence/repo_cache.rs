@@ -13,19 +13,19 @@ use crate::{
             repo::{CanonicalRepo, Repo},
             root::{CanonicalRoot, Root},
         },
-        repository::repo_cache::RepoCache,
+        port::repo_cache::RepoCache,
     },
     util::file,
 };
 
 #[derive(Debug, Deserialize, Serialize)]
-pub(super) struct FsRepoCache {
+pub(in crate::infrastructure) struct JsonRepoCache {
     now: Option<DateTime<Utc>>,
     cache: Cache,
 }
 
-impl FsRepoCache {
-    pub(super) fn new() -> Self {
+impl JsonRepoCache {
+    pub(in crate::infrastructure) fn new() -> Self {
         Self {
             now: None,
             cache: Cache::default(),
@@ -33,7 +33,7 @@ impl FsRepoCache {
     }
 }
 
-impl RepoCache for FsRepoCache {
+impl RepoCache for JsonRepoCache {
     fn load(
         &mut self,
         path: &dyn PathLike,

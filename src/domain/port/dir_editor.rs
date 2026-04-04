@@ -11,7 +11,7 @@ pub(crate) enum EnsureDirExistError {
     Other(Box<dyn std::error::Error + Send + Sync + 'static>),
 }
 
-pub(crate) trait EditDir: Debug {
+pub(crate) trait DirEditor: Debug {
     /// Creates a directory if it does not exist.
     ///
     /// Returns `true` if the directory was created by this function call, or
@@ -70,5 +70,5 @@ mod tests {
     use super::*;
 
     // Assert object safety for trait object.
-    const _: Option<&dyn EditDir> = None;
+    const _: Option<&dyn DirEditor> = None;
 }

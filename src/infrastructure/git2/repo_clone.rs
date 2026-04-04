@@ -1,13 +1,13 @@
 use git2_credentials::CredentialHandler;
 use url::Url;
 
-use crate::domain::{model::path_like::PathLike, repository::clone_repo::CloneRepo};
+use crate::domain::{model::path_like::PathLike, port::clone_repo::RepoClone};
 
 #[derive(Debug)]
-pub(super) struct FsCloneRepo {}
+pub(in crate::infrastructure) struct Git2RepoClone {}
 
-impl FsCloneRepo {
-    pub(super) fn new() -> Self {
+impl Git2RepoClone {
+    pub(in crate::infrastructure) fn new() -> Self {
         Self {}
     }
 }
@@ -27,7 +27,7 @@ enum Error {
     },
 }
 
-impl CloneRepo for FsCloneRepo {
+impl RepoClone for Git2RepoClone {
     fn clone_repo(
         &self,
         url: &url::Url,

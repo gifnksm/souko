@@ -45,8 +45,8 @@ impl Souko {
             .try_init()
             .map_err(|e| eyre!(e))?;
 
-        let repository = infrastructure::repository();
-        let service = Service::new(&repository);
+        let ports = infrastructure::ports();
+        let service = Service::new(&ports);
         let project_dirs = ProjectDirs::new()?;
         presentation.main(&service, &project_dirs)
     }

@@ -1,19 +1,25 @@
 use std::sync::{Arc, Mutex};
 
-use crate::domain::repository::Repository;
+use crate::{
+    domain::port::Ports,
+    infrastructure::{
+        fs::{FsDirEditor, FsDirWalker, FsPathCanonicalizer},
+        git2::{Git2RepoClone, Git2RepoProbe},
+        persistence::JsonRepoCache,
+    },
+};
 
-mod fs_canonicalize_root;
-mod fs_clone_repo;
-mod fs_edit_dir;
-mod fs_repo_cache;
-mod fs_walk_repo;
+mod fs;
+mod git2;
+mod persistence;
 
-pub(crate) fn repository() -> Repository {
-    Repository {
-        canonicalize_root: Arc::new(fs_canonicalize_root::FsCanonicalizeRoot::new()),
-        walk_repo: Arc::new(fs_walk_repo::FsWalkRepo::new()),
-        clone_repo: Arc::new(fs_clone_repo::FsCloneRepo::new()),
-        edit_dir: Arc::new(fs_edit_dir::FsEditDir::new()),
-        repo_cache: Arc::new(Mutex::new(fs_repo_cache::FsRepoCache::new())),
+pub(crate) fn ports() -> Ports {
+    Ports {
+        path_canonicalizer: Arc::new(FsPathCanonicalizer::new()),
+        dir_walker: Arc::new(FsDirWalker::new()),
+        repo_clone: Arc::new(Git2RepoClone::new()),
+        repo_probe: Arc::new(Git2RepoProbe::new()),
+        dir_editor: Arc::new(FsDirEditor::new()),
+        repo_cache: Arc::new(Mutex::new(JsonRepoCache::new())),
     }
 }
