@@ -4,7 +4,7 @@ use url::Url;
 
 use crate::domain::model::path_like::PathLike;
 
-pub(crate) trait CloneRepo: Debug {
+pub(crate) trait RepoClone: Debug {
     fn clone_repo(
         &self,
         url: &Url,
@@ -18,5 +18,5 @@ mod tests {
     use super::*;
 
     // Assert object safety for trait object.
-    const _: Option<&dyn CloneRepo> = None;
+    const _: Option<&dyn RepoClone> = None;
 }

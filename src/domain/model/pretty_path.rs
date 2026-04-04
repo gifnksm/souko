@@ -9,6 +9,16 @@ pub(crate) struct PrettyPath {
 }
 
 impl PrettyPath {
+    pub(crate) fn new<P>(path: P) -> Self
+    where
+        P: PathLike,
+    {
+        Self {
+            real_path: path.as_real_path().to_owned(),
+            display_path: path.as_display_path().to_owned(),
+        }
+    }
+
     pub(crate) fn from_pair(real_path: PathBuf, display_path: PathBuf) -> Self {
         Self {
             real_path,

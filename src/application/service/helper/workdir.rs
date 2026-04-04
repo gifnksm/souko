@@ -2,23 +2,23 @@ use std::{path::PathBuf, sync::Arc};
 
 use crate::domain::{
     model::path_like::PathLike,
-    repository::edit_dir::{EditDir, EnsureDirExistError},
+    port::dir_editor::{DirEditor, EnsureDirExistError},
 };
 
 #[derive(Debug)]
 pub(in super::super) struct Workdir {
-    edit_dir: Arc<dyn EditDir>,
+    dir_editor: Arc<dyn DirEditor>,
     created_dirs: Vec<PathBuf>,
     erase_leaf_content: bool,
 }
 
 impl Workdir {
     pub(in super::super) fn create(
-        edit_dir: Arc<dyn EditDir>,
+        dir_editor: Arc<dyn DirEditor>,
         path: &dyn PathLike,
     ) -> Result<Self, Box<dyn std::error::Error + Send + Sync + 'static>> {
         let mut workdir = Self {
-            edit_dir: Arc::clone(&edit_dir),
+            dir_editor: Arc::clone(&dir_editor),
             created_dirs: vec![],
             erase_leaf_content: false,
         };
@@ -26,7 +26,7 @@ impl Workdir {
         let leaf_path = path;
         let mut to_create = vec![leaf_path];
         while let Some(path) = to_create.last().copied() {
-            match edit_dir.ensure_dir_exist(path) {
+            match dir_editor.ensure_dir_exist(path) {
                 Ok(created_by_call) => {
                     if created_by_call {
                         // register the created dir only if it is created by this call.
@@ -66,14 +66,14 @@ impl Drop for Workdir {
         if self.erase_leaf_content
             && let Some(leaf_path) = self.created_dirs.last()
         {
-            let res = self.edit_dir.ensure_dir_empty(leaf_path);
+            let res = self.dir_editor.ensure_dir_empty(leaf_path);
             if res.is_err() {
                 return;
             }
         }
 
         while let Some(last) = self.created_dirs.pop() {
-            let res = self.edit_dir.ensure_dir_removed(&last);
+            let res = self.dir_editor.ensure_dir_removed(&last);
             if res.is_err() {
                 return;
             }
@@ -90,13 +90,13 @@ mod test {
 
     #[test]
     fn persist() {
-        let repository = infrastructure::repository();
-        let edit_dir = repository.edit_dir; // must be `FsEditDir`
+        let ports = infrastructure::ports();
+        let dir_editor = ports.dir_editor; // must be `FsDirEditor`
 
         let test_dir = TempDir::new().unwrap();
         test_dir.child("dir1/").create_dir_all().unwrap();
         let workdir_path = test_dir.child("dir1/a/b/c");
-        let mut workdir = Workdir::create(Arc::clone(&edit_dir), &workdir_path.path()).unwrap();
+        let mut workdir = Workdir::create(Arc::clone(&dir_editor), &workdir_path.path()).unwrap();
         assert!(workdir_path.is_dir());
         workdir_path.child("file").touch().unwrap();
         // `persist()` prevents workdir and its content from being removed on drop.
@@ -112,15 +112,15 @@ mod test {
 
     #[test]
     fn remove_on_drop() {
-        let repository = infrastructure::repository();
-        let edit_dir = repository.edit_dir; // must be `FsEditDir`
+        let ports = infrastructure::ports();
+        let dir_editor = ports.dir_editor; // must be `FsDirEditor`
 
         let test_dir = TempDir::new().unwrap();
 
         // when some directories created by `Workdir` are removed on drop
         test_dir.child("dir1/").create_dir_all().unwrap();
         let workdir_path = test_dir.child("dir1/a/b/c");
-        let workdir = Workdir::create(Arc::clone(&edit_dir), &workdir_path.path()).unwrap();
+        let workdir = Workdir::create(Arc::clone(&dir_editor), &workdir_path.path()).unwrap();
         assert!(workdir_path.is_dir());
         workdir_path.child("file").touch().unwrap();
         // drop removes the workdir and its content.
@@ -133,7 +133,7 @@ mod test {
         // when no directory is created by `Workdir`, nothing is removed on drop.
         test_dir.child("dir2/a/b/c").create_dir_all().unwrap();
         let workdir_path = test_dir.child("dir2/a/b/c");
-        let workdir = Workdir::create(Arc::clone(&edit_dir), &workdir_path.path()).unwrap();
+        let workdir = Workdir::create(Arc::clone(&dir_editor), &workdir_path.path()).unwrap();
         assert!(workdir_path.is_dir());
         workdir_path.child("file").touch().unwrap();
         // drop removes nothing

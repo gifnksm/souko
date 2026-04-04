@@ -1,4 +1,4 @@
-use crate::domain::repository::Repository;
+use crate::domain::port::Ports;
 
 mod helper;
 pub(crate) mod root;
@@ -8,9 +8,9 @@ pub(crate) struct Service {
 }
 
 impl Service {
-    pub(crate) fn new(repository: &Repository) -> Self {
+    pub(crate) fn new(ports: &Ports) -> Self {
         Self {
-            root: root::RootService::new(repository),
+            root: root::RootService::new(ports),
         }
     }
 

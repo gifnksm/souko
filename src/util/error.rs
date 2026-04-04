@@ -1,19 +1,29 @@
 use std::fmt::{self, Display, Formatter};
 
-pub(crate) fn format_error_chain<'a, E>(error: &'a E) -> ErrorChainDisplay<'a>
+pub(crate) trait FormatErrorChain {
+    fn format_error_chain(&self) -> impl Display + '_;
+}
+
+impl<E> FormatErrorChain for E
 where
-    E: AsRef<dyn std::error::Error> + 'a,
+    E: std::error::Error + ?Sized,
 {
-    ErrorChainDisplay {
-        error: error.as_ref(),
+    fn format_error_chain(&self) -> impl Display + '_ {
+        ErrorChainDisplay { error: self }
     }
 }
 
-pub(crate) struct ErrorChainDisplay<'a> {
-    error: &'a dyn std::error::Error,
+struct ErrorChainDisplay<'a, E>
+where
+    E: ?Sized,
+{
+    error: &'a E,
 }
 
-impl Display for ErrorChainDisplay<'_> {
+impl<E> Display for ErrorChainDisplay<'_, E>
+where
+    E: std::error::Error + ?Sized,
+{
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.error)?;
 

@@ -1,46 +1,40 @@
 use std::{
-    io,
     path::{Path, PathBuf},
     sync::Arc,
 };
 
 use crate::domain::{
-    model::{
-        path_like::PathLike,
-        pretty_path::PrettyPath,
-        repo::{CanonicalRepo, Repo},
-        root::CanonicalRoot,
-    },
-    repository::walk_repo::{Entry, FilterPredicate, Repos, WalkRepo},
+    model::{path_like::PathLike, pretty_path::PrettyPath, root::CanonicalRoot},
+    port::dir_walker::{DirEntries, DirEntry, DirWalker, FilterPredicate},
 };
 
 #[derive(Debug)]
-pub(super) struct FsWalkRepo {}
+pub(in crate::infrastructure) struct FsDirWalker {}
 
-impl FsWalkRepo {
-    pub(super) fn new() -> Self {
+impl FsDirWalker {
+    pub(in crate::infrastructure) fn new() -> Self {
         Self {}
     }
 }
 
-impl WalkRepo for FsWalkRepo {
-    fn walk_repo(
+impl DirWalker for FsDirWalker {
+    fn entries(
         &self,
         root: &CanonicalRoot,
-    ) -> Result<Box<dyn Repos>, Box<dyn std::error::Error>> {
-        Ok(Box::new(FsRepos::new(root)))
+    ) -> Result<Box<dyn DirEntries>, Box<dyn std::error::Error>> {
+        Ok(Box::new(FsDirEntries::new(root)))
     }
 }
 
 #[derive(custom_debug_derive::Debug)]
-pub(super) struct FsRepos {
+pub(super) struct FsDirEntries {
     root: Arc<CanonicalRoot>,
     iter: walkdir::IntoIter,
     #[debug(skip)]
     filter: Option<FilterPredicate>,
 }
 
-impl FsRepos {
+impl FsDirEntries {
     pub(super) fn new(root: &CanonicalRoot) -> Self {
         let root = Arc::new(root.clone());
         let iter = walkdir::WalkDir::new(root.path().as_real_path())
@@ -54,7 +48,7 @@ impl FsRepos {
     }
 }
 
-impl Repos for FsRepos {
+impl DirEntries for FsDirEntries {
     fn skip_subdir(&mut self) {
         self.iter.skip_current_dir();
     }
@@ -63,7 +57,7 @@ impl Repos for FsRepos {
         let mut filter = filter;
         let filter = match self.filter.take() {
             Some(mut pre_filter) => {
-                Box::new(move |entry: &dyn Entry| pre_filter(entry) && filter(entry))
+                Box::new(move |entry: &dyn DirEntry| pre_filter(entry) && filter(entry))
             }
             None => filter,
         };
@@ -76,16 +70,10 @@ impl Repos for FsRepos {
 enum Error {
     #[error(transparent)]
     WalkDir(#[from] walkdir::Error),
-    #[error("failed to canonicalize: {path}")]
-    Canonicalize {
-        path: PathBuf,
-        #[source]
-        source: io::Error,
-    },
 }
 
-impl Iterator for FsRepos {
-    type Item = Result<Box<dyn Entry>, Box<dyn std::error::Error>>;
+impl Iterator for FsDirEntries {
+    type Item = Result<Box<dyn DirEntry>, Box<dyn std::error::Error>>;
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -96,7 +84,7 @@ impl Iterator for FsRepos {
                 continue;
             }
 
-            let entry = FsEntry::new(Arc::clone(&self.root), entry);
+            let entry = FsDirEntry::new(Arc::clone(&self.root), entry);
 
             if let Some(filter) = &mut self.filter
                 && !filter(&entry)
@@ -112,14 +100,13 @@ impl Iterator for FsRepos {
 }
 
 #[derive(Debug)]
-struct FsEntry {
+struct FsDirEntry {
     root: Arc<CanonicalRoot>,
-    entry: walkdir::DirEntry,
     relative_path: PathBuf,
     path: PrettyPath,
 }
 
-impl FsEntry {
+impl FsDirEntry {
     fn new(root: Arc<CanonicalRoot>, entry: walkdir::DirEntry) -> Self {
         let relative_path = entry
             .path()
@@ -130,14 +117,13 @@ impl FsEntry {
 
         Self {
             root,
-            entry,
             relative_path,
             path,
         }
     }
 }
 
-impl Entry for FsEntry {
+impl DirEntry for FsDirEntry {
     fn root(&self) -> &CanonicalRoot {
         &self.root
     }
@@ -156,24 +142,5 @@ impl Entry for FsEntry {
             .file_name()
             .and_then(|file_name| file_name.to_str().map(|s| s.starts_with('.')))
             .unwrap_or(false)
-    }
-
-    fn to_repo(&self) -> Result<Option<CanonicalRepo>, Box<dyn std::error::Error>> {
-        let git2_repo = match git2::Repository::open(self.path().as_real_path()) {
-            Ok(repo) => repo,
-            Err(_e) => return Ok(None),
-        };
-        let bare = git2_repo.is_bare();
-        let repo = Repo::from_relative_path(self.root.as_root(), self.relative_path.clone(), bare);
-
-        let canonical_path =
-            dunce::canonicalize(self.entry.path()).map_err(|err| Error::Canonicalize {
-                path: self.entry.path().to_owned(),
-                source: err,
-            })?;
-
-        let canonical_repo = CanonicalRepo::new(repo, canonical_path);
-
-        Ok(Some(canonical_repo))
     }
 }

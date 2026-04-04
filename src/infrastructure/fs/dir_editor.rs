@@ -2,18 +2,18 @@ use std::{fs, io, path::Path};
 
 use remove_dir_all::remove_dir_contents;
 
-use crate::domain::repository::edit_dir::{EditDir, EnsureDirExistError};
+use crate::domain::port::dir_editor::{DirEditor, EnsureDirExistError};
 
 #[derive(Debug)]
-pub(super) struct FsEditDir {}
+pub(in crate::infrastructure) struct FsDirEditor {}
 
-impl FsEditDir {
-    pub(super) fn new() -> Self {
+impl FsDirEditor {
+    pub(in crate::infrastructure) fn new() -> Self {
         Self {}
     }
 }
 
-impl EditDir for FsEditDir {
+impl DirEditor for FsDirEditor {
     fn ensure_dir_exist(&self, path: &Path) -> Result<bool, EnsureDirExistError> {
         match fs::create_dir(path) {
             Ok(()) => Ok(true),
@@ -101,18 +101,18 @@ mod tests {
         readonly_dir.create_dir_all().unwrap();
         readonly_dir.set_readonly(true).unwrap();
 
-        let edit_dir = FsEditDir::new();
+        let dir_editor = FsDirEditor::new();
 
         // Test postcondition
         let call = |path: &Path| {
-            let res = edit_dir.ensure_dir_exist(path);
+            let res = dir_editor.ensure_dir_exist(path);
             if res.is_ok() {
                 assert!(path.is_dir());
             }
             res
         };
 
-        // Tests the properties described in the doc comment of `EditDir::ensure_dir_exist`
+        // Tests the properties described in the doc comment of `DirEditor::ensure_dir_exist`
 
         // Returns `true` if if the directory was created by this function call
         assert!(call(&normal_dir.child("newdir1")).unwrap());
@@ -166,11 +166,11 @@ mod tests {
         undeletable_dir.create_dir_all().unwrap();
         readonly_dir.set_readonly(true).unwrap();
 
-        let edit_dir = FsEditDir::new();
+        let dir_editor = FsDirEditor::new();
 
         // Test postcondition
         let call = |path: &Path| {
-            let res = edit_dir.ensure_dir_removed(path);
+            let res = dir_editor.ensure_dir_removed(path);
             if res.is_ok() {
                 assert!(path.parent().unwrap().try_exists().unwrap());
                 assert!(!path.try_exists().unwrap());
@@ -178,7 +178,7 @@ mod tests {
             res
         };
 
-        // Tests the properties described in the doc comment of `EditDir::ensure_dir_removed`
+        // Tests the properties described in the doc comment of `DirEditor::ensure_dir_removed`
 
         // Returns `true` if the directory was removed by this function call
         assert!(call(&normal_dir1).unwrap());
@@ -229,11 +229,11 @@ mod tests {
         readonly_dir.child("file").touch().unwrap();
         readonly_dir.set_readonly(true).unwrap();
 
-        let edit_dir = FsEditDir::new();
+        let dir_editor = FsDirEditor::new();
 
         // Test postcondition
         let call = |path: &Path| {
-            let res = edit_dir.ensure_dir_empty(path);
+            let res = dir_editor.ensure_dir_empty(path);
             if res.is_ok() {
                 assert!(path.is_dir());
                 assert!(path.read_dir().unwrap().next().is_none());
@@ -241,7 +241,7 @@ mod tests {
             res
         };
 
-        // Tests the properties described in the doc comment of `EditDir::ensure_dir_removed`
+        // Tests the properties described in the doc comment of `DirEditor::ensure_dir_removed`
 
         // Returns `true` if the contents of the directory were removed by this function call
         assert!(call(&normal_dir1).unwrap());

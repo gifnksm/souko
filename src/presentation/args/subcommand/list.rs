@@ -9,7 +9,7 @@ use color_eyre::eyre::{Result, eyre};
 use serde::Serialize;
 
 use crate::{
-    application::service::Service,
+    application::service::{Service, root::RootServiceError},
     domain::model::{
         path_like::PathLike,
         repo::CanonicalRepo,
@@ -18,7 +18,7 @@ use crate::{
     },
     presentation::{args::GlobalArgs, config::Config, model::optional_param::OptionalParam},
     project_dirs::ProjectDirs,
-    util::error::format_error_chain,
+    util::error::FormatErrorChain as _,
 };
 
 #[derive(Debug, Clone, Default, clap::Args)]
@@ -100,10 +100,11 @@ impl Args {
         let root_service = service.root();
         let roots = roots.into_iter().filter_map(|root| {
             let should_exist = root.is_explicit();
-            match root_service.canonicalize_root(root.value(), should_exist) {
-                Ok(root) => root,
+            match root_service.canonicalize_root(root.value()) {
+                Ok(root) => Some(root),
+                Err(RootServiceError::RootNotExist { .. }) if !should_exist => None,
                 Err(e) => {
-                    tracing::warn!("{}", format_error_chain(&e));
+                    tracing::warn!("{}", e.format_error_chain());
                     None
                 }
             }
@@ -118,7 +119,7 @@ impl Args {
             let repos = match root_service.find_repos(root, skip_hidden, skip_bare, no_recursive) {
                 Ok(repos) => Some(repos),
                 Err(e) => {
-                    tracing::warn!("{}", format_error_chain(&e));
+                    tracing::warn!("{}", e.format_error_chain());
                     None
                 }
             };
@@ -126,7 +127,7 @@ impl Args {
             repos.into_iter().flatten().filter_map(|res| match res {
                 Ok(repo) => Some(repo),
                 Err(e) => {
-                    tracing::warn!("{}", format_error_chain(&e));
+                    tracing::warn!("{}", e.format_error_chain());
                     None
                 }
             })
