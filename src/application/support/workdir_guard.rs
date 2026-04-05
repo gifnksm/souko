@@ -6,13 +6,13 @@ use crate::domain::{
 };
 
 #[derive(Debug)]
-pub(in super::super) struct Workdir {
+pub(in super::super) struct WorkdirGuard {
     dir_editor: Arc<dyn DirEditor>,
     created_dirs: Vec<PathBuf>,
     erase_leaf_content: bool,
 }
 
-impl Workdir {
+impl WorkdirGuard {
     pub(in super::super) fn create(
         dir_editor: Arc<dyn DirEditor>,
         path: &dyn PathLike,
@@ -61,7 +61,7 @@ impl Workdir {
     }
 }
 
-impl Drop for Workdir {
+impl Drop for WorkdirGuard {
     fn drop(&mut self) {
         if self.erase_leaf_content
             && let Some(leaf_path) = self.created_dirs.last()
@@ -96,7 +96,8 @@ mod test {
         let test_dir = TempDir::new().unwrap();
         test_dir.child("dir1/").create_dir_all().unwrap();
         let workdir_path = test_dir.child("dir1/a/b/c");
-        let mut workdir = Workdir::create(Arc::clone(&dir_editor), &workdir_path.path()).unwrap();
+        let mut workdir =
+            WorkdirGuard::create(Arc::clone(&dir_editor), &workdir_path.path()).unwrap();
         assert!(workdir_path.is_dir());
         workdir_path.child("file").touch().unwrap();
         // `persist()` prevents workdir and its content from being removed on drop.
@@ -120,7 +121,7 @@ mod test {
         // when some directories created by `Workdir` are removed on drop
         test_dir.child("dir1/").create_dir_all().unwrap();
         let workdir_path = test_dir.child("dir1/a/b/c");
-        let workdir = Workdir::create(Arc::clone(&dir_editor), &workdir_path.path()).unwrap();
+        let workdir = WorkdirGuard::create(Arc::clone(&dir_editor), &workdir_path.path()).unwrap();
         assert!(workdir_path.is_dir());
         workdir_path.child("file").touch().unwrap();
         // drop removes the workdir and its content.
@@ -133,7 +134,7 @@ mod test {
         // when no directory is created by `Workdir`, nothing is removed on drop.
         test_dir.child("dir2/a/b/c").create_dir_all().unwrap();
         let workdir_path = test_dir.child("dir2/a/b/c");
-        let workdir = Workdir::create(Arc::clone(&dir_editor), &workdir_path.path()).unwrap();
+        let workdir = WorkdirGuard::create(Arc::clone(&dir_editor), &workdir_path.path()).unwrap();
         assert!(workdir_path.is_dir());
         workdir_path.child("file").touch().unwrap();
         // drop removes nothing

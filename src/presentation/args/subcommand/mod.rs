@@ -1,7 +1,7 @@
 use color_eyre::eyre::Result;
 
 use super::GlobalArgs;
-use crate::{application::service::Service, project_dirs::ProjectDirs};
+use crate::{application::usecase::Usecases, project_dirs::ProjectDirs};
 
 mod clone;
 mod list;
@@ -18,12 +18,12 @@ impl Subcommand {
     pub(super) fn run(
         &self,
         global_args: &GlobalArgs,
-        service: &Service,
+        usecases: &Usecases,
         project_dirs: &ProjectDirs,
     ) -> Result<()> {
         match self {
-            Self::Clone(args) => args.inner.run(global_args, service, project_dirs),
-            Self::List(args) => args.inner.run(global_args, service, project_dirs),
+            Self::Clone(args) => args.inner.run(global_args, usecases, project_dirs),
+            Self::List(args) => args.inner.run(global_args, usecases, project_dirs),
         }
     }
 }

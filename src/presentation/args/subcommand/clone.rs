@@ -1,9 +1,11 @@
 use color_eyre::eyre::{Result, WrapErr, eyre};
 
 use crate::{
-    application::service::Service,
+    application::usecase::Usecases,
     domain::model::{path_like::PathLike, query::Query, root::Root},
-    presentation::{args::GlobalArgs, config::Config, model::optional_param::OptionalParam},
+    presentation::{
+        args::GlobalArgs, config::Config, message, model::optional_param::OptionalParam,
+    },
     project_dirs::ProjectDirs,
 };
 
@@ -54,7 +56,7 @@ impl Args {
     pub(super) fn run(
         &self,
         global_args: &GlobalArgs,
-        service: &Service,
+        usecases: &Usecases,
         project_dirs: &ProjectDirs,
     ) -> Result<()> {
         let config = global_args.config(project_dirs)?;
@@ -62,22 +64,21 @@ impl Args {
         let root = self.root(&config, project_dirs)?;
         let query = self.query(&config)?;
 
-        let root_service = service.root();
-
         let bare = false;
 
-        tracing::info!(
-            "Cloning {} into {}",
+        message::info!(
+            "cloning {} into {}",
             query.original_query(),
             root.value().path().display()
         );
 
-        root_service
+        usecases
+            .clone()
             .clone_repo(root.value(), &query, bare)
             .map_err(|e| eyre!(e))
             .wrap_err("failed to clone repository")?;
 
-        tracing::info!("Cloned {}", query.original_query());
+        message::info!("cloned {}", query.original_query());
 
         Ok(())
     }

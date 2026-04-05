@@ -5,7 +5,9 @@ use clap_complete::{Generator, Shell};
 use color_eyre::eyre::{Result, WrapErr as _, eyre};
 
 use self::args::Args;
-use crate::{application::service::Service, project_dirs::ProjectDirs};
+use crate::{application::usecase::Usecases, project_dirs::ProjectDirs};
+
+mod message;
 
 mod args;
 mod config;
@@ -26,9 +28,9 @@ impl Presentation {
         Self { args }
     }
 
-    pub(crate) fn main(self, service: &Service, project_dirs: &ProjectDirs) -> Result<()> {
+    pub(crate) fn main(self, usecases: &Usecases, project_dirs: &ProjectDirs) -> Result<()> {
         let Self { args } = self;
-        args.run(service, project_dirs)?;
+        args.run(usecases, project_dirs)?;
         Ok(())
     }
 

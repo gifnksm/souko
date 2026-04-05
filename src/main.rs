@@ -4,7 +4,9 @@ use color_eyre::eyre::{self, eyre};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
-use crate::{application::service::Service, presentation::Presentation, project_dirs::ProjectDirs};
+use crate::{
+    application::usecase::Usecases, presentation::Presentation, project_dirs::ProjectDirs,
+};
 
 #[macro_use]
 mod macros;
@@ -51,7 +53,7 @@ fn main() -> eyre::Result<()> {
         .map_err(|e| eyre!(e))?;
 
     let ports = infrastructure::ports();
-    let service = Service::new(&ports);
+    let usecases = Usecases::new(&ports);
     let project_dirs = ProjectDirs::new()?;
-    presentation.main(&service, &project_dirs)
+    presentation.main(&usecases, &project_dirs)
 }

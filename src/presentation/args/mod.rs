@@ -7,7 +7,7 @@ use super::{
     model::{optional_param::OptionalParam, tilde_path::TildePath},
 };
 use crate::{
-    application::service::Service, domain::model::path_like::PathLike, project_dirs::ProjectDirs,
+    application::usecase::Usecases, domain::model::path_like::PathLike, project_dirs::ProjectDirs,
     util::file,
 };
 
@@ -74,9 +74,9 @@ impl Args {
         self.global_args.verbosity.verbosity()
     }
 
-    pub(super) fn run(&self, service: &Service, project_dirs: &ProjectDirs) -> Result<()> {
+    pub(super) fn run(&self, usecases: &Usecases, project_dirs: &ProjectDirs) -> Result<()> {
         match &self.subcommand {
-            Some(subcommand) => subcommand.run(&self.global_args, service, project_dirs)?,
+            Some(subcommand) => subcommand.run(&self.global_args, usecases, project_dirs)?,
             None => <Args as clap::CommandFactory>::command().print_help()?,
         }
         Ok(())

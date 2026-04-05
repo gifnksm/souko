@@ -17,9 +17,9 @@ pub(crate) fn ports() -> Ports {
     Ports {
         path_canonicalizer: Arc::new(FsPathCanonicalizer::new()),
         dir_walker: Arc::new(FsDirWalker::new()),
+        dir_editor: Arc::new(FsDirEditor::new()),
         repo_clone: Arc::new(Git2RepoClone::new()),
         repo_probe: Arc::new(Git2RepoProbe::new()),
-        dir_editor: Arc::new(FsDirEditor::new()),
         repo_cache: Arc::new(Mutex::new(JsonRepoCache::new())),
     }
 }

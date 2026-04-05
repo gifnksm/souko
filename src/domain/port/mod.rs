@@ -18,8 +18,8 @@ pub(crate) mod repo_probe;
 pub(crate) struct Ports {
     pub(crate) path_canonicalizer: Arc<dyn PathCanonicalizer>,
     pub(crate) dir_walker: Arc<dyn DirWalker>,
+    pub(crate) dir_editor: Arc<dyn DirEditor>,
     pub(crate) repo_clone: Arc<dyn RepoClone>,
     pub(crate) repo_probe: Arc<dyn RepoProbe>,
-    pub(crate) dir_editor: Arc<dyn DirEditor>,
     pub(crate) repo_cache: Arc<Mutex<dyn RepoCache>>,
 }
