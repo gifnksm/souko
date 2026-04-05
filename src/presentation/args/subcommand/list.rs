@@ -4,19 +4,25 @@ use std::{
     path::PathBuf,
 };
 
-use chrono::{Duration, Utc};
+use chrono::Utc;
 use color_eyre::eyre::{Result, eyre};
 use serde::Serialize;
 
 use crate::{
-    application::service::{Service, root::RootServiceError},
+    application::usecase::{
+        Usecases,
+        list::{ListContext, ListOptions, ListRootInput},
+    },
     domain::model::{
         path_like::PathLike,
+        pretty_path::PrettyPath,
         repo::CanonicalRepo,
         root::{CanonicalRoot, Root},
         template::{Template, TemplateContext},
     },
-    presentation::{args::GlobalArgs, config::Config, model::optional_param::OptionalParam},
+    presentation::{
+        args::GlobalArgs, config::Config, message, model::optional_param::OptionalParam,
+    },
     project_dirs::ProjectDirs,
     util::error::FormatErrorChain as _,
 };
@@ -90,82 +96,71 @@ impl Args {
     pub(super) fn run(
         &self,
         global_args: &GlobalArgs,
-        service: &Service,
+        usecases: &Usecases,
         project_dirs: &ProjectDirs,
     ) -> Result<()> {
         let format = self.format.validate()?;
         let config = global_args.config(project_dirs)?;
-        let roots = self.roots(&config, project_dirs)?;
-
-        let root_service = service.root();
-        let roots = roots.into_iter().filter_map(|root| {
-            let should_exist = root.is_explicit();
-            match root_service.canonicalize_root(root.value()) {
-                Ok(root) => Some(root),
-                Err(RootServiceError::RootNotExist { .. }) if !should_exist => None,
-                Err(e) => {
-                    tracing::warn!("{}", e.format_error_chain());
-                    None
-                }
-            }
-        });
+        let input_roots =
+            self.roots(&config, project_dirs)?
+                .into_iter()
+                .map(|root| ListRootInput {
+                    allow_missing: !root.is_explicit(),
+                    root: root.value().clone(),
+                });
 
         // TODO: make this configurable
-        let skip_hidden = true;
-        let skip_bare = true;
-        let no_recursive = true;
+        let context = ListContext {
+            now: Utc::now(),
+            repo_cache_path: PrettyPath::new(global_args.repo_cache_path(project_dirs).value()),
+        };
+        let options = ListOptions::default();
 
-        let repos_in_root = move |root: &CanonicalRoot| {
-            let repos = match root_service.find_repos(root, skip_hidden, skip_bare, no_recursive) {
-                Ok(repos) => Some(repos),
-                Err(e) => {
-                    tracing::warn!("{}", e.format_error_chain());
-                    None
-                }
-            };
-
-            repos.into_iter().flatten().filter_map(|res| match res {
-                Ok(repo) => Some(repo),
-                Err(e) => {
-                    tracing::warn!("{}", e.format_error_chain());
-                    None
-                }
+        let roots = usecases
+            .list()
+            .list_repos(input_roots, context, options)
+            .map(|list_root| {
+                list_root.and_then(|root| {
+                    Ok((root.root().clone(), root.repos()?.warn_and_skip_errors()))
+                })
             })
-        };
-
-        // TODO: make this configurable
-        let now = Utc::now();
-        let cache_expire_duration = Duration::try_days(3).unwrap();
-
-        let repo_cache_path = global_args.repo_cache_path(project_dirs);
-        root_service.load_repo_cache(repo_cache_path.value(), now, cache_expire_duration);
-
-        let res = match format {
-            Format::Default => emit_text(roots, repos_in_root),
-            Format::Json => emit_json(roots, repos_in_root),
-            Format::Template(template) => emit_template(roots, repos_in_root, template),
-        };
-
-        root_service.store_repo_cache(repo_cache_path.value());
-
-        res
+            .warn_and_skip_errors();
+        match format {
+            Format::Default => emit_text(roots),
+            Format::Json => emit_json(roots),
+            Format::Template(template) => emit_template(roots, template),
+        }
     }
 }
 
-fn emit_json<Roots, F, Repos>(roots: Roots, repos_in_root: F) -> Result<()>
+trait WarnAndSkipErrorExt<T, E>: Iterator<Item = Result<T, E>> {
+    fn warn_and_skip_errors(self) -> impl Iterator<Item = T>
+    where
+        Self: Sized,
+        E: std::error::Error,
+    {
+        self.filter_map(|res| {
+            res.map_err(|e| message::warn!("{}", e.format_error_chain()))
+                .ok()
+        })
+    }
+}
+
+impl<I, T, E> WarnAndSkipErrorExt<T, E> for I where I: Iterator<Item = Result<T, E>> {}
+
+fn emit_json<Roots, Repos>(roots: Roots) -> Result<()>
 where
-    Roots: Iterator<Item = CanonicalRoot>,
-    F: Fn(&CanonicalRoot) -> Repos,
+    Roots: Iterator<Item = (CanonicalRoot, Repos)>,
     Repos: Iterator<Item = CanonicalRepo>,
 {
     let list = JsonList {
         roots: roots
-            .map(|root| JsonRoot {
+            .map(|(root, repos)| JsonRoot {
                 name: root.name().to_owned(),
                 display_path: root.path().as_display_path().to_owned(),
                 real_path: root.path().as_real_path().to_owned(),
                 canonical_path: root.canonical_path().to_owned(),
-                repos: repos_in_root(&root).map(JsonRepo::from).collect(),
+                repos: repos.map(JsonRepo::from).collect(),
             })
             .collect(),
     };
@@ -177,14 +172,13 @@ where
     Ok(())
 }
 
-fn emit_text<Roots, F, Repos>(roots: Roots, repos_in_root: F) -> Result<()>
+fn emit_text<Roots, Repos>(roots: Roots) -> Result<()>
 where
-    Roots: Iterator<Item = CanonicalRoot>,
-    F: Fn(&CanonicalRoot) -> Repos,
+    Roots: Iterator<Item = (CanonicalRoot, Repos)>,
     Repos: Iterator<Item = CanonicalRepo>,
 {
-    for root in roots {
-        for repo in repos_in_root(&root) {
+    for (_root, repos) in roots {
+        for repo in repos {
             println!("{}", repo.canonical_path().display());
         }
     }
@@ -229,14 +223,13 @@ fn format_displayable_path(path: impl Display) -> String {
     path.to_string()
 }
 
-fn emit_template<Roots, F, Repos>(roots: Roots, repos_in_root: F, template: Template) -> Result<()>
+fn emit_template<Roots, Repos>(roots: Roots, template: Template) -> Result<()>
 where
-    Roots: Iterator<Item = CanonicalRoot>,
-    F: Fn(&CanonicalRoot) -> Repos,
+    Roots: Iterator<Item = (CanonicalRoot, Repos)>,
     Repos: Iterator<Item = CanonicalRepo>,
 {
-    for root in roots {
-        for repo in repos_in_root(&root) {
+    for (root, repos) in roots {
+        for repo in repos {
             let context = RepoListTemplateContext::new(&root, &repo);
             println!("{}", template.expand(&context));
         }
