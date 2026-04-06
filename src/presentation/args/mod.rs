@@ -1,23 +1,20 @@
-use color_eyre::eyre::{Result, eyre};
 use tracing::Level;
 
-use self::{subcommand::Subcommand, verbosity::Verbosity};
-use super::{
-    config::Config,
-    model::{optional_param::OptionalParam, tilde_path::TildePath},
-};
+use self::verbosity::Verbosity;
+use super::model::{optional_param::OptionalParam, tilde_path::TildePath};
 use crate::{
-    application::usecase::Usecases, domain::model::path_like::PathLike, project_dirs::ProjectDirs,
-    util::file,
+    presentation::args::{clone::CloneArgs, list::ListArgs},
+    project_dirs::ProjectDirs,
 };
 
-mod subcommand;
+pub(in crate::presentation) mod clone;
+pub(in crate::presentation) mod list;
 mod verbosity;
 
 #[derive(Debug, Clone, Default, clap::Parser)]
 #[command(author, version, about)]
 #[command(propagate_version = true)]
-pub struct Args {
+pub(crate) struct Args {
     #[command(flatten)]
     global_args: GlobalArgs,
 
@@ -25,8 +22,18 @@ pub struct Args {
     subcommand: Option<Subcommand>,
 }
 
+impl Args {
+    pub(crate) fn global_args(&self) -> &GlobalArgs {
+        &self.global_args
+    }
+
+    pub(in crate::presentation) fn subcommand(&self) -> Option<&Subcommand> {
+        self.subcommand.as_ref()
+    }
+}
+
 #[derive(Debug, Clone, Default, clap::Args)]
-struct GlobalArgs {
+pub(crate) struct GlobalArgs {
     #[command(flatten)]
     verbosity: Verbosity,
 
@@ -40,45 +47,33 @@ struct GlobalArgs {
 }
 
 impl GlobalArgs {
-    pub(super) fn config_path(&'_ self, project_dirs: &ProjectDirs) -> OptionalParam<TildePath> {
+    pub(crate) fn verbosity(&self) -> Option<Level> {
+        self.verbosity.verbosity()
+    }
+
+    pub(in crate::presentation) fn config_path(
+        &self,
+        project_dirs: &ProjectDirs,
+    ) -> OptionalParam<TildePath> {
         OptionalParam::new("config", self.config_path.clone(), || {
             TildePath::from_real_path(project_dirs.config_dir().join("config.toml"))
         })
     }
 
-    pub(super) fn repo_cache_path(
-        &'_ self,
+    pub(in crate::presentation) fn repo_cache_path(
+        &self,
         project_dirs: &ProjectDirs,
     ) -> OptionalParam<TildePath> {
         OptionalParam::new("repo-cache", self.repo_cache_path.clone(), || {
             TildePath::from_real_path(project_dirs.cache_dir().join("repos.json"))
         })
     }
-
-    pub(super) fn config(&self, project_dirs: &ProjectDirs) -> Result<Config> {
-        let config_path = self.config_path(project_dirs);
-        let config = match file::load_toml(config_path.name(), config_path.value())? {
-            Some(config) => config,
-            None if config_path.is_default() => Config::default(),
-            None => bail!(eyre!(
-                "config file not found: {}",
-                config_path.value().display()
-            )),
-        };
-        Ok(config)
-    }
 }
 
-impl Args {
-    pub(super) fn verbosity(&self) -> Option<Level> {
-        self.global_args.verbosity.verbosity()
-    }
-
-    pub(super) fn run(&self, usecases: &Usecases, project_dirs: &ProjectDirs) -> Result<()> {
-        match &self.subcommand {
-            Some(subcommand) => subcommand.run(&self.global_args, usecases, project_dirs)?,
-            None => <Args as clap::CommandFactory>::command().print_help()?,
-        }
-        Ok(())
-    }
+#[derive(Debug, Clone, clap::Subcommand)]
+pub(in crate::presentation) enum Subcommand {
+    /// Clone remote repositories and put them into souko
+    Clone(CloneArgs),
+    /// List repositories in souko
+    List(ListArgs),
 }
