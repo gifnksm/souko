@@ -6,6 +6,7 @@ use crate::{
 pub(crate) mod clone;
 pub(crate) mod list;
 
+#[derive(Debug)]
 pub(crate) struct Usecases {
     clone: CloneUsecase,
     list: ListUsecase,
