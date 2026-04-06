@@ -1,69 +1,57 @@
-use std::{ffi::OsString, io};
+use std::io;
 
-use clap::{CommandFactory as _, Parser as _};
+use clap::CommandFactory as _;
 use clap_complete::{Generator, Shell};
 use color_eyre::eyre::{Result, WrapErr as _, eyre};
 
+use crate::{
+    application::usecase::Usecases,
+    presentation::context::{SubcommandContext, global::GlobalContext},
+    project_dirs::ProjectDirs,
+};
+
 use self::args::Args;
-use crate::{application::usecase::Usecases, project_dirs::ProjectDirs};
 
 mod message;
 
-mod args;
+pub(crate) mod args;
+mod command;
 mod config;
+mod context;
 mod model;
+mod render;
 
-#[derive(Debug)]
-pub(crate) struct Presentation {
-    args: Args,
+pub(crate) fn print_completion(bin_name: &str, shell: &str) -> Result<()> {
+    fn generate_completion<G>(bin_name: &str, g: G)
+    where
+        G: Generator,
+    {
+        clap_complete::generate(g, &mut Args::command(), bin_name, &mut io::stdout());
+    }
+    match shell {
+        "bash" => generate_completion(bin_name, Shell::Bash),
+        "elvish" => generate_completion(bin_name, Shell::Elvish),
+        "fish" => generate_completion(bin_name, Shell::Fish),
+        "powershell" => generate_completion(bin_name, Shell::PowerShell),
+        "zsh" => generate_completion(bin_name, Shell::Zsh),
+        "nushell" => generate_completion(bin_name, clap_complete_nushell::Nushell),
+        _ => {
+            bail!(eyre!(
+                "unknown shell `{shell}`, expected one of `bash`, `elvish`, `fish`, `powershell`, `zsh`, `nushell`"
+            ));
+        }
+    }
+    Ok(())
 }
 
-impl Presentation {
-    pub(crate) fn from_args<I, T>(args: I) -> Self
-    where
-        I: IntoIterator<Item = T>,
-        T: Into<OsString> + Clone,
-    {
-        let args = Args::parse_from(args);
-        Self { args }
-    }
+pub(crate) fn generate_man(output_dir: &str) -> Result<()> {
+    clap_mangen::generate_to(Args::command(), output_dir)
+        .wrap_err_with(|| format!("failed to generate man pages in {output_dir}"))?;
+    Ok(())
+}
 
-    pub(crate) fn main(self, usecases: &Usecases, project_dirs: &ProjectDirs) -> Result<()> {
-        let Self { args } = self;
-        args.run(usecases, project_dirs)?;
-        Ok(())
-    }
-
-    pub(crate) fn verbosity(&self) -> Option<tracing::Level> {
-        self.args.verbosity()
-    }
-
-    pub(crate) fn print_completion(bin_name: &str, shell: &str) -> Result<()> {
-        fn generate_completion<G>(bin_name: &str, g: G)
-        where
-            G: Generator,
-        {
-            clap_complete::generate(g, &mut Args::command(), bin_name, &mut io::stdout());
-        }
-        match shell {
-            "bash" => generate_completion(bin_name, Shell::Bash),
-            "elvish" => generate_completion(bin_name, Shell::Elvish),
-            "fish" => generate_completion(bin_name, Shell::Fish),
-            "powershell" => generate_completion(bin_name, Shell::PowerShell),
-            "zsh" => generate_completion(bin_name, Shell::Zsh),
-            "nushell" => generate_completion(bin_name, clap_complete_nushell::Nushell),
-            _ => {
-                bail!(eyre!(
-                    "unknown shell `{shell}`, expected one of `bash`, `elvish`, `fish`, `powershell`, `zsh`, `nushell`"
-                ));
-            }
-        }
-        Ok(())
-    }
-
-    pub(crate) fn generate_man(output_dir: &str) -> Result<()> {
-        clap_mangen::generate_to(Args::command(), output_dir)
-            .wrap_err_with(|| format!("failed to generate man pages in {output_dir}"))?;
-        Ok(())
-    }
+pub(crate) fn dispatch(args: &Args, usecases: Usecases, project_dirs: ProjectDirs) -> Result<()> {
+    let global_ctx = GlobalContext::new(args, usecases, project_dirs)?;
+    let subcommand_ctx = SubcommandContext::new(&global_ctx, args.subcommand())?;
+    command::dispatch(&global_ctx, &subcommand_ctx)
 }

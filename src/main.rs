@@ -1,12 +1,11 @@
 use std::env;
 
+use clap::Parser as _;
 use color_eyre::eyre::{self, eyre};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
-use crate::{
-    application::usecase::Usecases, presentation::Presentation, project_dirs::ProjectDirs,
-};
+use crate::{application::usecase::Usecases, presentation::args::Args, project_dirs::ProjectDirs};
 
 #[macro_use]
 mod macros;
@@ -25,19 +24,20 @@ fn main() -> eyre::Result<()> {
 
     let env_prefix = BIN_NAME.to_uppercase().replace("-", "_");
     if let Ok(shell) = env::var(format!("{env_prefix}_COMPLETE")) {
-        Presentation::print_completion(BIN_NAME, &shell)?;
+        presentation::print_completion(BIN_NAME, &shell)?;
         return Ok(());
     }
     if let Ok(output_dir) = env::var(format!("{env_prefix}_GENERATE_MAN_TO")) {
-        Presentation::generate_man(&output_dir)?;
+        presentation::generate_man(&output_dir)?;
         return Ok(());
     }
 
-    let presentation = Presentation::from_args(env::args_os());
+    let args = Args::parse();
     let env_filter = if env::var_os("RUST_LOG").is_some() {
         EnvFilter::from_default_env()
     } else {
-        let default_directive = presentation
+        let default_directive = args
+            .global_args()
             .verbosity()
             .map(Into::into)
             .unwrap_or(LevelFilter::OFF.into());
@@ -55,5 +55,5 @@ fn main() -> eyre::Result<()> {
     let ports = infrastructure::ports();
     let usecases = Usecases::new(&ports);
     let project_dirs = ProjectDirs::new()?;
-    presentation.main(&usecases, &project_dirs)
+    presentation::dispatch(&args, usecases, project_dirs)
 }
