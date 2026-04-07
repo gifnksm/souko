@@ -9,7 +9,7 @@ use crate::{
 };
 
 pub(super) fn dispatch(global_ctx: &GlobalContext, clone_ctx: &CloneContext) -> Result<()> {
-    let root = clone_ctx.root();
+    let root_context = clone_ctx.root_context();
     let query = clone_ctx.query();
 
     let bare = false;
@@ -17,13 +17,13 @@ pub(super) fn dispatch(global_ctx: &GlobalContext, clone_ctx: &CloneContext) -> 
     message::info!(
         "cloning {} into {}",
         query.original_query(),
-        root.value().path().display()
+        root_context.value().path().display()
     );
 
     global_ctx
         .usecases()
         .clone()
-        .clone_repo(root.value(), query, bare)
+        .clone_repo(root_context.value().root(), query, bare)
         .map_err(|e| eyre!(e))
         .wrap_err("failed to clone repository")?;
 
