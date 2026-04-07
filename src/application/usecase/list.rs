@@ -23,18 +23,12 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub(crate) struct ListOptions {
-    pub(crate) skip_hidden: bool,
-    pub(crate) skip_bare: bool,
-    pub(crate) no_recursive: bool,
     pub(crate) cache_expire_duration: TimeDelta,
 }
 
 impl Default for ListOptions {
     fn default() -> Self {
         Self {
-            skip_hidden: true,
-            skip_bare: true,
-            no_recursive: true,
             cache_expire_duration: Duration::try_days(3).unwrap(),
         }
     }
@@ -48,7 +42,10 @@ pub(crate) struct ListContext {
 
 #[derive(Debug)]
 pub(crate) struct ListRootInput {
-    pub(crate) allow_missing: bool,
+    pub(crate) allow_missing_root: bool,
+    pub(crate) visit_hidden_dirs: bool,
+    pub(crate) visit_repo_subdirs: bool,
+    pub(crate) include_bare_repo: bool,
     pub(crate) root: Root,
 }
 
@@ -98,7 +95,6 @@ impl ListUsecase {
             repo_cache: Arc::clone(&self.repo_cache),
             repo_scan_service: self.repo_scan_service.clone(),
             context,
-            options,
             roots: roots.into_iter(),
         }
     }
@@ -138,7 +134,6 @@ pub(crate) struct ListRoots<'a, I> {
     repo_cache: Arc<Mutex<dyn RepoCache>>,
     repo_scan_service: RepoScanService,
     context: ListContext,
-    options: ListOptions,
     roots: I,
 }
 
@@ -176,15 +171,17 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
-            let root = self.roots.next()?;
-            return match self.canonicalize_root(&root.root) {
+            let input = self.roots.next()?;
+            return match self.canonicalize_root(&input.root) {
                 Ok(root) => Some(Ok(ListRoot {
                     repo_cache: Arc::clone(&self.repo_cache),
                     repo_scan: self.repo_scan_service.clone(),
-                    options: self.options.clone(),
+                    visit_hidden_dirs: input.visit_hidden_dirs,
+                    visit_repo_subdirs: input.visit_repo_subdirs,
+                    include_bare_repo: input.include_bare_repo,
                     root,
                 })),
-                Err(ListUsecaseError::RootNotExist { .. }) if root.allow_missing => continue,
+                Err(ListUsecaseError::RootNotExist { .. }) if input.allow_missing_root => continue,
                 Err(e) => Some(Err(e)),
             };
         }
@@ -195,7 +192,9 @@ where
 pub(crate) struct ListRoot {
     repo_scan: RepoScanService,
     repo_cache: Arc<Mutex<dyn RepoCache>>,
-    options: ListOptions,
+    visit_hidden_dirs: bool,
+    visit_repo_subdirs: bool,
+    include_bare_repo: bool,
     root: CanonicalRoot,
 }
 
@@ -206,12 +205,13 @@ impl ListRoot {
 
     pub(crate) fn repos(&self) -> Result<ListRepos, ListUsecaseError> {
         let mut repos = self.repo_scan.repos(&self.root)?;
-        if self.options.skip_hidden {
+        if !self.visit_hidden_dirs {
             repos.filter_entry(|e| !e.is_hidden());
         }
         Ok(ListRepos {
             repo_cache: Arc::clone(&self.repo_cache),
-            options: self.options.clone(),
+            visit_repo_subdirs: self.visit_repo_subdirs,
+            include_bare_repo: self.include_bare_repo,
             repos,
         })
     }
@@ -220,7 +220,8 @@ impl ListRoot {
 #[derive(Debug)]
 pub(crate) struct ListRepos {
     repo_cache: Arc<Mutex<dyn RepoCache>>,
-    options: ListOptions,
+    visit_repo_subdirs: bool,
+    include_bare_repo: bool,
     repos: Repos,
 }
 
@@ -255,10 +256,10 @@ impl Iterator for ListRepos {
                 tracing::trace!("skipping non-git-repository: {}", entry.path().display());
                 continue;
             };
-            if self.options.no_recursive {
+            if !self.visit_repo_subdirs {
                 self.repos.skip_subdir();
             }
-            if self.options.skip_bare && repo.bare() {
+            if !self.include_bare_repo && repo.bare() {
                 tracing::trace!("skipping bare repo: {}", repo.path().display());
                 continue;
             }

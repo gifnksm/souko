@@ -20,11 +20,13 @@ pub(in crate::presentation) fn dispatch(
         // Only the synthesized fallback default root is allowed to be missing
         // silently. Roots present in config remain explicit even when their path
         // is omitted and resolved to the default path.
-        allow_missing: !root.is_explicit(),
+        allow_missing_root: !root.is_explicit(),
+        visit_hidden_dirs: root.value().visit_hidden_dirs(),
+        visit_repo_subdirs: root.value().visit_repo_subdirs(),
+        include_bare_repo: root.value().include_bare_repo(),
         root: root.value().root().clone(),
     });
 
-    // TODO: make this configurable
     let context = ListUsecaseContext {
         now: Utc::now(),
         repo_cache_path: PrettyPath::new(global_ctx.repo_cache_path()),

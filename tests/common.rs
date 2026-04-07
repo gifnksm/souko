@@ -8,5 +8,8 @@ pub fn souko_cmd(home_dir: &Path) -> Command {
         ("HOME", home_dir.as_os_str()),
         ("SOUKO_INTEGRATION_TEST", "true".as_ref()),
     ]);
+    cmd.env_remove("XDG_CONFIG_HOME");
+    cmd.env_remove("XDG_DATA_HOME");
+    cmd.env_remove("XDG_CACHE_HOME");
     cmd
 }
