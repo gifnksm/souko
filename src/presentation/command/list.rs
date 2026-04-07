@@ -18,7 +18,7 @@ pub(in crate::presentation) fn dispatch(
     let format = list_ctx.format();
     let input_roots = list_ctx.roots().iter().map(|root| ListRootInput {
         allow_missing: !root.is_explicit(),
-        root: root.value().clone(),
+        root: root.value().root().clone(),
     });
 
     // TODO: make this configurable

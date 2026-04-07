@@ -8,6 +8,8 @@ use crate::presentation::{
 pub(in crate::presentation) mod clone;
 pub(crate) mod global;
 pub(in crate::presentation) mod list;
+pub(in crate::presentation) mod query;
+pub(in crate::presentation) mod root;
 
 #[derive(Debug)]
 pub(in crate::presentation) enum SubcommandContext {
