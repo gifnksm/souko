@@ -56,6 +56,14 @@ impl RootContextMap {
         self.map.get(name)
     }
 
+    pub(in crate::presentation) fn root_by_name_or_err(
+        &self,
+        name: &str,
+    ) -> Result<&OptionalParam<RootContext>, color_eyre::Report> {
+        self.root_by_name(name)
+            .ok_or_else(|| color_eyre::eyre::eyre!("root `{name}` not found in config file"))
+    }
+
     pub(in crate::presentation) fn all_roots(
         &self,
     ) -> impl Iterator<Item = &OptionalParam<RootContext>> {

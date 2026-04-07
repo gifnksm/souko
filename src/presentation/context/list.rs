@@ -1,4 +1,4 @@
-use color_eyre::eyre::{Result, eyre};
+use color_eyre::eyre::Result;
 
 use crate::presentation::{
     args::list::{Format, ListArgs},
@@ -22,12 +22,7 @@ impl ListContext {
         let roots = match args.root_name() {
             Some(names) => names
                 .iter()
-                .map(|name| {
-                    root_map
-                        .root_by_name(name)
-                        .ok_or_else(|| eyre!("root `{name}` not found in config file"))
-                        .cloned()
-                })
+                .map(|name| root_map.root_by_name_or_err(name).cloned())
                 .collect::<Result<Vec<_>>>()?,
             None => root_map.all_roots().cloned().collect(),
         };

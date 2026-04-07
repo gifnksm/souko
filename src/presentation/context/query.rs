@@ -44,12 +44,18 @@ impl QueryContext {
         };
         // existing key will be overwritten by the values from config file
         // see `std::iter::Extend`.
-        parse_option
-            .scheme_alias
-            .extend(config.scheme_alias.clone());
-        parse_option
-            .custom_scheme
-            .extend(config.custom_scheme.clone());
+        parse_option.scheme_alias.extend(
+            config
+                .scheme_alias
+                .iter()
+                .map(|(src, dst)| (src.clone(), dst.clone())),
+        );
+        parse_option.custom_scheme.extend(
+            config
+                .custom_scheme
+                .iter()
+                .map(|(scheme, template)| (scheme.clone(), template.clone())),
+        );
 
         Self { parse_option }
     }

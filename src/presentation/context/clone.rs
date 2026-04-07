@@ -1,4 +1,4 @@
-use color_eyre::eyre::{Result, WrapErr as _, eyre};
+use color_eyre::eyre::{Result, WrapErr as _};
 
 use crate::{
     domain::model::query::Query,
@@ -21,10 +21,7 @@ impl CloneContext {
         args: &CloneArgs,
     ) -> Result<Self> {
         let root = match args.root_name() {
-            Some(name) => global_ctx
-                .root_map()
-                .root_by_name(name)
-                .ok_or_else(|| eyre!("root `{name}` not found in config file"))?,
+            Some(name) => global_ctx.root_map().root_by_name_or_err(name)?,
             None => global_ctx.root_map().default_root(),
         }
         .clone();
