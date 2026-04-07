@@ -21,6 +21,10 @@ impl RootContextMap {
         let mut map: BTreeMap<String, OptionalParam<RootContext>> = config
             .iter()
             .map(|root_config| {
+                // A root entry present in config is treated as explicit even when its path is
+                // omitted and resolved to the default path. Only the synthesized fallback
+                // `default` root (added when no such entry exists in config at all) is treated as
+                // non-explicit.
                 (
                     root_config.name.clone(),
                     OptionalParam::new_explicit(

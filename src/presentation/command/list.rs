@@ -17,6 +17,9 @@ pub(in crate::presentation) fn dispatch(
 ) -> Result<()> {
     let format = list_ctx.format();
     let input_roots = list_ctx.roots().iter().map(|root| ListRootInput {
+        // Only the synthesized fallback default root is allowed to be missing
+        // silently. Roots present in config remain explicit even when their path
+        // is omitted and resolved to the default path.
         allow_missing: !root.is_explicit(),
         root: root.value().root().clone(),
     });
