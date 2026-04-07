@@ -3,13 +3,11 @@ use std::collections::BTreeMap;
 use crate::{
     domain::model::{pretty_path::PrettyPath, root::Root},
     presentation::{
-        config::RootConfig,
+        config::{DEFAULT_ROOT_NAME, RootConfig},
         model::{optional_param::OptionalParam, tilde_path::TildePath},
     },
     project_dirs::ProjectDirs,
 };
-
-const DEFAULT_ROOT_NAME: &str = "default";
 
 #[derive(Debug)]
 pub(in crate::presentation) struct RootContextMap {
@@ -38,7 +36,7 @@ impl RootContextMap {
         map.entry(DEFAULT_ROOT_NAME.to_owned()).or_insert_with(|| {
             OptionalParam::new_default(
                 "root",
-                RootContext::with_default_path(DEFAULT_ROOT_NAME.to_owned(), project_dirs),
+                RootContext::from_config(&RootConfig::default_root(), project_dirs),
             )
         });
 
@@ -71,28 +69,30 @@ impl RootContextMap {
     }
 }
 
+fn default_path(project_dirs: &ProjectDirs) -> TildePath {
+    TildePath::from_real_path(project_dirs.data_local_dir().join("root"))
+}
+
 #[derive(Debug, Clone)]
 pub(in crate::presentation) struct RootContext {
     root: Root,
+    visit_hidden_dirs: bool,
+    visit_repo_subdirs: bool,
+    include_bare_repo: bool,
 }
 
 impl RootContext {
     fn from_config(root_config: &RootConfig, project_dirs: &ProjectDirs) -> Self {
-        match &root_config.path {
-            Some(path) => Self::new(root_config.name.clone(), path.clone()),
-            None => Self::with_default_path(root_config.name.clone(), project_dirs),
+        let path = root_config
+            .path
+            .clone()
+            .unwrap_or_else(|| default_path(project_dirs));
+        Self {
+            root: Root::new(root_config.name.clone(), path.into()),
+            visit_hidden_dirs: root_config.visit_hidden_dirs,
+            visit_repo_subdirs: root_config.visit_repo_subdirs,
+            include_bare_repo: root_config.include_bare_repo,
         }
-    }
-
-    fn new(name: String, path: TildePath) -> Self {
-        let root = Root::new(name, path.into());
-        Self { root }
-    }
-
-    fn with_default_path(name: String, project_dirs: &ProjectDirs) -> Self {
-        let default_root_path = project_dirs.data_local_dir().join("root");
-        let path = TildePath::from_real_path(default_root_path);
-        Self::new(name, path)
     }
 
     pub(in crate::presentation) fn root(&self) -> &Root {
@@ -106,6 +106,18 @@ impl RootContext {
 
     pub(in crate::presentation) fn path(&self) -> &PrettyPath {
         self.root.path()
+    }
+
+    pub(in crate::presentation) fn visit_hidden_dirs(&self) -> bool {
+        self.visit_hidden_dirs
+    }
+
+    pub(in crate::presentation) fn include_bare_repo(&self) -> bool {
+        self.include_bare_repo
+    }
+
+    pub(in crate::presentation) fn visit_repo_subdirs(&self) -> bool {
+        self.visit_repo_subdirs
     }
 }
 
