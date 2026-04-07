@@ -161,4 +161,35 @@ mod tests {
             std::path::Path::new("/tmp/custom-root")
         );
     }
+
+    #[test]
+    fn explicit_root_entry_with_omitted_path_remains_explicit() {
+        let project_dirs = ProjectDirs::new_for_test(
+            "target/test-config-dir-implicit-path-root",
+            "target/test-data-local-dir-implicit-path-root",
+            "target/test-cache-dir-implicit-path-root",
+        )
+        .unwrap();
+        let config: Config = toml_edit::de::from_str(
+            r#"
+            [[root]]
+            name = "foo"
+            "#,
+        )
+        .unwrap();
+
+        let root_ctx = RootContextMap::new(&config.roots, &project_dirs);
+
+        let foo_root = root_ctx.root_by_name("foo").unwrap();
+        assert!(foo_root.is_explicit());
+        assert_eq!(foo_root.value().name(), "foo");
+        assert_eq!(
+            foo_root.value().path().as_real_path(),
+            &project_dirs.data_local_dir().join("root")
+        );
+
+        let default_root = root_ctx.default_root();
+        assert!(default_root.is_default());
+        assert_eq!(default_root.value().name(), "default");
+    }
 }
