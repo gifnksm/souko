@@ -1,6 +1,7 @@
 use color_eyre::eyre::{Result, eyre};
 
 use crate::{
+    app_dirs::AppDirs,
     application::usecase::Usecases,
     domain::model::path_like::PathLike as _,
     presentation::{
@@ -9,7 +10,6 @@ use crate::{
         context::{query::QueryContext, root::RootContextMap},
         model::{optional_param::OptionalParam, tilde_path::TildePath},
     },
-    project_dirs::ProjectDirs,
     util::file,
 };
 
@@ -25,15 +25,15 @@ impl GlobalContext {
     pub(in crate::presentation) fn new(
         args: &Args,
         usecases: Usecases,
-        project_dirs: ProjectDirs,
+        app_dirs: AppDirs,
     ) -> Result<Self> {
-        let config_path = args.global_args().config_path(&project_dirs);
+        let config_path = args.global_args().config_path(&app_dirs);
         let config = load_config(&config_path)?;
-        let root_map = RootContextMap::new(&config.roots, &project_dirs);
+        let root_map = RootContextMap::new(&config.roots, &app_dirs);
         let query = QueryContext::from_config(&config.query);
         let repo_cache_path = args
             .global_args()
-            .repo_cache_path(&project_dirs)
+            .repo_cache_path(&app_dirs)
             .value()
             .clone();
         Ok(Self {

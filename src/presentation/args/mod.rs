@@ -3,8 +3,8 @@ use tracing::Level;
 use self::verbosity::Verbosity;
 use super::model::{optional_param::OptionalParam, tilde_path::TildePath};
 use crate::{
+    app_dirs::AppDirs,
     presentation::args::{clone::CloneArgs, list::ListArgs},
-    project_dirs::ProjectDirs,
 };
 
 pub(in crate::presentation) mod clone;
@@ -53,19 +53,19 @@ impl GlobalArgs {
 
     pub(in crate::presentation) fn config_path(
         &self,
-        project_dirs: &ProjectDirs,
+        app_dirs: &AppDirs,
     ) -> OptionalParam<TildePath> {
         OptionalParam::new("config", self.config_path.clone(), || {
-            TildePath::from_real_path(project_dirs.config_dir().join("config.toml"))
+            TildePath::from_real_path(app_dirs.config_dir().join("config.toml"))
         })
     }
 
     pub(in crate::presentation) fn repo_cache_path(
         &self,
-        project_dirs: &ProjectDirs,
+        app_dirs: &AppDirs,
     ) -> OptionalParam<TildePath> {
         OptionalParam::new("repo-cache", self.repo_cache_path.clone(), || {
-            TildePath::from_real_path(project_dirs.cache_dir().join("repos.json"))
+            TildePath::from_real_path(app_dirs.cache_dir().join("repos.json"))
         })
     }
 }

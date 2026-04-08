@@ -5,16 +5,16 @@ use color_eyre::eyre::{self, eyre};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
-use crate::{application::usecase::Usecases, presentation::args::Args, project_dirs::ProjectDirs};
+use crate::{app_dirs::AppDirs, application::usecase::Usecases, presentation::args::Args};
 
 #[macro_use]
 mod macros;
 
+mod app_dirs;
 mod application;
 mod domain;
 mod infrastructure;
 mod presentation;
-mod project_dirs;
 mod util;
 
 const BIN_NAME: &str = env!("CARGO_BIN_NAME");
@@ -54,6 +54,6 @@ fn main() -> eyre::Result<()> {
 
     let ports = infrastructure::ports();
     let usecases = Usecases::new(&ports);
-    let project_dirs = ProjectDirs::new()?;
-    presentation::dispatch(&args, usecases, project_dirs)
+    let app_dirs = AppDirs::new(BIN_NAME)?;
+    presentation::dispatch(&args, usecases, app_dirs)
 }
