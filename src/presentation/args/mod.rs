@@ -1,7 +1,7 @@
 use tracing::Level;
 
 use self::verbosity::Verbosity;
-use super::model::{optional_param::OptionalParam, tilde_path::TildePath};
+use super::model::{optional_param::OptionalParam, unresolved_path::UnresolvedPath};
 use crate::{
     app_dirs::AppDirs,
     presentation::args::{clone::CloneArgs, list::ListArgs},
@@ -38,12 +38,12 @@ pub(crate) struct GlobalArgs {
     verbosity: Verbosity,
 
     /// Path to souko config file
-    #[arg(long = "config", env = "SOUKO_CONFIG", value_parser = TildePath::parse_real_path)]
-    config_path: Option<TildePath>,
+    #[arg(long = "config", env = "SOUKO_CONFIG")]
+    config_path: Option<UnresolvedPath>,
 
     /// Path to souko repository cache directory
-    #[arg(long = "repo-cache", env = "SOUKO_REPO_CACHE", value_parser = TildePath::parse_real_path)]
-    repo_cache_path: Option<TildePath>,
+    #[arg(long = "repo-cache", env = "SOUKO_REPO_CACHE")]
+    repo_cache_path: Option<UnresolvedPath>,
 }
 
 impl GlobalArgs {
@@ -54,18 +54,18 @@ impl GlobalArgs {
     pub(in crate::presentation) fn config_path(
         &self,
         app_dirs: &AppDirs,
-    ) -> OptionalParam<TildePath> {
+    ) -> OptionalParam<UnresolvedPath> {
         OptionalParam::new("config", self.config_path.clone(), || {
-            TildePath::from_real_path(app_dirs.config_dir().join("config.toml"))
+            UnresolvedPath::new(app_dirs.config_dir().join("config.toml"))
         })
     }
 
     pub(in crate::presentation) fn repo_cache_path(
         &self,
         app_dirs: &AppDirs,
-    ) -> OptionalParam<TildePath> {
+    ) -> OptionalParam<UnresolvedPath> {
         OptionalParam::new("repo-cache", self.repo_cache_path.clone(), || {
-            TildePath::from_real_path(app_dirs.cache_dir().join("repos.json"))
+            UnresolvedPath::new(app_dirs.cache_dir().join("repos.json"))
         })
     }
 }
