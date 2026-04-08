@@ -15,27 +15,48 @@ pub(crate) struct ProjectDirs {
 
 impl ProjectDirs {
     pub(crate) fn new() -> Result<Self> {
-        let integration_test = env::var_os("SOUKO_INTEGRATION_TEST").is_some();
-        let inner = directories::ProjectDirs::from("", "", env!("CARGO_PKG_NAME"))
+        let integration_test_home = env::var_os("SOUKO_INTEGRATION_TEST_HOME");
+        let app_name = env!("CARGO_PKG_NAME");
+        let inner = directories::ProjectDirs::from("", "", app_name)
             .ok_or_else(|| eyre!("failed to get project directories"))?;
 
-        let config_dir = (integration_test && cfg!(target_os = "windows")).then(|| {
-            let home = env::var_os("HOME").expect("BUG: missing HOME");
-            Path::new(&home).join(r"AppData\Roaming\souko\config")
-        });
-        let data_local_dir = (integration_test && cfg!(target_os = "windows")).then(|| {
-            let home = env::var_os("HOME").expect("BUG: missing HOME");
-            Path::new(&home).join(r"AppData\Local\souko\data")
-        });
-        let cache_dir = (integration_test && cfg!(target_os = "windows")).then(|| {
-            let home = env::var_os("HOME").expect("BUG: missing HOME");
-            Path::new(&home).join(r"AppData\Local\souko\cache")
+        let overridden_dirs = integration_test_home.and_then(|home| {
+            if cfg!(target_os = "windows") {
+                Some((
+                    Path::new(&home).join(format!(r"AppData\Roaming\{app_name}\config")),
+                    Path::new(&home).join(format!(r"AppData\Local\{app_name}\data")),
+                    Path::new(&home).join(format!(r"AppData\Local\{app_name}\cache")),
+                ))
+            } else if cfg!(target_os = "linux") {
+                Some((
+                    Path::new(&home).join(format!(".config/{app_name}")),
+                    Path::new(&home).join(format!(".local/share/{app_name}")),
+                    Path::new(&home).join(format!(".cache/{app_name}")),
+                ))
+            } else if cfg!(target_os = "macos") {
+                Some((
+                    Path::new(&home).join(format!("Library/Application Support/{app_name}")),
+                    Path::new(&home).join(format!("Library/Application Support/{app_name}")),
+                    Path::new(&home).join(format!("Library/Caches/{app_name}")),
+                ))
+            } else {
+                None
+            }
         });
 
+        if let Some((config_dir, data_local_dir, cache_dir)) = overridden_dirs {
+            return Ok(Self {
+                config_dir: Some(config_dir),
+                data_local_dir: Some(data_local_dir),
+                cache_dir: Some(cache_dir),
+                inner,
+            });
+        }
+
         Ok(Self {
-            config_dir,
-            data_local_dir,
-            cache_dir,
+            config_dir: None,
+            data_local_dir: None,
+            cache_dir: None,
             inner,
         })
     }
