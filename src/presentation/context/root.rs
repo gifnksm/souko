@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::{collections::BTreeMap, path::Path};
 
 use crate::{
     app_dirs::AppDirs,
@@ -15,7 +15,11 @@ pub(in crate::presentation) struct RootContextMap {
 }
 
 impl RootContextMap {
-    pub(in crate::presentation) fn new(config: &[RootConfig], app_dirs: &AppDirs) -> Self {
+    pub(in crate::presentation) fn new(
+        config: &[RootConfig],
+        app_dirs: &AppDirs,
+        config_dir: &Path,
+    ) -> Self {
         let mut map: BTreeMap<String, OptionalParam<RootContext>> = config
             .iter()
             .map(|root_config| {
@@ -27,7 +31,7 @@ impl RootContextMap {
                     root_config.name.clone(),
                     OptionalParam::new_explicit(
                         "root",
-                        RootContext::from_config(root_config, app_dirs),
+                        RootContext::from_config(root_config, app_dirs, config_dir),
                     ),
                 )
             })
@@ -36,7 +40,7 @@ impl RootContextMap {
         map.entry(DEFAULT_ROOT_NAME.to_owned()).or_insert_with(|| {
             OptionalParam::new_default(
                 "root",
-                RootContext::from_config(&RootConfig::default_root(), app_dirs),
+                RootContext::from_config(&RootConfig::default_root(), app_dirs, config_dir),
             )
         });
 
@@ -83,11 +87,11 @@ pub(in crate::presentation) struct RootContext {
 }
 
 impl RootContext {
-    fn from_config(root_config: &RootConfig, app_dirs: &AppDirs) -> Self {
+    fn from_config(root_config: &RootConfig, app_dirs: &AppDirs, config_dir: &Path) -> Self {
         let path = root_config
             .path
             .clone()
-            .map(|path| path.normalize_with_home(app_dirs.home_dir()))
+            .map(|path| path.normalize_with_home_and_base(app_dirs.home_dir(), config_dir))
             .unwrap_or_else(|| default_path(app_dirs));
         Self {
             root: Root::new(root_config.name.clone(), path),
@@ -137,7 +141,7 @@ mod tests {
         let app_dirs = AppDirs::new_for_test(env!("CARGO_BIN_NAME"), home.path()).unwrap();
         let config = Config::default();
 
-        let root_ctx = RootContextMap::new(&config.roots, &app_dirs);
+        let root_ctx = RootContextMap::new(&config.roots, &app_dirs, app_dirs.config_dir());
 
         let default_root = root_ctx.default_root();
         assert_eq!(default_root.value().name(), "default");
@@ -160,7 +164,7 @@ mod tests {
         )
         .unwrap();
 
-        let root_ctx = RootContextMap::new(&config.roots, &app_dirs);
+        let root_ctx = RootContextMap::new(&config.roots, &app_dirs, app_dirs.config_dir());
 
         let default_root = root_ctx.default_root();
         assert_eq!(default_root.value().name(), "default");
@@ -182,7 +186,7 @@ mod tests {
         )
         .unwrap();
 
-        let root_ctx = RootContextMap::new(&config.roots, &app_dirs);
+        let root_ctx = RootContextMap::new(&config.roots, &app_dirs, app_dirs.config_dir());
 
         let foo_root = root_ctx.root_by_name("foo").unwrap();
         assert!(foo_root.is_explicit());
@@ -195,5 +199,28 @@ mod tests {
         let default_root = root_ctx.default_root();
         assert!(default_root.is_default());
         assert_eq!(default_root.value().name(), "default");
+    }
+
+    #[test]
+    fn relative_path_in_config_is_resolved_against_config_dir() {
+        let home = TempDir::new().unwrap();
+        let app_dirs = AppDirs::new_for_test(env!("CARGO_BIN_NAME"), home.path()).unwrap();
+        let config: Config = toml_edit::de::from_str(
+            r#"
+            [[root]]
+            name = "repos"
+            path = "relative/repos"
+            "#,
+        )
+        .unwrap();
+
+        let config_dir = Path::new("/some/config/dir");
+        let root_ctx = RootContextMap::new(&config.roots, &app_dirs, config_dir);
+
+        let repos_root = root_ctx.root_by_name("repos").unwrap();
+        assert_eq!(
+            repos_root.value().path().as_real_path(),
+            Path::new("/some/config/dir/relative/repos")
+        );
     }
 }

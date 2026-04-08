@@ -27,18 +27,24 @@ impl GlobalContext {
         usecases: Usecases,
         app_dirs: AppDirs,
     ) -> Result<Self> {
+        let current_dir = std::env::current_dir()?;
         let config_path = args
             .global_args()
             .config_path(&app_dirs)
-            .map(|path| path.normalize_with_home(app_dirs.home_dir()));
+            .map(|path| path.normalize_with_home_and_base(app_dirs.home_dir(), &current_dir));
+        let config_dir = config_path
+            .value()
+            .as_real_path()
+            .parent()
+            .unwrap_or(config_path.value().as_real_path());
         let config = load_config(&config_path)?;
-        let root_map = RootContextMap::new(&config.roots, &app_dirs);
+        let root_map = RootContextMap::new(&config.roots, &app_dirs, config_dir);
         let query = QueryContext::from_config(&config.query);
         let repo_cache_path = args
             .global_args()
             .repo_cache_path(&app_dirs)
             .value()
-            .normalize_with_home(app_dirs.home_dir());
+            .normalize_with_home_and_base(app_dirs.home_dir(), &current_dir);
         Ok(Self {
             usecases,
             root_map,

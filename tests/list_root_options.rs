@@ -157,3 +157,65 @@ visit_repo_subdirs = true
         .stdout(predicate::str::contains(parent_repo.display().to_string()))
         .stdout(predicate::str::contains(child_repo.display().to_string()));
 }
+
+#[test]
+fn relative_root_path_in_config_resolves_against_config_file_dir() {
+    let home = TempDir::new().unwrap();
+
+    // Create a repository under the config directory using a relative path
+    let config_d = config_dir(&home);
+    config_d.create_dir_all().unwrap();
+
+    let repo_dir = config_d.child("myrepos/github.com/example/project");
+    repo_dir.create_dir_all().unwrap();
+    git2::Repository::init(repo_dir.path()).unwrap();
+
+    // Write config with a relative root path — it should resolve against the config file's dir
+    config_d.child("config.toml").write_str(
+        r#"
+[[root]]
+name = "default"
+path = "myrepos"
+"#,
+    ).unwrap();
+
+    let expected_repo = canonical(repo_dir.path());
+
+    common::souko_cmd(home.path())
+        .args(["list"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(expected_repo.display().to_string()));
+}
+
+#[test]
+fn relative_repo_cache_path_from_cli_resolves_against_cwd() {
+    let home = TempDir::new().unwrap();
+    let workdir = TempDir::new().unwrap();
+
+    // Clone a repo first so there is something to list.
+    common::souko_cmd(home.path())
+        .args(["clone", "gifnksm/souko"])
+        .assert()
+        .success();
+
+    let expected_repo = canonical(
+        data_local_dir(&home)
+            .child("root/github.com/gifnksm/souko")
+            .path(),
+    );
+
+    // Run list with a relative --repo-cache path from workdir; the cache file should be
+    // created in the CWD (workdir), not in the default cache location.
+    common::souko_cmd(home.path())
+        .current_dir(workdir.path())
+        .args(["--repo-cache", "repos.json", "list"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(expected_repo.display().to_string()));
+
+    // Verify the cache was written to the CWD, not somewhere else.
+    workdir
+        .child("repos.json")
+        .assert(predicate::path::is_file());
+}

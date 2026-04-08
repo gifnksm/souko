@@ -66,6 +66,35 @@ impl UnresolvedPath {
             normalize_trailing_separator(&display_path),
         )
     }
+
+    /// Like [`normalize_with_home`](Self::normalize_with_home), but also resolves relative paths
+    /// against `base`. Paths starting with `~` are still resolved against `home` first;
+    /// already-absolute paths are left unchanged.
+    pub(in crate::presentation) fn normalize_with_home_and_base<P, Q>(
+        &self,
+        home: &P,
+        base: &Q,
+    ) -> PrettyPath
+    where
+        P: AsRef<Path> + ?Sized,
+        Q: AsRef<Path> + ?Sized,
+    {
+        let home = home.as_ref();
+        let base = base.as_ref();
+        let resolved_path = match self.0.strip_prefix("~") {
+            Ok(rest) => home.join(rest),
+            Err(_) if self.0.is_relative() => base.join(&self.0),
+            Err(_) => self.0.clone(),
+        };
+        let display_path = match resolved_path.strip_prefix(home) {
+            Ok(rest) => Path::new("~").join(rest),
+            Err(_) => resolved_path.clone(),
+        };
+        PrettyPath::from_pair(
+            normalize_trailing_separator(&resolved_path),
+            normalize_trailing_separator(&display_path),
+        )
+    }
 }
 
 impl FromStr for UnresolvedPath {
@@ -130,5 +159,41 @@ mod tests {
         let path = UnresolvedPath::new("/home/foo/bar".into()).normalize_with_home(home);
         assert_eq!(path.as_display_path(), Path::new("~").join("bar"));
         assert_eq!(path.as_real_path(), Path::new("/home/foo/bar"));
+    }
+
+    #[test]
+    fn expand_with_base() {
+        let home = Path::new("/home/foo");
+        let base = Path::new("/base/dir");
+
+        // relative path is resolved against base
+        let path =
+            UnresolvedPath::new("repos".into()).normalize_with_home_and_base(home, base);
+        assert_eq!(path.as_display_path(), Path::new("/base/dir/repos"));
+        assert_eq!(path.as_real_path(), Path::new("/base/dir/repos"));
+
+        // relative path with multiple components is resolved against base
+        let path =
+            UnresolvedPath::new("a/b/c".into()).normalize_with_home_and_base(home, base);
+        assert_eq!(path.as_display_path(), Path::new("/base/dir/a/b/c"));
+        assert_eq!(path.as_real_path(), Path::new("/base/dir/a/b/c"));
+
+        // tilde path is resolved against home, not base
+        let path =
+            UnresolvedPath::new("~/repos".into()).normalize_with_home_and_base(home, base);
+        assert_eq!(path.as_display_path(), Path::new("~").join("repos"));
+        assert_eq!(path.as_real_path(), home.join("repos"));
+
+        // absolute path is not affected by base
+        let path =
+            UnresolvedPath::new("/absolute/path".into()).normalize_with_home_and_base(home, base);
+        assert_eq!(path.as_display_path(), Path::new("/absolute/path"));
+        assert_eq!(path.as_real_path(), Path::new("/absolute/path"));
+
+        // relative path under home resolves to tilde-based display path
+        let path =
+            UnresolvedPath::new("repos".into()).normalize_with_home_and_base(home, home);
+        assert_eq!(path.as_display_path(), Path::new("~").join("repos"));
+        assert_eq!(path.as_real_path(), home.join("repos"));
     }
 }
