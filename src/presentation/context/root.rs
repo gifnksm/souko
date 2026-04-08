@@ -1,12 +1,12 @@
 use std::collections::BTreeMap;
 
 use crate::{
+    app_dirs::AppDirs,
     domain::model::{pretty_path::PrettyPath, root::Root},
     presentation::{
         config::{DEFAULT_ROOT_NAME, RootConfig},
         model::{optional_param::OptionalParam, tilde_path::TildePath},
     },
-    project_dirs::ProjectDirs,
 };
 
 #[derive(Debug)]
@@ -15,7 +15,7 @@ pub(in crate::presentation) struct RootContextMap {
 }
 
 impl RootContextMap {
-    pub(in crate::presentation) fn new(config: &[RootConfig], project_dirs: &ProjectDirs) -> Self {
+    pub(in crate::presentation) fn new(config: &[RootConfig], app_dirs: &AppDirs) -> Self {
         let mut map: BTreeMap<String, OptionalParam<RootContext>> = config
             .iter()
             .map(|root_config| {
@@ -27,7 +27,7 @@ impl RootContextMap {
                     root_config.name.clone(),
                     OptionalParam::new_explicit(
                         "root",
-                        RootContext::from_config(root_config, project_dirs),
+                        RootContext::from_config(root_config, app_dirs),
                     ),
                 )
             })
@@ -36,7 +36,7 @@ impl RootContextMap {
         map.entry(DEFAULT_ROOT_NAME.to_owned()).or_insert_with(|| {
             OptionalParam::new_default(
                 "root",
-                RootContext::from_config(&RootConfig::default_root(), project_dirs),
+                RootContext::from_config(&RootConfig::default_root(), app_dirs),
             )
         });
 
@@ -69,8 +69,8 @@ impl RootContextMap {
     }
 }
 
-fn default_path(project_dirs: &ProjectDirs) -> TildePath {
-    TildePath::from_real_path(project_dirs.data_local_dir().join("root"))
+fn default_path(app_dirs: &AppDirs) -> TildePath {
+    TildePath::from_real_path(app_dirs.data_local_dir().join("root"))
 }
 
 #[derive(Debug, Clone)]
@@ -82,11 +82,11 @@ pub(in crate::presentation) struct RootContext {
 }
 
 impl RootContext {
-    fn from_config(root_config: &RootConfig, project_dirs: &ProjectDirs) -> Self {
+    fn from_config(root_config: &RootConfig, app_dirs: &AppDirs) -> Self {
         let path = root_config
             .path
             .clone()
-            .unwrap_or_else(|| default_path(project_dirs));
+            .unwrap_or_else(|| default_path(app_dirs));
         Self {
             root: Root::new(root_config.name.clone(), path.into()),
             visit_hidden_dirs: root_config.visit_hidden_dirs,
@@ -123,38 +123,32 @@ impl RootContext {
 
 #[cfg(test)]
 mod tests {
+    use tempfile::TempDir;
+
     use crate::{domain::model::path_like::PathLike as _, presentation::config::Config};
 
     use super::*;
 
     #[test]
-    fn default_config_resolves_default_root_from_injected_project_dirs() {
-        let project_dirs = ProjectDirs::new_for_test(
-            "target/test-config-dir-default-root",
-            "target/test-data-local-dir-default-root",
-            "target/test-cache-dir-default-root",
-        )
-        .unwrap();
+    fn default_config_resolves_default_root_from_injected_app_dirs() {
+        let home = TempDir::new().unwrap();
+        let app_dirs = AppDirs::new_for_test(env!("CARGO_BIN_NAME"), home.path()).unwrap();
         let config = Config::default();
 
-        let root_ctx = RootContextMap::new(&config.roots, &project_dirs);
+        let root_ctx = RootContextMap::new(&config.roots, &app_dirs);
 
         let default_root = root_ctx.default_root();
         assert_eq!(default_root.value().name(), "default");
         assert_eq!(
             default_root.value().path().as_real_path(),
-            &project_dirs.data_local_dir().join("root")
+            &app_dirs.data_local_dir().join("root")
         );
     }
 
     #[test]
     fn explicit_default_root_in_config_overrides_injected_default_root_path() {
-        let project_dirs = ProjectDirs::new_for_test(
-            "target/test-config-dir-explicit-root",
-            "target/test-data-local-dir-explicit-root",
-            "target/test-cache-dir-explicit-root",
-        )
-        .unwrap();
+        let home = TempDir::new().unwrap();
+        let app_dirs = AppDirs::new_for_test(env!("CARGO_BIN_NAME"), home.path()).unwrap();
         let config: Config = toml_edit::de::from_str(
             r#"
             [[root]]
@@ -164,7 +158,7 @@ mod tests {
         )
         .unwrap();
 
-        let root_ctx = RootContextMap::new(&config.roots, &project_dirs);
+        let root_ctx = RootContextMap::new(&config.roots, &app_dirs);
 
         let default_root = root_ctx.default_root();
         assert_eq!(default_root.value().name(), "default");
@@ -176,12 +170,8 @@ mod tests {
 
     #[test]
     fn explicit_root_entry_with_omitted_path_remains_explicit() {
-        let project_dirs = ProjectDirs::new_for_test(
-            "target/test-config-dir-implicit-path-root",
-            "target/test-data-local-dir-implicit-path-root",
-            "target/test-cache-dir-implicit-path-root",
-        )
-        .unwrap();
+        let home = TempDir::new().unwrap();
+        let app_dirs = AppDirs::new_for_test(env!("CARGO_BIN_NAME"), home.path()).unwrap();
         let config: Config = toml_edit::de::from_str(
             r#"
             [[root]]
@@ -190,14 +180,14 @@ mod tests {
         )
         .unwrap();
 
-        let root_ctx = RootContextMap::new(&config.roots, &project_dirs);
+        let root_ctx = RootContextMap::new(&config.roots, &app_dirs);
 
         let foo_root = root_ctx.root_by_name("foo").unwrap();
         assert!(foo_root.is_explicit());
         assert_eq!(foo_root.value().name(), "foo");
         assert_eq!(
             foo_root.value().path().as_real_path(),
-            &project_dirs.data_local_dir().join("root")
+            &app_dirs.data_local_dir().join("root")
         );
 
         let default_root = root_ctx.default_root();

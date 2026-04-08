@@ -5,9 +5,9 @@ use clap_complete::{Generator, Shell};
 use color_eyre::eyre::{Result, WrapErr as _, eyre};
 
 use crate::{
+    app_dirs::AppDirs,
     application::usecase::Usecases,
     presentation::context::{SubcommandContext, global::GlobalContext},
-    project_dirs::ProjectDirs,
 };
 
 use self::args::Args;
@@ -50,12 +50,12 @@ pub(crate) fn generate_man(output_dir: &str) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn dispatch(args: &Args, usecases: Usecases, project_dirs: ProjectDirs) -> Result<()> {
+pub(crate) fn dispatch(args: &Args, usecases: Usecases, app_dirs: AppDirs) -> Result<()> {
     let Some(subcommand) = args.subcommand() else {
         Args::command().print_help()?;
         return Ok(());
     };
-    let global_ctx = GlobalContext::new(args, usecases, project_dirs)?;
+    let global_ctx = GlobalContext::new(args, usecases, app_dirs)?;
     let subcommand_ctx = SubcommandContext::new(&global_ctx, subcommand)?;
     command::dispatch(&global_ctx, &subcommand_ctx)
 }
