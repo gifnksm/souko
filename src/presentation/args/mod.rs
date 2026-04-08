@@ -1,9 +1,12 @@
+use std::path::Path;
+
 use tracing::Level;
 
 use self::verbosity::Verbosity;
 use super::model::{optional_param::OptionalParam, unresolved_path::UnresolvedPath};
 use crate::{
     app_dirs::AppDirs,
+    domain::model::pretty_path::PrettyPath,
     presentation::args::{clone::CloneArgs, list::ListArgs},
 };
 
@@ -51,22 +54,30 @@ impl GlobalArgs {
         self.verbosity.verbosity()
     }
 
+    /// Returns the config file path, resolved relative to `cwd` if given as a relative CLI
+    /// argument (or environment variable). The default path is always absolute.
     pub(in crate::presentation) fn config_path(
         &self,
         app_dirs: &AppDirs,
-    ) -> OptionalParam<UnresolvedPath> {
+        cwd: &Path,
+    ) -> OptionalParam<PrettyPath> {
         OptionalParam::new("config", self.config_path.clone(), || {
             UnresolvedPath::new(app_dirs.config_dir().join("config.toml"))
         })
+        .map(|path| path.normalize_with_home_and_base(app_dirs.home_dir(), cwd))
     }
 
+    /// Returns the repo-cache file path, resolved relative to `cwd` if given as a relative CLI
+    /// argument (or environment variable). The default path is always absolute.
     pub(in crate::presentation) fn repo_cache_path(
         &self,
         app_dirs: &AppDirs,
-    ) -> OptionalParam<UnresolvedPath> {
+        cwd: &Path,
+    ) -> OptionalParam<PrettyPath> {
         OptionalParam::new("repo-cache", self.repo_cache_path.clone(), || {
             UnresolvedPath::new(app_dirs.cache_dir().join("repos.json"))
         })
+        .map(|path| path.normalize_with_home_and_base(app_dirs.home_dir(), cwd))
     }
 }
 

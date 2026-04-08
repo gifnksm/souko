@@ -167,20 +167,17 @@ mod tests {
         let base = Path::new("/base/dir");
 
         // relative path is resolved against base
-        let path =
-            UnresolvedPath::new("repos".into()).normalize_with_home_and_base(home, base);
+        let path = UnresolvedPath::new("repos".into()).normalize_with_home_and_base(home, base);
         assert_eq!(path.as_display_path(), Path::new("/base/dir/repos"));
         assert_eq!(path.as_real_path(), Path::new("/base/dir/repos"));
 
         // relative path with multiple components is resolved against base
-        let path =
-            UnresolvedPath::new("a/b/c".into()).normalize_with_home_and_base(home, base);
+        let path = UnresolvedPath::new("a/b/c".into()).normalize_with_home_and_base(home, base);
         assert_eq!(path.as_display_path(), Path::new("/base/dir/a/b/c"));
         assert_eq!(path.as_real_path(), Path::new("/base/dir/a/b/c"));
 
         // tilde path is resolved against home, not base
-        let path =
-            UnresolvedPath::new("~/repos".into()).normalize_with_home_and_base(home, base);
+        let path = UnresolvedPath::new("~/repos".into()).normalize_with_home_and_base(home, base);
         assert_eq!(path.as_display_path(), Path::new("~").join("repos"));
         assert_eq!(path.as_real_path(), home.join("repos"));
 
@@ -191,8 +188,7 @@ mod tests {
         assert_eq!(path.as_real_path(), Path::new("/absolute/path"));
 
         // relative path under home resolves to tilde-based display path
-        let path =
-            UnresolvedPath::new("repos".into()).normalize_with_home_and_base(home, home);
+        let path = UnresolvedPath::new("repos".into()).normalize_with_home_and_base(home, home);
         assert_eq!(path.as_display_path(), Path::new("~").join("repos"));
         assert_eq!(path.as_real_path(), home.join("repos"));
     }

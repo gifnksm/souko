@@ -28,10 +28,17 @@ impl GlobalContext {
         app_dirs: AppDirs,
     ) -> Result<Self> {
         let current_dir = std::env::current_dir()?;
-        let config_path = args
+
+        // Args-sourced paths are resolved relative to the current working directory.
+        let config_path = args.global_args().config_path(&app_dirs, &current_dir);
+        let repo_cache_path = args
             .global_args()
-            .config_path(&app_dirs)
-            .map(|path| path.normalize_with_home_and_base(app_dirs.home_dir(), &current_dir));
+            .repo_cache_path(&app_dirs, &current_dir)
+            .value()
+            .clone();
+
+        // Config-sourced paths (e.g. root paths) are resolved relative to the config file's
+        // directory; see RootContextMap::new.
         let config_dir = config_path
             .value()
             .as_real_path()
@@ -40,11 +47,7 @@ impl GlobalContext {
         let config = load_config(&config_path)?;
         let root_map = RootContextMap::new(&config.roots, &app_dirs, config_dir);
         let query = QueryContext::from_config(&config.query);
-        let repo_cache_path = args
-            .global_args()
-            .repo_cache_path(&app_dirs)
-            .value()
-            .normalize_with_home_and_base(app_dirs.home_dir(), &current_dir);
+
         Ok(Self {
             usecases,
             root_map,
