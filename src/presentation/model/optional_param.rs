@@ -24,13 +24,13 @@ impl<T> OptionalParamValue<T> {
 }
 
 #[derive(Debug, Clone)]
-pub(in super::super) struct OptionalParam<T> {
+pub(in crate::presentation) struct OptionalParam<T> {
     name: &'static str,
     value: OptionalParamValue<T>,
 }
 
 impl<T> OptionalParam<T> {
-    pub(in super::super) fn new(
+    pub(in crate::presentation) fn new(
         name: &'static str,
         value: Option<T>,
         default: impl FnOnce() -> T,
@@ -42,29 +42,43 @@ impl<T> OptionalParam<T> {
         OptionalParam { name, value }
     }
 
-    pub(in super::super) fn new_default(name: &'static str, value: T) -> Self {
+    pub(in crate::presentation) fn new_default(name: &'static str, value: T) -> Self {
         let value = OptionalParamValue::Default(value);
         OptionalParam { name, value }
     }
 
-    pub(in super::super) fn new_explicit(name: &'static str, value: T) -> Self {
+    pub(in crate::presentation) fn new_explicit(name: &'static str, value: T) -> Self {
         let value = OptionalParamValue::Explicit(value);
         OptionalParam { name, value }
     }
 
-    pub(in super::super) fn name(&self) -> &'static str {
+    pub(in crate::presentation) fn name(&self) -> &'static str {
         self.name
     }
 
-    pub(in super::super) fn value(&self) -> &T {
+    pub(in crate::presentation) fn value(&self) -> &T {
         self.value.as_ref()
     }
 
-    pub(in super::super) fn is_default(&self) -> bool {
+    pub(in crate::presentation) fn is_default(&self) -> bool {
         self.value.is_default()
     }
 
-    pub(in super::super) fn is_explicit(&self) -> bool {
+    pub(in crate::presentation) fn is_explicit(&self) -> bool {
         self.value.is_explicit()
+    }
+
+    pub(in crate::presentation) fn map<F, U>(self, f: F) -> OptionalParam<U>
+    where
+        F: FnOnce(T) -> U,
+    {
+        let value = match self.value {
+            OptionalParamValue::Explicit(v) => OptionalParamValue::Explicit(f(v)),
+            OptionalParamValue::Default(v) => OptionalParamValue::Default(f(v)),
+        };
+        OptionalParam {
+            name: self.name,
+            value,
+        }
     }
 }

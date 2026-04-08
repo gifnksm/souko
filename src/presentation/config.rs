@@ -2,7 +2,7 @@ use std::{collections::HashMap, str::FromStr as _};
 
 use serde::Deserialize;
 
-use super::model::tilde_path::TildePath;
+use super::model::unresolved_path::UnresolvedPath;
 use crate::domain::model::{scheme::Scheme, template::Template};
 
 pub(in crate::presentation) const DEFAULT_ROOT_NAME: &str = "default";
@@ -21,7 +21,7 @@ pub(in crate::presentation) struct Config {
 pub(in crate::presentation) struct RootConfig {
     pub(in crate::presentation) name: String,
     #[serde(default)]
-    pub(in crate::presentation) path: Option<TildePath>,
+    pub(in crate::presentation) path: Option<UnresolvedPath>,
     #[serde(default)]
     pub(in crate::presentation) visit_hidden_dirs: bool,
     #[serde(default)]

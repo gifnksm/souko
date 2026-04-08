@@ -5,7 +5,7 @@ use crate::{
     domain::model::{pretty_path::PrettyPath, root::Root},
     presentation::{
         config::{DEFAULT_ROOT_NAME, RootConfig},
-        model::{optional_param::OptionalParam, tilde_path::TildePath},
+        model::{optional_param::OptionalParam, unresolved_path::UnresolvedPath},
     },
 };
 
@@ -69,8 +69,9 @@ impl RootContextMap {
     }
 }
 
-fn default_path(app_dirs: &AppDirs) -> TildePath {
-    TildePath::from_real_path(app_dirs.data_local_dir().join("root"))
+fn default_path(app_dirs: &AppDirs) -> PrettyPath {
+    UnresolvedPath::new(app_dirs.data_local_dir().join("root"))
+        .normalize_with_home(app_dirs.home_dir())
 }
 
 #[derive(Debug, Clone)]
@@ -86,9 +87,10 @@ impl RootContext {
         let path = root_config
             .path
             .clone()
+            .map(|path| path.normalize_with_home(app_dirs.home_dir()))
             .unwrap_or_else(|| default_path(app_dirs));
         Self {
-            root: Root::new(root_config.name.clone(), path.into()),
+            root: Root::new(root_config.name.clone(), path),
             visit_hidden_dirs: root_config.visit_hidden_dirs,
             visit_repo_subdirs: root_config.visit_repo_subdirs,
             include_bare_repo: root_config.include_bare_repo,
