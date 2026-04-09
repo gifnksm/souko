@@ -13,8 +13,8 @@ pub(in crate::presentation) mod root;
 
 #[derive(Debug)]
 pub(in crate::presentation) enum SubcommandContext {
-    Clone(CloneContext),
-    List(ListContext),
+    Clone(Box<CloneContext>),
+    List(Box<ListContext>),
 }
 
 impl SubcommandContext {
@@ -23,8 +23,10 @@ impl SubcommandContext {
         subcommand: &Subcommand,
     ) -> Result<Self> {
         match subcommand {
-            Subcommand::Clone(args) => Ok(Self::Clone(CloneContext::new(global_ctx, args)?)),
-            Subcommand::List(args) => Ok(Self::List(ListContext::new(global_ctx, args)?)),
+            Subcommand::Clone(args) => {
+                Ok(Self::Clone(Box::new(CloneContext::new(global_ctx, args)?)))
+            }
+            Subcommand::List(args) => Ok(Self::List(Box::new(ListContext::new(global_ctx, args)?))),
         }
     }
 }

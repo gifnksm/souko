@@ -27,18 +27,17 @@ impl GlobalContext {
         usecases: Usecases,
         app_dirs: AppDirs,
     ) -> Result<Self> {
-        let config_path = args
-            .global_args()
-            .config_path(&app_dirs)
-            .map(|path| path.normalize_with_home(app_dirs.home_dir()));
+        let config_path = args.global_args().config_path(&app_dirs);
+        let config_path = config_path
+            .as_ref()
+            .map(|path| path.normalize(config_path.source(), &app_dirs));
         let config = load_config(&config_path)?;
-        let root_map = RootContextMap::new(&config.roots, &app_dirs);
+        let root_map = RootContextMap::new(config_path.value(), &config.roots, &app_dirs);
         let query = QueryContext::from_config(&config.query);
-        let repo_cache_path = args
-            .global_args()
-            .repo_cache_path(&app_dirs)
+        let repo_cache_path = args.global_args().repo_cache_path(&app_dirs);
+        let repo_cache_path = repo_cache_path
             .value()
-            .normalize_with_home(app_dirs.home_dir());
+            .normalize(repo_cache_path.source(), &app_dirs);
         Ok(Self {
             usecases,
             root_map,

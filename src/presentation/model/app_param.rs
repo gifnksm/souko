@@ -1,5 +1,7 @@
+use crate::domain::model::pretty_path::PrettyPath;
+
 /// Source of an application input parameter.
-#[derive(Debug, Clone, PartialEq, Eq, derive_more::IsVariant)]
+#[derive(Debug, Clone, derive_more::IsVariant)]
 pub(in crate::presentation) enum AppParamSource {
     /// Value provided through a clap argument source.
     ///
@@ -7,7 +9,7 @@ pub(in crate::presentation) enum AppParamSource {
     /// or by the environment variable bound to that option via clap `env`.
     CommandLineArgument,
     /// Value loaded from a configuration file.
-    ConfigurationFile,
+    ConfigurationFile { path: PrettyPath },
     /// Value synthesized by the application when the user did not provide one.
     ImplicitDefault,
 }
@@ -38,6 +40,13 @@ impl<T> AppParam<T> {
         AppParam {
             source: self.source,
             value: f(self.value),
+        }
+    }
+
+    pub(crate) fn as_ref(&self) -> AppParam<&T> {
+        AppParam {
+            source: self.source.clone(),
+            value: &self.value,
         }
     }
 }

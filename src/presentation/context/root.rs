@@ -20,23 +20,29 @@ pub(in crate::presentation) struct RootContextMap {
 }
 
 impl RootContextMap {
-    pub(in crate::presentation) fn new(config: &[RootConfig], app_dirs: &AppDirs) -> Self {
+    pub(in crate::presentation) fn new(
+        config_path: &PrettyPath,
+        config: &[RootConfig],
+        app_dirs: &AppDirs,
+    ) -> Self {
         let mut map: BTreeMap<String, AppParam<RootContext>> = config
             .iter()
-            .map(|root_config| {
+            .map(|config| {
                 // A root entry present in the configuration file keeps
                 // `ConfigurationFile` source even when its path is omitted and resolved to the
                 // default path. Only the synthesized fallback `default` root (added when no such
                 // entry exists in config at all) uses `ImplicitDefault` source.
-                let source = AppParamSource::ConfigurationFile;
-                let value = RootContext::from_config(root_config, app_dirs);
-                (root_config.name.clone(), AppParam::new(source, value))
+                let source = AppParamSource::ConfigurationFile {
+                    path: config_path.clone(),
+                };
+                let value = RootContext::from_config(&source, config, app_dirs);
+                (config.name.clone(), AppParam::new(source, value))
             })
             .collect();
 
         map.entry(DEFAULT_ROOT_NAME.to_owned()).or_insert_with(|| {
             let source = AppParamSource::ImplicitDefault;
-            let value = RootContext::from_config(&RootConfig::default_root(), app_dirs);
+            let value = RootContext::from_config(&source, &RootConfig::default_root(), app_dirs);
             AppParam::new(source, value)
         });
 
@@ -71,7 +77,7 @@ impl RootContextMap {
 
 fn default_path(app_dirs: &AppDirs) -> PrettyPath {
     UnresolvedPath::new(app_dirs.data_local_dir().join("root"))
-        .normalize_with_home(app_dirs.home_dir())
+        .normalize(&AppParamSource::ImplicitDefault, app_dirs)
 }
 
 #[derive(Debug, Clone)]
@@ -83,17 +89,17 @@ pub(in crate::presentation) struct RootContext {
 }
 
 impl RootContext {
-    fn from_config(root_config: &RootConfig, app_dirs: &AppDirs) -> Self {
-        let path = root_config
+    fn from_config(source: &AppParamSource, config: &RootConfig, app_dirs: &AppDirs) -> Self {
+        let path = config
             .path
             .clone()
-            .map(|path| path.normalize_with_home(app_dirs.home_dir()))
+            .map(|path| path.normalize(source, app_dirs))
             .unwrap_or_else(|| default_path(app_dirs));
         Self {
-            root: Root::new(root_config.name.clone(), path),
-            visit_hidden_dirs: root_config.visit_hidden_dirs,
-            visit_repo_subdirs: root_config.visit_repo_subdirs,
-            include_bare_repo: root_config.include_bare_repo,
+            root: Root::new(config.name.clone(), path),
+            visit_hidden_dirs: config.visit_hidden_dirs,
+            visit_repo_subdirs: config.visit_repo_subdirs,
+            include_bare_repo: config.include_bare_repo,
         }
     }
 
@@ -125,6 +131,8 @@ impl RootContext {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use tempfile::TempDir;
 
     use crate::{domain::model::path_like::PathLike as _, presentation::config::Config};
@@ -134,10 +142,15 @@ mod tests {
     #[test]
     fn default_config_resolves_default_root_from_injected_app_dirs() {
         let home = TempDir::new().unwrap();
-        let app_dirs = AppDirs::new_for_test(env!("CARGO_BIN_NAME"), home.path()).unwrap();
+        let app_dirs =
+            AppDirs::new_for_test(env!("CARGO_BIN_NAME"), home.path(), home.path()).unwrap();
+        let config_path = PrettyPath::from_pair(
+            home.path().join("config.toml"),
+            PathBuf::from("~/config.toml"),
+        );
         let config = Config::default();
 
-        let root_ctx = RootContextMap::new(&config.roots, &app_dirs);
+        let root_ctx = RootContextMap::new(&config_path, &config.roots, &app_dirs);
 
         let default_root = root_ctx.default_root();
         assert_eq!(default_root.value().name(), "default");
@@ -150,30 +163,43 @@ mod tests {
     #[test]
     fn configuration_file_default_root_overrides_injected_default_root_path() {
         let home = TempDir::new().unwrap();
-        let app_dirs = AppDirs::new_for_test(env!("CARGO_BIN_NAME"), home.path()).unwrap();
-        let config: Config = toml_edit::de::from_str(
+        let app_dirs =
+            AppDirs::new_for_test(env!("CARGO_BIN_NAME"), home.path(), home.path()).unwrap();
+        let config_path = PrettyPath::from_pair(
+            home.path().join("config.toml"),
+            PathBuf::from("~/config.toml"),
+        );
+        let custom_root = if cfg!(windows) {
+            std::path::PathBuf::from(r"C:\tmp\custom-root")
+        } else {
+            std::path::PathBuf::from("/tmp/custom-root")
+        };
+        let config: Config = toml_edit::de::from_str(&format!(
             r#"
             [[root]]
             name = "default"
-            path = "/tmp/custom-root"
+            path = '{}'
             "#,
-        )
+            custom_root.display()
+        ))
         .unwrap();
 
-        let root_ctx = RootContextMap::new(&config.roots, &app_dirs);
+        let root_ctx = RootContextMap::new(&config_path, &config.roots, &app_dirs);
 
         let default_root = root_ctx.default_root();
         assert_eq!(default_root.value().name(), "default");
-        assert_eq!(
-            default_root.value().path().as_real_path(),
-            std::path::Path::new("/tmp/custom-root")
-        );
+        assert_eq!(default_root.value().path().as_real_path(), &custom_root);
     }
 
     #[test]
     fn configuration_file_root_entry_with_omitted_path_remains_configuration_file() {
         let home = TempDir::new().unwrap();
-        let app_dirs = AppDirs::new_for_test(env!("CARGO_BIN_NAME"), home.path()).unwrap();
+        let app_dirs =
+            AppDirs::new_for_test(env!("CARGO_BIN_NAME"), home.path(), home.path()).unwrap();
+        let config_path = PrettyPath::from_pair(
+            home.path().join("config.toml"),
+            PathBuf::from("~/config.toml"),
+        );
         let config: Config = toml_edit::de::from_str(
             r#"
             [[root]]
@@ -182,7 +208,7 @@ mod tests {
         )
         .unwrap();
 
-        let root_ctx = RootContextMap::new(&config.roots, &app_dirs);
+        let root_ctx = RootContextMap::new(&config_path, &config.roots, &app_dirs);
 
         let foo_root = root_ctx.root_by_name("foo").unwrap();
         assert_eq!(foo_root.value().name(), "foo");
