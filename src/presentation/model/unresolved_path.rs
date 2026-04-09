@@ -6,7 +6,11 @@ use std::{
 
 use serde::Deserialize;
 
-use crate::domain::model::pretty_path::PrettyPath;
+use crate::{
+    app_dirs::AppDirs,
+    domain::model::{path_like::PathLike, pretty_path::PrettyPath},
+    presentation::model::app_param::AppParamSource,
+};
 
 #[derive(Debug, Default, Clone, Deserialize)]
 #[serde(transparent)]
@@ -48,16 +52,38 @@ impl UnresolvedPath {
         Self(path)
     }
 
-    pub(in crate::presentation) fn normalize_with_home<P>(&self, home: &P) -> PrettyPath
-    where
-        P: AsRef<Path> + ?Sized,
-    {
-        let home = home.as_ref();
-        let resolved_path = match self.0.strip_prefix("~") {
-            Ok(rest) => home.join(rest),
+    pub(in crate::presentation) fn normalize(
+        &self,
+        source: &AppParamSource,
+        app_dirs: &AppDirs,
+    ) -> PrettyPath {
+        let home_dir = app_dirs.home_dir();
+        let mut resolved_path = match self.0.strip_prefix("~") {
+            Ok(rest) => home_dir.join(rest),
             Err(_) => self.0.clone(),
         };
-        let display_path = match resolved_path.strip_prefix(home) {
+
+        if resolved_path.is_relative() {
+            match source {
+                AppParamSource::CommandLineArgument => {
+                    resolved_path = app_dirs.working_dir().join(resolved_path);
+                }
+                AppParamSource::ConfigurationFile { path } => {
+                    let config_dir = path.as_real_path().parent().unwrap();
+                    assert!(config_dir.is_absolute());
+                    resolved_path = config_dir.join(resolved_path);
+                }
+                AppParamSource::ImplicitDefault => {
+                    // default path values should never be relative, so this is likely a bug
+                    panic!(
+                        "Unexpected relative path from implicit default source: {:?}",
+                        self.0
+                    )
+                }
+            }
+        }
+
+        let display_path = match resolved_path.strip_prefix(home_dir) {
             Ok(rest) => Path::new("~").join(rest),
             Err(_) => resolved_path.clone(),
         };
@@ -78,57 +104,112 @@ impl FromStr for UnresolvedPath {
 
 #[cfg(test)]
 mod tests {
+
     use crate::domain::model::path_like::PathLike as _;
 
     use super::*;
 
     #[test]
-    fn expand() {
-        let home = Path::new("/home/foo");
+    fn normalize_tilde_and_home_paths() {
+        let app_dirs = AppDirs::new_for_test(env!("CARGO_BIN_NAME"), "/home/foo", "/work").unwrap();
+        let home_dir = app_dirs.home_dir();
+        let config_dir = UnresolvedPath::new(app_dirs.config_dir().to_owned())
+            .normalize(&AppParamSource::ImplicitDefault, &app_dirs);
+        let config_path = PrettyPath::from_pair(
+            config_dir.as_real_path().join("config.toml"),
+            config_dir.as_display_path().join("config.toml"),
+        );
+        let source = AppParamSource::ConfigurationFile { path: config_path };
 
         // expand first tilde component
-        let path = UnresolvedPath::new("~/.config/souko".into()).normalize_with_home(home);
-        assert_eq!(path.as_display_path(), Path::new("~").join(".config/souko"));
-        assert_eq!(path.as_real_path(), home.join(".config/souko"));
+        let path = UnresolvedPath::new("~/.config/souko".into()).normalize(&source, &app_dirs);
+        assert_eq!(path.as_display_path(), Path::new("~/.config/souko"));
+        assert_eq!(path.as_real_path(), home_dir.join(".config/souko"));
 
         // expand bare tilde to home
-        let path = UnresolvedPath::new("~".into()).normalize_with_home(home);
+        let path = UnresolvedPath::new("~".into()).normalize(&source, &app_dirs);
         assert_eq!(path.as_display_path(), Path::new("~"));
-        assert_eq!(path.as_real_path(), home);
+        assert_eq!(path.as_real_path(), home_dir);
 
         // normalize bare tilde with trailing separator to base tilde
-        let path = UnresolvedPath::new("~/".into()).normalize_with_home(home);
+        let path = UnresolvedPath::new("~/".into()).normalize(&source, &app_dirs);
         assert_eq!(path.as_display_path(), Path::new("~"));
-        assert_eq!(path.as_real_path(), home);
+        assert_eq!(path.as_real_path(), home_dir);
 
-        // don't expand tilde+username component
-        let path = UnresolvedPath::new("~foo/.config/souko".into()).normalize_with_home(home);
-        assert_eq!(path.as_display_path(), Path::new("~foo/.config/souko"));
-        assert_eq!(path.as_real_path(), Path::new("~foo/.config/souko"));
+        // don't expand tilde+username component; it is treated as a relative path
+        let path = UnresolvedPath::new("~foo/.config/souko".into()).normalize(&source, &app_dirs);
+        assert_eq!(
+            path.as_display_path(),
+            config_dir.as_display_path().join("~foo/.config/souko")
+        );
+        assert_eq!(
+            path.as_real_path(),
+            config_dir.as_real_path().join("~foo/.config/souko")
+        );
 
         // don't expand non-first tilde component
-        let path = UnresolvedPath::new("/foo/~/baz".into()).normalize_with_home(home);
-        assert_eq!(path.as_display_path(), Path::new("/foo/~/baz"));
-        assert_eq!(path.as_real_path(), Path::new("/foo/~/baz"));
+        let absolute_path = home_dir.parent().unwrap().join("~/baz");
+        let path = UnresolvedPath::new(absolute_path.clone()).normalize(&source, &app_dirs);
+        assert_eq!(path.as_display_path(), absolute_path);
+        assert_eq!(path.as_real_path(), absolute_path);
 
         // normalize home itself to base tilde
-        let path = UnresolvedPath::new("/home/foo".into()).normalize_with_home(home);
+        let path = UnresolvedPath::new(home_dir.to_owned()).normalize(&source, &app_dirs);
         assert_eq!(path.as_display_path(), Path::new("~"));
-        assert_eq!(path.as_real_path(), home);
+        assert_eq!(path.as_real_path(), home_dir);
 
         // normalize home itself with trailing separator to base tilde
-        let path = UnresolvedPath::new("/home/foo/".into()).normalize_with_home(home);
+        let path = UnresolvedPath::new(format!("{}/", home_dir.display()).into())
+            .normalize(&source, &app_dirs);
         assert_eq!(path.as_display_path(), Path::new("~"));
-        assert_eq!(path.as_real_path(), home);
+        assert_eq!(path.as_real_path(), home_dir);
 
         // don't normalize paths that only share a string prefix with home
-        let path = UnresolvedPath::new("/home/foobar/bar".into()).normalize_with_home(home);
-        assert_eq!(path.as_display_path(), Path::new("/home/foobar/bar"));
-        assert_eq!(path.as_real_path(), Path::new("/home/foobar/bar"));
+        let sibling_of_home_dir = home_dir.parent().unwrap().join("foobar");
+        let path = UnresolvedPath::new(sibling_of_home_dir.clone()).normalize(&source, &app_dirs);
+        assert_eq!(path.as_display_path(), sibling_of_home_dir);
+        assert_eq!(path.as_real_path(), sibling_of_home_dir);
 
         // normalize a path under home to a tilde-based display path
-        let path = UnresolvedPath::new("/home/foo/bar".into()).normalize_with_home(home);
-        assert_eq!(path.as_display_path(), Path::new("~").join("bar"));
-        assert_eq!(path.as_real_path(), Path::new("/home/foo/bar"));
+        let path = UnresolvedPath::new(home_dir.join("bar")).normalize(&source, &app_dirs);
+        assert_eq!(path.as_display_path(), Path::new("~/bar"));
+        assert_eq!(path.as_real_path(), home_dir.join("bar"));
+    }
+
+    #[test]
+    fn normalize_resolves_relative_paths_from_configuration_file_directory() {
+        let app_dirs = AppDirs::new_for_test(env!("CARGO_BIN_NAME"), "/home/foo", "/work").unwrap();
+        let config_dir = UnresolvedPath::new(app_dirs.config_dir().join("nested"))
+            .normalize(&AppParamSource::ImplicitDefault, &app_dirs);
+        let config_path = PrettyPath::from_pair(
+            config_dir.as_real_path().join("config.toml"),
+            config_dir.as_display_path().join("config.toml"),
+        );
+        let source = AppParamSource::ConfigurationFile { path: config_path };
+
+        let path = UnresolvedPath::new("repos/root".into()).normalize(&source, &app_dirs);
+
+        assert_eq!(
+            path.as_real_path(),
+            config_dir.as_real_path().join("repos/root"),
+        );
+        assert_eq!(
+            path.as_display_path(),
+            config_dir.as_display_path().join("repos/root"),
+        );
+    }
+
+    #[test]
+    fn normalize_resolves_relative_paths_from_command_line_working_directory() {
+        let app_dirs = AppDirs::new_for_test(env!("CARGO_BIN_NAME"), "/home/foo", "/work").unwrap();
+        let source = AppParamSource::CommandLineArgument;
+
+        let path = UnresolvedPath::new("repos/cache.json".into()).normalize(&source, &app_dirs);
+
+        let expected_real_path = app_dirs.working_dir().join("repos/cache.json");
+        let expected_display_path = expected_real_path.clone();
+
+        assert_eq!(path.as_real_path(), expected_real_path);
+        assert_eq!(path.as_display_path(), expected_display_path);
     }
 }

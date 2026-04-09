@@ -157,3 +157,39 @@ visit_repo_subdirs = true
         .stdout(predicate::str::contains(parent_repo.display().to_string()))
         .stdout(predicate::str::contains(child_repo.display().to_string()));
 }
+
+#[test]
+fn list_resolves_root_path_relative_to_configuration_file_directory() {
+    let home = TempDir::new().unwrap();
+
+    let config_root = home.child("config-root");
+    let config_dir = config_root.child("nested");
+    config_dir.create_dir_all().unwrap();
+
+    let repo = config_root.child("repos/example");
+    repo.create_dir_all().unwrap();
+    git2::Repository::init(repo.path()).unwrap();
+
+    config_dir
+        .child("config.toml")
+        .write_str(
+            r#"
+[[root]]
+name = "default"
+path = "../repos"
+"#,
+        )
+        .unwrap();
+
+    let repo = canonical(repo.path());
+
+    common::souko_cmd(home.path())
+        .args([
+            "--config",
+            config_dir.child("config.toml").path().to_str().unwrap(),
+            "list",
+        ])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains(repo.display().to_string()));
+}
