@@ -7,66 +7,67 @@ use crate::{
     domain::model::{pretty_path::PrettyPath, root::Root},
     presentation::{
         config::{DEFAULT_ROOT_NAME, RootConfig},
-        model::{optional_param::OptionalParam, unresolved_path::UnresolvedPath},
+        model::{
+            app_param::{AppParam, AppParamSource},
+            unresolved_path::UnresolvedPath,
+        },
     },
 };
 
 #[derive(Debug)]
 pub(in crate::presentation) struct RootContextMap {
-    map: BTreeMap<String, OptionalParam<RootContext>>,
+    map: BTreeMap<String, AppParam<RootContext>>,
 }
 
 impl RootContextMap {
     pub(in crate::presentation) fn new(config: &[RootConfig], app_dirs: &AppDirs) -> Self {
-        let mut map: BTreeMap<String, OptionalParam<RootContext>> = config
+        let mut map: BTreeMap<String, AppParam<RootContext>> = config
             .iter()
             .map(|root_config| {
-                // A root entry present in config is treated as explicit even when its path is
-                // omitted and resolved to the default path. Only the synthesized fallback
-                // `default` root (added when no such entry exists in config at all) is treated as
-                // non-explicit.
+                // A root entry present in config is treated as coming from the configuration
+                // file even when its path is omitted and resolved to the default path. Only the
+                // synthesized fallback `default` root (added when no such entry exists in config
+                // at all) is treated as an implicit default.
+                let source = AppParamSource::ConfigurationFile;
+                let value = RootContext::from_config(root_config, app_dirs);
                 (
                     root_config.name.clone(),
-                    OptionalParam::new_explicit(
-                        "root",
-                        RootContext::from_config(root_config, app_dirs),
-                    ),
+                    AppParam::new("root", source, value),
                 )
             })
             .collect();
 
         map.entry(DEFAULT_ROOT_NAME.to_owned()).or_insert_with(|| {
-            OptionalParam::new_default(
-                "root",
-                RootContext::from_config(&RootConfig::default_root(), app_dirs),
-            )
+            let source = AppParamSource::ImplicitDefault;
+            let value = RootContext::from_config(&RootConfig::default_root(), app_dirs);
+            AppParam::new("root", source, value)
         });
 
         Self { map }
     }
 
-    pub(in crate::presentation) fn default_root(&self) -> &OptionalParam<RootContext> {
+    pub(in crate::presentation) fn default_root(&self) -> &AppParam<RootContext> {
         self.map.get(DEFAULT_ROOT_NAME).unwrap()
     }
 
     pub(in crate::presentation) fn root_by_name(
         &self,
         name: &str,
-    ) -> Option<&OptionalParam<RootContext>> {
+    ) -> Option<&AppParam<RootContext>> {
         self.map.get(name)
     }
 
     pub(in crate::presentation) fn root_by_name_or_err(
         &self,
         name: &str,
-    ) -> Result<&OptionalParam<RootContext>, color_eyre::Report> {
+    ) -> Result<&AppParam<RootContext>, color_eyre::Report> {
         self.root_by_name(name)
             .ok_or_else(|| eyre!("root `{name}` not found in config file"))
     }
 
     pub(in crate::presentation) fn all_roots(
         &self,
-    ) -> impl Iterator<Item = &OptionalParam<RootContext>> {
+    ) -> impl Iterator<Item = &AppParam<RootContext>> {
         self.map.values()
     }
 }
@@ -173,7 +174,7 @@ mod tests {
     }
 
     #[test]
-    fn explicit_root_entry_with_omitted_path_remains_explicit() {
+    fn configuration_file_root_entry_with_omitted_path_remains_configuration_file() {
         let home = TempDir::new().unwrap();
         let app_dirs = AppDirs::new_for_test(env!("CARGO_BIN_NAME"), home.path()).unwrap();
         let config: Config = toml_edit::de::from_str(
@@ -187,15 +188,15 @@ mod tests {
         let root_ctx = RootContextMap::new(&config.roots, &app_dirs);
 
         let foo_root = root_ctx.root_by_name("foo").unwrap();
-        assert!(foo_root.is_explicit());
         assert_eq!(foo_root.value().name(), "foo");
+        assert!(foo_root.source().is_configuration_file());
         assert_eq!(
             foo_root.value().path().as_real_path(),
             &app_dirs.data_local_dir().join("root")
         );
 
         let default_root = root_ctx.default_root();
-        assert!(default_root.is_default());
+        assert!(default_root.source().is_implicit_default());
         assert_eq!(default_root.value().name(), "default");
     }
 }

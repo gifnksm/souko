@@ -5,13 +5,13 @@ use crate::{
     presentation::{
         args::clone::CloneArgs,
         context::{global::GlobalContext, root::RootContext},
-        model::optional_param::OptionalParam,
+        model::app_param::AppParam,
     },
 };
 
 #[derive(Debug)]
 pub(in crate::presentation) struct CloneContext {
-    root: OptionalParam<RootContext>,
+    root: AppParam<RootContext>,
     query: Query,
 }
 
@@ -34,7 +34,7 @@ impl CloneContext {
         Ok(Self { root, query })
     }
 
-    pub(in crate::presentation) fn root_context(&self) -> &OptionalParam<RootContext> {
+    pub(in crate::presentation) fn root_context(&self) -> &AppParam<RootContext> {
         &self.root
     }
 

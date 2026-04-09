@@ -1,10 +1,13 @@
 use tracing::Level;
 
 use self::verbosity::Verbosity;
-use super::model::{optional_param::OptionalParam, unresolved_path::UnresolvedPath};
+use super::model::{app_param::AppParam, unresolved_path::UnresolvedPath};
 use crate::{
     app_dirs::AppDirs,
-    presentation::args::{clone::CloneArgs, list::ListArgs},
+    presentation::{
+        args::{clone::CloneArgs, list::ListArgs},
+        model::app_param::AppParamSource,
+    },
 };
 
 pub(in crate::presentation) mod clone;
@@ -54,19 +57,35 @@ impl GlobalArgs {
     pub(in crate::presentation) fn config_path(
         &self,
         app_dirs: &AppDirs,
-    ) -> OptionalParam<UnresolvedPath> {
-        OptionalParam::new("config", self.config_path.clone(), || {
-            UnresolvedPath::new(app_dirs.config_dir().join("config.toml"))
-        })
+    ) -> AppParam<UnresolvedPath> {
+        let (source, value) = self
+            .config_path
+            .as_ref()
+            .map(|path| (AppParamSource::CommandLineArgument, path.clone()))
+            .unwrap_or_else(|| {
+                (
+                    AppParamSource::ImplicitDefault,
+                    UnresolvedPath::new(app_dirs.config_dir().join("config.toml")),
+                )
+            });
+        AppParam::new("config", source, value)
     }
 
     pub(in crate::presentation) fn repo_cache_path(
         &self,
         app_dirs: &AppDirs,
-    ) -> OptionalParam<UnresolvedPath> {
-        OptionalParam::new("repo-cache", self.repo_cache_path.clone(), || {
-            UnresolvedPath::new(app_dirs.cache_dir().join("repos.json"))
-        })
+    ) -> AppParam<UnresolvedPath> {
+        let (source, value) = self
+            .repo_cache_path
+            .as_ref()
+            .map(|path| (AppParamSource::CommandLineArgument, path.clone()))
+            .unwrap_or_else(|| {
+                (
+                    AppParamSource::ImplicitDefault,
+                    UnresolvedPath::new(app_dirs.cache_dir().join("repos.json")),
+                )
+            });
+        AppParam::new("repo-cache", source, value)
     }
 }
 

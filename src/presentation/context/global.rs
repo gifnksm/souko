@@ -8,7 +8,7 @@ use crate::{
         args::Args,
         config::Config,
         context::{query::QueryContext, root::RootContextMap},
-        model::optional_param::OptionalParam,
+        model::app_param::AppParam,
     },
     util::file,
 };
@@ -64,10 +64,10 @@ impl GlobalContext {
     }
 }
 
-fn load_config(path: &OptionalParam<PrettyPath>) -> Result<Config> {
+fn load_config(path: &AppParam<PrettyPath>) -> Result<Config> {
     match file::load_toml(path.name(), path.value())? {
         Some(config) => Ok(config),
-        None if path.is_default() => Ok(Config::default()),
+        None if path.source().is_implicit_default() => Ok(Config::default()),
         None => bail!("config file not found: {}", path.value().display()),
     }
 }
