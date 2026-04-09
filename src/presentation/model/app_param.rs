@@ -14,26 +14,13 @@ pub(in crate::presentation) enum AppParamSource {
 
 #[derive(Debug, Clone)]
 pub(in crate::presentation) struct AppParam<T> {
-    name: &'static str,
     source: AppParamSource,
     value: T,
 }
 
 impl<T> AppParam<T> {
-    pub(in crate::presentation) fn new(
-        name: &'static str,
-        source: AppParamSource,
-        value: T,
-    ) -> Self {
-        AppParam {
-            name,
-            source,
-            value,
-        }
-    }
-
-    pub(in crate::presentation) fn name(&self) -> &'static str {
-        self.name
+    pub(in crate::presentation) fn new(source: AppParamSource, value: T) -> Self {
+        AppParam { source, value }
     }
 
     pub(in crate::presentation) fn source(&self) -> &AppParamSource {
@@ -49,7 +36,6 @@ impl<T> AppParam<T> {
         F: FnOnce(T) -> U,
     {
         AppParam {
-            name: self.name,
             source: self.source,
             value: f(self.value),
         }
