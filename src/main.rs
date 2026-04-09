@@ -1,7 +1,7 @@
 use std::env;
 
 use clap::Parser as _;
-use color_eyre::eyre::{self, eyre};
+use color_eyre::eyre::{self, WrapErr as _, eyre};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
@@ -54,6 +54,7 @@ fn main() -> eyre::Result<()> {
 
     let ports = infrastructure::ports();
     let usecases = Usecases::new(&ports);
-    let app_dirs = AppDirs::new(BIN_NAME)?;
+    let app_dirs =
+        AppDirs::new(BIN_NAME).wrap_err("failed to initialize application directories")?;
     presentation::dispatch(&args, usecases, app_dirs)
 }

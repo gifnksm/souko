@@ -1,9 +1,9 @@
 use std::{
     env,
-    path::{Path, PathBuf},
+    path::{self, Path, PathBuf},
 };
 
-use color_eyre::eyre::{Result, ensure, eyre};
+use color_eyre::eyre::{Result, WrapErr as _, eyre};
 use directories::BaseDirs;
 
 #[derive(Debug, Clone)]
@@ -65,16 +65,16 @@ impl AppDirs {
         cache_dir: S,
     ) -> Result<Self>
     where
-        P: AsRef<Path> + Into<PathBuf>,
-        Q: AsRef<Path> + Into<PathBuf>,
-        R: AsRef<Path> + Into<PathBuf>,
-        S: AsRef<Path> + Into<PathBuf>,
+        P: AsRef<Path>,
+        Q: AsRef<Path>,
+        R: AsRef<Path>,
+        S: AsRef<Path>,
     {
         Ok(Self {
-            home_dir: ensure_absolute_path("home_dir", home_dir)?.into(),
-            config_dir: ensure_absolute_path("config_dir", config_dir)?.into(),
-            data_local_dir: ensure_absolute_path("data_local_dir", data_local_dir)?.into(),
-            cache_dir: ensure_absolute_path("cache_dir", cache_dir)?.into(),
+            home_dir: make_absolute_path("home_dir", home_dir)?,
+            config_dir: make_absolute_path("config_dir", config_dir)?,
+            data_local_dir: make_absolute_path("data_local_dir", data_local_dir)?,
+            cache_dir: make_absolute_path("cache_dir", cache_dir)?,
         })
     }
 
@@ -95,14 +95,11 @@ impl AppDirs {
     }
 }
 
-fn ensure_absolute_path<P>(name: &str, path: P) -> Result<P>
+fn make_absolute_path<P>(name: &str, path: P) -> Result<PathBuf>
 where
     P: AsRef<Path>,
 {
-    ensure!(
-        path.as_ref().is_absolute(),
-        "{name} is not an absolute path: {}",
-        path.as_ref().display()
-    );
-    Ok(path)
+    let path = path.as_ref();
+    path::absolute(path)
+        .wrap_err_with(|| format!("failed to get absolute path for {name}: {}", path.display()))
 }
