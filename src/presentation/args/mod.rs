@@ -68,7 +68,7 @@ impl GlobalArgs {
                     UnresolvedPath::new(app_dirs.config_dir().join("config.toml")),
                 )
             });
-        AppParam::new("config", source, value)
+        AppParam::new(source, value)
     }
 
     pub(in crate::presentation) fn repo_cache_path(
@@ -85,7 +85,7 @@ impl GlobalArgs {
                     UnresolvedPath::new(app_dirs.cache_dir().join("repos.json")),
                 )
             });
-        AppParam::new("repo-cache", source, value)
+        AppParam::new(source, value)
     }
 }
 

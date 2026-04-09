@@ -24,23 +24,20 @@ impl RootContextMap {
         let mut map: BTreeMap<String, AppParam<RootContext>> = config
             .iter()
             .map(|root_config| {
-                // A root entry present in config is treated as coming from the configuration
-                // file even when its path is omitted and resolved to the default path. Only the
-                // synthesized fallback `default` root (added when no such entry exists in config
-                // at all) is treated as an implicit default.
+                // A root entry present in the configuration file keeps
+                // `ConfigurationFile` source even when its path is omitted and resolved to the
+                // default path. Only the synthesized fallback `default` root (added when no such
+                // entry exists in config at all) uses `ImplicitDefault` source.
                 let source = AppParamSource::ConfigurationFile;
                 let value = RootContext::from_config(root_config, app_dirs);
-                (
-                    root_config.name.clone(),
-                    AppParam::new("root", source, value),
-                )
+                (root_config.name.clone(), AppParam::new(source, value))
             })
             .collect();
 
         map.entry(DEFAULT_ROOT_NAME.to_owned()).or_insert_with(|| {
             let source = AppParamSource::ImplicitDefault;
             let value = RootContext::from_config(&RootConfig::default_root(), app_dirs);
-            AppParam::new("root", source, value)
+            AppParam::new(source, value)
         });
 
         Self { map }
@@ -151,7 +148,7 @@ mod tests {
     }
 
     #[test]
-    fn explicit_default_root_in_config_overrides_injected_default_root_path() {
+    fn configuration_file_default_root_overrides_injected_default_root_path() {
         let home = TempDir::new().unwrap();
         let app_dirs = AppDirs::new_for_test(env!("CARGO_BIN_NAME"), home.path()).unwrap();
         let config: Config = toml_edit::de::from_str(

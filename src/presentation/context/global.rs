@@ -65,7 +65,7 @@ impl GlobalContext {
 }
 
 fn load_config(path: &AppParam<PrettyPath>) -> Result<Config> {
-    match file::load_toml(path.name(), path.value())? {
+    match file::load_toml("configuration file", path.value())? {
         Some(config) => Ok(config),
         None if path.source().is_implicit_default() => Ok(Config::default()),
         None => bail!("config file not found: {}", path.value().display()),
