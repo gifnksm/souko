@@ -1,5 +1,7 @@
 use std::collections::BTreeMap;
 
+use color_eyre::eyre::eyre;
+
 use crate::{
     app_dirs::AppDirs,
     domain::model::{pretty_path::PrettyPath, root::Root},
@@ -59,7 +61,7 @@ impl RootContextMap {
         name: &str,
     ) -> Result<&OptionalParam<RootContext>, color_eyre::Report> {
         self.root_by_name(name)
-            .ok_or_else(|| color_eyre::eyre::eyre!("root `{name}` not found in config file"))
+            .ok_or_else(|| eyre!("root `{name}` not found in config file"))
     }
 
     pub(in crate::presentation) fn all_roots(

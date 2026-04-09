@@ -46,7 +46,7 @@ impl WorkdirGuard {
                     }
                     unreachable!()
                 }
-                Err(err) => bail!(err),
+                Err(err) => return Err(err.into()),
             }
         }
         Ok(workdir)

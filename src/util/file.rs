@@ -3,7 +3,7 @@ use std::{
     io::{self, BufReader, BufWriter, Read},
 };
 
-use color_eyre::eyre::{Error, Result, WrapErr, eyre};
+use color_eyre::eyre::{Result, WrapErr, eyre};
 use serde::{Deserialize, Serialize};
 use tempfile::NamedTempFile;
 use toml_edit::DocumentMut;
@@ -15,7 +15,7 @@ pub(crate) fn open(name: &str, path: &impl PathLike) -> Result<Option<File>> {
         Ok(file) => Some(file),
         Err(e) if e.kind() == io::ErrorKind::NotFound => None,
         Err(e) => {
-            bail!(Error::from(e).wrap_err(format!("failed to open {name}: {}", path.display())))
+            return Err(e).wrap_err(format!("failed to open {name}: {}", path.display()));
         }
     };
     Ok(file)

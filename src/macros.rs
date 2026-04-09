@@ -6,9 +6,3 @@ macro_rules! itry {
         }
     };
 }
-
-macro_rules! bail {
-    ($e:expr) => {
-        return Err(From::from($e))
-    };
-}

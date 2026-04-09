@@ -1,4 +1,4 @@
-use color_eyre::eyre::{Result, eyre};
+use color_eyre::eyre::{Result, bail};
 
 use crate::{
     app_dirs::AppDirs,
@@ -68,6 +68,6 @@ fn load_config(path: &OptionalParam<PrettyPath>) -> Result<Config> {
     match file::load_toml(path.name(), path.value())? {
         Some(config) => Ok(config),
         None if path.is_default() => Ok(Config::default()),
-        None => bail!(eyre!("config file not found: {}", path.value().display())),
+        None => bail!("config file not found: {}", path.value().display()),
     }
 }
