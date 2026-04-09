@@ -35,6 +35,7 @@ clap_complete_nushell = "4.6.0"
 clap_mangen = "0.3.0"
 color-eyre = "0.6.5"
 custom_debug_derive = "0.6.2"
+derive_more = { version = "2.1.1", features = ["is_variant"] }
 directories = "6.0.0"
 dunce = "1.0.5"
 git2 = { version = "0.20.4" }

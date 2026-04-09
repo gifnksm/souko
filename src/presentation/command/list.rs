@@ -17,10 +17,11 @@ pub(in crate::presentation) fn dispatch(
 ) -> Result<()> {
     let format = list_ctx.format();
     let input_roots = list_ctx.roots().iter().map(|root| ListRootInput {
-        // Only the synthesized fallback default root is allowed to be missing
-        // silently. Roots present in config remain explicit even when their path
-        // is omitted and resolved to the default path.
-        allow_missing_root: !root.is_explicit(),
+        // Only the synthesized fallback `default` root with `ImplicitDefault`
+        // source is allowed to be missing silently. Roots loaded from the
+        // configuration file keep `ConfigurationFile` source even when their
+        // path is omitted and resolved to the default path.
+        allow_missing_root: root.source().is_implicit_default(),
         visit_hidden_dirs: root.value().visit_hidden_dirs(),
         visit_repo_subdirs: root.value().visit_repo_subdirs(),
         include_bare_repo: root.value().include_bare_repo(),

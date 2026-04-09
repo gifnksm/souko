@@ -3,13 +3,13 @@ use color_eyre::eyre::Result;
 use crate::presentation::{
     args::list::{Format, ListArgs},
     context::{global::GlobalContext, root::RootContext},
-    model::optional_param::OptionalParam,
+    model::app_param::AppParam,
     render::list::RepoListTemplateContext,
 };
 
 #[derive(Debug)]
 pub(in crate::presentation) struct ListContext {
-    roots: Vec<OptionalParam<RootContext>>,
+    roots: Vec<AppParam<RootContext>>,
     format: Format,
 }
 
@@ -30,7 +30,7 @@ impl ListContext {
         Ok(Self { roots, format })
     }
 
-    pub(in crate::presentation) fn roots(&self) -> &[OptionalParam<RootContext>] {
+    pub(in crate::presentation) fn roots(&self) -> &[AppParam<RootContext>] {
         &self.roots
     }
 
