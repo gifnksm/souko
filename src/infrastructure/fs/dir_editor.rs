@@ -39,9 +39,9 @@ impl DirEditor for FsDirEditor {
                 {
                     return Ok(false);
                 }
-                bail!(err)
+                return Err(err.into());
             }
-            Err(err) => bail!(err),
+            Err(err) => return Err(err.into()),
         };
         Ok(removed)
     }

@@ -33,12 +33,12 @@ impl PathCanonicalizer for FsPathCanonicalizer {
                     path: PrettyPath::new(path),
                 })
             }
-            Err(err) => bail!(PathCanonicalizerError::Backend(
+            Err(err) => Err(PathCanonicalizerError::Backend(
                 Error::Canonicalize {
                     path: path.as_real_path().to_owned(),
                     source: err,
                 }
-                .into()
+                .into(),
             )),
         }
     }

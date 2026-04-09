@@ -153,10 +153,12 @@ impl<I> ListRoots<'_, I> {
                     path,
                 });
             }
-            Err(source) => bail!(ListUsecaseError::CanonicalizeRoot {
-                name: root.name().to_owned(),
-                source
-            }),
+            Err(source) => {
+                return Err(ListUsecaseError::CanonicalizeRoot {
+                    name: root.name().to_owned(),
+                    source,
+                });
+            }
         };
         let canonical_root = CanonicalRoot::new(root.clone(), canonical_path);
         Ok(canonical_root)

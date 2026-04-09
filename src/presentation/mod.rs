@@ -2,7 +2,7 @@ use std::io;
 
 use clap::CommandFactory as _;
 use clap_complete::{Generator, Shell};
-use color_eyre::eyre::{Result, WrapErr as _, eyre};
+use color_eyre::eyre::{Result, WrapErr as _, bail};
 
 use crate::{
     app_dirs::AppDirs,
@@ -36,9 +36,9 @@ pub(crate) fn print_completion(bin_name: &str, shell: &str) -> Result<()> {
         "zsh" => generate_completion(bin_name, Shell::Zsh),
         "nushell" => generate_completion(bin_name, clap_complete_nushell::Nushell),
         _ => {
-            bail!(eyre!(
+            bail!(
                 "unknown shell `{shell}`, expected one of `bash`, `elvish`, `fish`, `powershell`, `zsh`, `nushell`"
-            ));
+            );
         }
     }
     Ok(())

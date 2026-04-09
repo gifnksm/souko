@@ -38,7 +38,7 @@ impl FromStr for Scheme {
         static SCHEME_RE: Lazy<Regex> =
             Lazy::new(|| Regex::new(r"^[a-zA-Z][a-zA-Z0-9+.-]+$").unwrap());
         if !SCHEME_RE.is_match(s) {
-            bail!(ParseError::InvalidScheme {
+            return Err(ParseError::InvalidScheme {
                 scheme: s.to_string(),
             });
         }
