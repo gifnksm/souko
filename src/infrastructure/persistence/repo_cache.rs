@@ -1,6 +1,7 @@
 use std::{
     collections::{HashMap, hash_map::Entry},
     path::{Path, PathBuf},
+    sync::{Arc, Mutex},
 };
 
 use chrono::{DateTime, Duration, Utc};
@@ -13,116 +14,112 @@ use crate::{
             repo::{CanonicalRepo, Repo},
             root::{CanonicalRoot, Root},
         },
-        port::repo_cache::RepoCache,
+        port::repo_cache::{RepoCache, RepoCacheEntry},
     },
     util::file,
 };
 
-#[derive(Debug, Deserialize, Serialize)]
-pub(in crate::infrastructure) struct JsonRepoCache {
-    now: Option<DateTime<Utc>>,
-    cache: Cache,
-}
+#[derive(Debug)]
+pub(in crate::infrastructure) struct JsonRepoCache(Mutex<JsonRepoCacheInner>);
 
 impl JsonRepoCache {
     pub(in crate::infrastructure) fn new() -> Self {
-        Self {
+        Self(Mutex::new(JsonRepoCacheInner {
             now: None,
-            cache: Cache::default(),
-        }
+            expire_duration: None,
+            cache: JsonCache::default(),
+        }))
     }
+}
+
+#[derive(Debug)]
+struct JsonRepoCacheInner {
+    now: Option<DateTime<Utc>>,
+    expire_duration: Option<Duration>,
+    cache: JsonCache,
 }
 
 impl RepoCache for JsonRepoCache {
     fn load(
-        &mut self,
+        &self,
         path: &dyn PathLike,
         now: DateTime<Utc>,
         expire_duration: Duration,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
-        self.cache = file::load_json("repository cache", &path.as_real_path())?.unwrap_or_default();
-        self.cache.remove_invalid_repos(&now, expire_duration);
-        self.now = Some(now);
+        let mut this = self.0.lock().unwrap();
+        this.now = Some(now);
+        this.expire_duration = Some(expire_duration);
+        this.cache = file::load_json("repository cache", &path.as_real_path())?.unwrap_or_default();
+        this.cache.remove_invalid_repos(&now, expire_duration);
         Ok(())
     }
 
-    fn clear(&mut self, now: DateTime<Utc>) {
-        self.now = Some(now);
-        self.cache = Cache::default();
+    fn clear(&self) {
+        let mut this = self.0.lock().unwrap();
+        this.cache = JsonCache::default();
     }
 
-    fn store(
-        &mut self,
+    fn persist(
+        &self,
         path: &dyn PathLike,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
-        file::store_json("repository cache", &path.as_real_path(), &self.cache)?;
+        let mut this = self.0.lock().unwrap();
+        if let (Some(now), Some(expire_duration)) = (this.now, this.expire_duration) {
+            this.cache.remove_invalid_repos(&now, expire_duration);
+            file::store_json("repository cache", &path.as_real_path(), &this.cache)?;
+        }
         Ok(())
     }
 
-    fn get(&mut self, root: &CanonicalRoot, relative_path: &Path) -> Option<CanonicalRepo> {
-        let root_cache = self.cache.get_root_cache(root)?;
-        let repo_cache = root_cache.get_repo_cache(relative_path)?;
-        Some(repo_cache.to_canonical_repo(root.as_root(), relative_path.to_owned()))
-    }
-
-    fn insert(&mut self, root: &CanonicalRoot, repo: &CanonicalRepo) {
-        let root_cache = self.cache.insert_root_cache(root);
-        let now = self
-            .now
-            .expect("load or clear must be called before insert");
-        root_cache.insert_canonical_repo(repo, now);
+    fn entry(&self, root: &CanonicalRoot, relative_path: &Path) -> Box<dyn RepoCacheEntry> {
+        let mut this = self.0.lock().unwrap();
+        let root_cache = this.cache.entry(root);
+        let entry = root_cache.entry(relative_path.to_owned());
+        Box::new(RepoCacheEntryHandler {
+            now: this.now.unwrap_or_else(Utc::now),
+            root: root.as_root().clone(),
+            relative_path: relative_path.to_owned(),
+            entry,
+        })
     }
 }
 
 #[derive(Debug, Deserialize, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
-struct Cache {
-    roots: HashMap<String, RootCacheEntry>,
+struct JsonCache {
+    roots: HashMap<String, JsonRootEntry>,
 }
 
-impl Cache {
+impl JsonCache {
     fn remove_invalid_repos(&mut self, now: &DateTime<Utc>, expire_duration: Duration) {
         for root_cache in self.roots.values_mut() {
             root_cache.remove_invalid_repos(now, expire_duration);
         }
     }
 
-    fn get_root_cache(&mut self, root: &CanonicalRoot) -> Option<&mut RootCacheEntry> {
-        let Entry::Occupied(entry) = self.roots.entry(root.name().to_owned()) else {
-            return None;
-        };
-
-        if !entry.get().is_valid(root) {
-            entry.remove();
-            return None;
-        }
-
-        Some(entry.into_mut())
-    }
-
-    fn insert_root_cache(&mut self, root: &CanonicalRoot) -> &mut RootCacheEntry {
+    fn entry(&mut self, root: &CanonicalRoot) -> &mut JsonRootEntry {
         match self.roots.entry(root.name().to_owned()) {
             Entry::Occupied(mut entry) => {
                 if !entry.get().is_valid(root) {
-                    *entry.get_mut() = RootCacheEntry::new(root);
+                    *entry.get_mut() = JsonRootEntry::new(root);
                 }
                 entry.into_mut()
             }
-            Entry::Vacant(entry) => entry.insert(RootCacheEntry::new(root)),
+            Entry::Vacant(entry) => entry.insert(JsonRootEntry::new(root)),
         }
     }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct RootCacheEntry {
+struct JsonRootEntry {
     real_path: PathBuf,
     display_path: PathBuf,
     canonical_path: PathBuf,
-    repos: HashMap<PathBuf, RepoCacheEntry>,
+    repos: HashMap<PathBuf, Arc<Mutex<Option<JsonRepoEntry>>>>,
 }
 
-impl RootCacheEntry {
+impl JsonRootEntry {
     fn new(root: &CanonicalRoot) -> Self {
         Self {
             real_path: root.path().as_real_path().to_owned(),
@@ -137,34 +134,33 @@ impl RootCacheEntry {
     }
 
     fn remove_invalid_repos(&mut self, now: &DateTime<Utc>, expire_duration: Duration) {
-        self.repos
-            .retain(|_, entry| entry.is_valid(now, expire_duration));
+        self.repos.retain(|_, entry| {
+            entry
+                .lock()
+                .unwrap()
+                .as_ref()
+                .is_some_and(|entry| entry.is_valid(now, expire_duration))
+        });
     }
 
-    fn get_repo_cache(&mut self, relative_path: &Path) -> Option<&RepoCacheEntry> {
-        self.repos.get(relative_path)
-    }
-
-    fn insert_canonical_repo(&mut self, repo: &CanonicalRepo, now: DateTime<Utc>) {
-        let relative_path = repo.relative_path().as_real_path().to_owned();
-        let entry = RepoCacheEntry {
-            timestamp: now,
-            canonical_path: repo.canonical_path().to_owned(),
-            bare: repo.bare(),
-        };
-        self.repos.insert(relative_path, entry);
+    fn entry(&mut self, relative_path: PathBuf) -> Arc<Mutex<Option<JsonRepoEntry>>> {
+        Arc::clone(
+            self.repos
+                .entry(relative_path)
+                .or_insert_with(|| Arc::new(Mutex::new(None))),
+        )
     }
 }
 
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-struct RepoCacheEntry {
+struct JsonRepoEntry {
     timestamp: DateTime<Utc>,
     canonical_path: PathBuf,
     bare: bool,
 }
 
-impl RepoCacheEntry {
+impl JsonRepoEntry {
     fn is_valid(&self, now: &DateTime<Utc>, expire_duration: Duration) -> bool {
         *now - self.timestamp <= expire_duration
     }
@@ -176,5 +172,31 @@ impl RepoCacheEntry {
     fn to_canonical_repo(&self, root: &Root, relative_path: PathBuf) -> CanonicalRepo {
         let repo = self.to_repo(root, relative_path);
         CanonicalRepo::new(repo, self.canonical_path.clone())
+    }
+}
+
+#[derive(Debug)]
+struct RepoCacheEntryHandler {
+    now: DateTime<Utc>,
+    root: Root,
+    relative_path: PathBuf,
+    entry: Arc<Mutex<Option<JsonRepoEntry>>>,
+}
+
+impl RepoCacheEntry for RepoCacheEntryHandler {
+    fn get(&self) -> Option<CanonicalRepo> {
+        let entry = self.entry.lock().unwrap();
+        entry
+            .as_ref()
+            .map(|repo| repo.to_canonical_repo(&self.root, self.relative_path.clone()))
+    }
+
+    fn publish(&self, repo: CanonicalRepo) {
+        let mut entry = self.entry.lock().unwrap();
+        *entry = Some(JsonRepoEntry {
+            timestamp: self.now,
+            canonical_path: repo.canonical_path().to_owned(),
+            bare: repo.bare(),
+        });
     }
 }

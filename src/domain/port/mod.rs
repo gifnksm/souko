@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use crate::domain::port::repo_probe::RepoProbe;
 
@@ -21,5 +21,5 @@ pub(crate) struct Ports {
     pub(crate) dir_editor: Arc<dyn DirEditor>,
     pub(crate) repo_clone: Arc<dyn RepoClone>,
     pub(crate) repo_probe: Arc<dyn RepoProbe>,
-    pub(crate) repo_cache: Arc<Mutex<dyn RepoCache>>,
+    pub(crate) repo_cache: Arc<dyn RepoCache>,
 }

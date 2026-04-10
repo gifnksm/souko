@@ -5,30 +5,31 @@ use chrono::{DateTime, Duration, Utc};
 use crate::domain::model::{path_like::PathLike, repo::CanonicalRepo, root::CanonicalRoot};
 
 pub(crate) trait RepoCache: Debug {
-    /// Loads the cache at path.
+    /// Loads persisted entries into the in-memory cache.
     fn load(
-        &mut self,
+        &self,
         path: &dyn PathLike,
         now: DateTime<Utc>,
         expire_duration: Duration,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>;
 
-    /// Clears the cache.
-    fn clear(&mut self, now: DateTime<Utc>);
+    /// Clears all cached entries.
+    fn clear(&self);
 
-    /// Stores the cache.
-    fn store(
-        &mut self,
+    /// Persists initialized entries.
+    fn persist(
+        &self,
         path: &dyn PathLike,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>;
 
-    /// Gets the cached repository.
-    ///
-    /// Returns `None` if the repository is not cached.
-    fn get(&mut self, root: &CanonicalRoot, relative_path: &Path) -> Option<CanonicalRepo>;
+    /// Returns a handle to the cache entry for the given root/path pair.
+    fn entry(&self, root: &CanonicalRoot, relative_path: &Path) -> Box<dyn RepoCacheEntry>;
+}
 
-    /// Inserts the repository in the cache.
-    ///
-    /// Before calling `insert`, `load` or `clear` must be called.
-    fn insert(&mut self, root: &CanonicalRoot, repo: &CanonicalRepo);
+pub(crate) trait RepoCacheEntry: Debug {
+    /// Returns the cached repository if present.
+    fn get(&self) -> Option<CanonicalRepo>;
+
+    /// Publishes a repository value for this entry.
+    fn publish(&self, repo: CanonicalRepo);
 }

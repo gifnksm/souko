@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use crate::{
     domain::port::Ports,
@@ -20,6 +20,6 @@ pub(crate) fn ports() -> Ports {
         dir_editor: Arc::new(FsDirEditor::new()),
         repo_clone: Arc::new(Git2RepoClone::new()),
         repo_probe: Arc::new(Git2RepoProbe::new()),
-        repo_cache: Arc::new(Mutex::new(JsonRepoCache::new())),
+        repo_cache: Arc::new(JsonRepoCache::new()),
     }
 }
