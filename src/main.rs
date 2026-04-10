@@ -5,16 +5,16 @@ use color_eyre::eyre::{self, WrapErr as _, eyre};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
-use crate::{app_dirs::AppDirs, application::usecase::Usecases, presentation::args::Args};
+use crate::{app_dirs::AppDirs, application::usecase::Usecases, cli::args::Args};
 
 #[macro_use]
 mod macros;
 
 mod app_dirs;
 mod application;
+mod cli;
 mod domain;
 mod infrastructure;
-mod presentation;
 mod util;
 
 const BIN_NAME: &str = env!("CARGO_BIN_NAME");
@@ -24,11 +24,11 @@ fn main() -> eyre::Result<()> {
 
     let env_prefix = BIN_NAME.to_uppercase().replace("-", "_");
     if let Ok(shell) = env::var(format!("{env_prefix}_COMPLETE")) {
-        presentation::print_completion(BIN_NAME, &shell)?;
+        cli::print_completion(BIN_NAME, &shell)?;
         return Ok(());
     }
     if let Ok(output_dir) = env::var(format!("{env_prefix}_GENERATE_MAN_TO")) {
-        presentation::generate_man(&output_dir)?;
+        cli::generate_man(&output_dir)?;
         return Ok(());
     }
 
@@ -56,5 +56,5 @@ fn main() -> eyre::Result<()> {
     let usecases = Usecases::new(&ports);
     let app_dirs =
         AppDirs::new(BIN_NAME).wrap_err("failed to initialize application directories")?;
-    presentation::dispatch(&args, usecases, app_dirs)
+    cli::dispatch(&args, usecases, app_dirs)
 }

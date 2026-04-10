@@ -1,12 +1,12 @@
 use std::{collections::HashMap, str::FromStr as _};
 
 use crate::{
+    cli::config::QueryConfig,
     domain::model::{query::ParseOption, scheme::Scheme, template::Template},
-    presentation::config::QueryConfig,
 };
 
 #[derive(Debug)]
-pub(in crate::presentation) struct QueryContext {
+pub(in crate::cli) struct QueryContext {
     parse_option: ParseOption,
 }
 
@@ -36,7 +36,7 @@ fn predefined_custom_schemes() -> HashMap<Scheme, Template> {
 }
 
 impl QueryContext {
-    pub(in crate::presentation) fn from_config(config: &QueryConfig) -> Self {
+    pub(in crate::cli) fn from_config(config: &QueryConfig) -> Self {
         let mut parse_option = ParseOption {
             default_scheme: Some(config.default_scheme.clone()),
             scheme_alias: predefined_aliases(),
@@ -60,14 +60,14 @@ impl QueryContext {
         Self { parse_option }
     }
 
-    pub(in crate::presentation) fn parse_option(&self) -> &ParseOption {
+    pub(in crate::cli) fn parse_option(&self) -> &ParseOption {
         &self.parse_option
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::presentation::config::Config;
+    use crate::cli::config::Config;
 
     use super::*;
 

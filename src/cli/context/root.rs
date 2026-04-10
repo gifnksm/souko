@@ -4,23 +4,23 @@ use color_eyre::eyre::eyre;
 
 use crate::{
     app_dirs::AppDirs,
-    domain::model::{pretty_path::PrettyPath, root::Root},
-    presentation::{
+    cli::{
         config::{DEFAULT_ROOT_NAME, RootConfig},
-        model::{
+        input::{
             app_param::{AppParam, AppParamSource},
             unresolved_path::UnresolvedPath,
         },
     },
+    domain::model::{pretty_path::PrettyPath, root::Root},
 };
 
 #[derive(Debug)]
-pub(in crate::presentation) struct RootContextMap {
+pub(in crate::cli) struct RootContextMap {
     map: BTreeMap<String, AppParam<RootContext>>,
 }
 
 impl RootContextMap {
-    pub(in crate::presentation) fn new(
+    pub(in crate::cli) fn new(
         config_path: &PrettyPath,
         config: &[RootConfig],
         app_dirs: &AppDirs,
@@ -49,18 +49,15 @@ impl RootContextMap {
         Self { map }
     }
 
-    pub(in crate::presentation) fn default_root(&self) -> &AppParam<RootContext> {
+    pub(in crate::cli) fn default_root(&self) -> &AppParam<RootContext> {
         self.map.get(DEFAULT_ROOT_NAME).unwrap()
     }
 
-    pub(in crate::presentation) fn root_by_name(
-        &self,
-        name: &str,
-    ) -> Option<&AppParam<RootContext>> {
+    pub(in crate::cli) fn root_by_name(&self, name: &str) -> Option<&AppParam<RootContext>> {
         self.map.get(name)
     }
 
-    pub(in crate::presentation) fn root_by_name_or_err(
+    pub(in crate::cli) fn root_by_name_or_err(
         &self,
         name: &str,
     ) -> Result<&AppParam<RootContext>, color_eyre::Report> {
@@ -68,9 +65,7 @@ impl RootContextMap {
             .ok_or_else(|| eyre!("root `{name}` not found in config file"))
     }
 
-    pub(in crate::presentation) fn all_roots(
-        &self,
-    ) -> impl Iterator<Item = &AppParam<RootContext>> {
+    pub(in crate::cli) fn all_roots(&self) -> impl Iterator<Item = &AppParam<RootContext>> {
         self.map.values()
     }
 }
@@ -81,7 +76,7 @@ fn default_path(app_dirs: &AppDirs) -> PrettyPath {
 }
 
 #[derive(Debug, Clone)]
-pub(in crate::presentation) struct RootContext {
+pub(in crate::cli) struct RootContext {
     root: Root,
     visit_hidden_dirs: bool,
     visit_repo_subdirs: bool,
@@ -103,28 +98,28 @@ impl RootContext {
         }
     }
 
-    pub(in crate::presentation) fn root(&self) -> &Root {
+    pub(in crate::cli) fn root(&self) -> &Root {
         &self.root
     }
 
     #[cfg(test)]
-    pub(in crate::presentation) fn name(&self) -> &str {
+    pub(in crate::cli) fn name(&self) -> &str {
         self.root.name()
     }
 
-    pub(in crate::presentation) fn path(&self) -> &PrettyPath {
+    pub(in crate::cli) fn path(&self) -> &PrettyPath {
         self.root.path()
     }
 
-    pub(in crate::presentation) fn visit_hidden_dirs(&self) -> bool {
+    pub(in crate::cli) fn visit_hidden_dirs(&self) -> bool {
         self.visit_hidden_dirs
     }
 
-    pub(in crate::presentation) fn include_bare_repo(&self) -> bool {
+    pub(in crate::cli) fn include_bare_repo(&self) -> bool {
         self.include_bare_repo
     }
 
-    pub(in crate::presentation) fn visit_repo_subdirs(&self) -> bool {
+    pub(in crate::cli) fn visit_repo_subdirs(&self) -> bool {
         self.visit_repo_subdirs
     }
 }
@@ -135,7 +130,7 @@ mod tests {
 
     use tempfile::TempDir;
 
-    use crate::{domain::model::path_like::PathLike as _, presentation::config::Config};
+    use crate::{cli::config::Config, domain::model::path_like::PathLike as _};
 
     use super::*;
 

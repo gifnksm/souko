@@ -3,18 +3,15 @@ use color_eyre::eyre::Result;
 
 use crate::{
     application::usecase::list::{ListContext as ListUsecaseContext, ListOptions, ListRootInput},
-    domain::model::pretty_path::PrettyPath,
-    presentation::{
+    cli::{
         context::{global::GlobalContext, list::ListContext},
         message, render,
     },
+    domain::model::pretty_path::PrettyPath,
     util::error::FormatErrorChain as _,
 };
 
-pub(in crate::presentation) fn dispatch(
-    global_ctx: &GlobalContext,
-    list_ctx: &ListContext,
-) -> Result<()> {
+pub(in crate::cli) fn dispatch(global_ctx: &GlobalContext, list_ctx: &ListContext) -> Result<()> {
     let format = list_ctx.format();
     let input_roots = list_ctx.roots().iter().map(|root| ListRootInput {
         // Only the synthesized fallback `default` root with `ImplicitDefault`

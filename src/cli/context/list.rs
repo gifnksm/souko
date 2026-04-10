@@ -1,23 +1,20 @@
 use color_eyre::eyre::Result;
 
-use crate::presentation::{
+use crate::cli::{
     args::list::{Format, ListArgs},
     context::{global::GlobalContext, root::RootContext},
-    model::app_param::AppParam,
+    input::app_param::AppParam,
     render::list::RepoListTemplateContext,
 };
 
 #[derive(Debug)]
-pub(in crate::presentation) struct ListContext {
+pub(in crate::cli) struct ListContext {
     roots: Vec<AppParam<RootContext>>,
     format: Format,
 }
 
 impl ListContext {
-    pub(in crate::presentation) fn new(
-        global_ctx: &GlobalContext,
-        args: &ListArgs,
-    ) -> Result<Self> {
+    pub(in crate::cli) fn new(global_ctx: &GlobalContext, args: &ListArgs) -> Result<Self> {
         let root_map = global_ctx.root_map();
         let roots = match args.root_name() {
             Some(names) => names
@@ -30,11 +27,11 @@ impl ListContext {
         Ok(Self { roots, format })
     }
 
-    pub(in crate::presentation) fn roots(&self) -> &[AppParam<RootContext>] {
+    pub(in crate::cli) fn roots(&self) -> &[AppParam<RootContext>] {
         &self.roots
     }
 
-    pub(in crate::presentation) fn format(&self) -> &Format {
+    pub(in crate::cli) fn format(&self) -> &Format {
         &self.format
     }
 }

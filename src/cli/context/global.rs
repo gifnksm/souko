@@ -3,18 +3,18 @@ use color_eyre::eyre::{Result, bail};
 use crate::{
     app_dirs::AppDirs,
     application::usecase::Usecases,
-    domain::model::{path_like::PathLike as _, pretty_path::PrettyPath},
-    presentation::{
+    cli::{
         args::Args,
         config::Config,
         context::{query::QueryContext, root::RootContextMap},
-        model::app_param::AppParam,
+        input::app_param::AppParam,
     },
+    domain::model::{path_like::PathLike as _, pretty_path::PrettyPath},
     util::file,
 };
 
 #[derive(Debug)]
-pub(in crate::presentation) struct GlobalContext {
+pub(in crate::cli) struct GlobalContext {
     usecases: Usecases,
     root_map: RootContextMap,
     query: QueryContext,
@@ -22,11 +22,7 @@ pub(in crate::presentation) struct GlobalContext {
 }
 
 impl GlobalContext {
-    pub(in crate::presentation) fn new(
-        args: &Args,
-        usecases: Usecases,
-        app_dirs: AppDirs,
-    ) -> Result<Self> {
+    pub(in crate::cli) fn new(args: &Args, usecases: Usecases, app_dirs: AppDirs) -> Result<Self> {
         let config_path = args.global_args().config_path(&app_dirs);
         let config_path = config_path
             .as_ref()
@@ -46,19 +42,19 @@ impl GlobalContext {
         })
     }
 
-    pub(in crate::presentation) fn usecases(&self) -> &Usecases {
+    pub(in crate::cli) fn usecases(&self) -> &Usecases {
         &self.usecases
     }
 
-    pub(in crate::presentation) fn repo_cache_path(&self) -> &PrettyPath {
+    pub(in crate::cli) fn repo_cache_path(&self) -> &PrettyPath {
         &self.repo_cache_path
     }
 
-    pub(in crate::presentation) fn root_map(&self) -> &RootContextMap {
+    pub(in crate::cli) fn root_map(&self) -> &RootContextMap {
         &self.root_map
     }
 
-    pub(in crate::presentation) fn query(&self) -> &QueryContext {
+    pub(in crate::cli) fn query(&self) -> &QueryContext {
         &self.query
     }
 }

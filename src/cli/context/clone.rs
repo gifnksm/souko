@@ -1,25 +1,22 @@
 use color_eyre::eyre::{Result, WrapErr as _};
 
 use crate::{
-    domain::model::query::Query,
-    presentation::{
+    cli::{
         args::clone::CloneArgs,
         context::{global::GlobalContext, root::RootContext},
-        model::app_param::AppParam,
+        input::app_param::AppParam,
     },
+    domain::model::query::Query,
 };
 
 #[derive(Debug)]
-pub(in crate::presentation) struct CloneContext {
+pub(in crate::cli) struct CloneContext {
     root: AppParam<RootContext>,
     query: Query,
 }
 
 impl CloneContext {
-    pub(in crate::presentation) fn new(
-        global_ctx: &GlobalContext,
-        args: &CloneArgs,
-    ) -> Result<Self> {
+    pub(in crate::cli) fn new(global_ctx: &GlobalContext, args: &CloneArgs) -> Result<Self> {
         let root = match args.root_name() {
             Some(name) => global_ctx.root_map().root_by_name_or_err(name)?,
             None => global_ctx.root_map().default_root(),
@@ -34,11 +31,11 @@ impl CloneContext {
         Ok(Self { root, query })
     }
 
-    pub(in crate::presentation) fn root_context(&self) -> &AppParam<RootContext> {
+    pub(in crate::cli) fn root_context(&self) -> &AppParam<RootContext> {
         &self.root
     }
 
-    pub(in crate::presentation) fn query(&self) -> &Query {
+    pub(in crate::cli) fn query(&self) -> &Query {
         &self.query
     }
 }
