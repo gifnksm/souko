@@ -1,11 +1,11 @@
 use std::{fmt::Debug, path::PathBuf};
 
-use crate::domain::model::{path_like::PathLike, pretty_path::PrettyPath};
+use crate::domain::model::{path_buf_pair::PathBufPair, path_like::PathLike};
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum PathCanonicalizerError {
     #[error("path not found: {}", path.display())]
-    PathNotFound { path: PrettyPath },
+    PathNotFound { path: PathBufPair },
     #[error(transparent)]
     Backend(#[from] Box<dyn std::error::Error>),
 }

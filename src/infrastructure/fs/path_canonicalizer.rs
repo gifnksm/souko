@@ -1,7 +1,7 @@
 use std::{io, path::PathBuf};
 
 use crate::domain::{
-    model::{path_like::PathLike, pretty_path::PrettyPath},
+    model::{path_buf_pair::PathBufPair, path_like::PathLike},
     port::path_canonicalizer::{PathCanonicalizer, PathCanonicalizerError},
 };
 
@@ -30,7 +30,7 @@ impl PathCanonicalizer for FsPathCanonicalizer {
             Ok(path) => Ok(path),
             Err(err) if err.kind() == io::ErrorKind::NotFound => {
                 Err(PathCanonicalizerError::PathNotFound {
-                    path: PrettyPath::new(path),
+                    path: PathBufPair::new(path),
                 })
             }
             Err(err) => Err(PathCanonicalizerError::Backend(

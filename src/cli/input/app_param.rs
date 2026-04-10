@@ -1,4 +1,4 @@
-use crate::domain::model::pretty_path::PrettyPath;
+use crate::domain::model::path_buf_pair::PathBufPair;
 
 /// Source of an application input parameter.
 #[derive(Debug, Clone, derive_more::IsVariant)]
@@ -9,7 +9,7 @@ pub(in crate::cli) enum AppParamSource {
     /// or by the environment variable bound to that option via clap `env`.
     CommandLineArgument,
     /// Value loaded from a configuration file.
-    ConfigurationFile { path: PrettyPath },
+    ConfigurationFile { path: PathBufPair },
     /// Value synthesized by the application when the user did not provide one.
     ImplicitDefault,
 }

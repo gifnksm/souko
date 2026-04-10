@@ -1,5 +1,5 @@
 use crate::domain::{
-    model::{path_like::PathLike, pretty_path::PrettyPath},
+    model::{path_buf_pair::PathBufPair, path_like::PathLike},
     port::repo_probe::{RepoProbe, RepoProbeError, RepoProbeResult},
 };
 
@@ -16,7 +16,7 @@ impl Git2RepoProbe {
 enum Error {
     #[error("failed to open repository: {}", path.display())]
     Open {
-        path: PrettyPath,
+        path: PathBufPair,
         #[source]
         source: git2::Error,
     },
@@ -25,7 +25,7 @@ enum Error {
 impl RepoProbe for Git2RepoProbe {
     fn probe(&self, path: &dyn PathLike) -> Result<RepoProbeResult, RepoProbeError> {
         let repo = git2::Repository::open(path.as_real_path()).map_err(|source| {
-            let path = PrettyPath::new(path);
+            let path = PathBufPair::new(path);
             if source.code() == git2::ErrorCode::NotFound {
                 RepoProbeError::NotARepo { path }
             } else {

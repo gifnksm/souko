@@ -6,8 +6,8 @@ use color_eyre::eyre::eyre;
 use crate::{
     domain::{
         model::{
+            path_buf_pair::PathBufPair,
             path_like::PathLike,
-            pretty_path::PrettyPath,
             repo::CanonicalRepo,
             root::{CanonicalRoot, Root},
         },
@@ -37,7 +37,7 @@ impl Default for ListOptions {
 #[derive(Debug, Clone)]
 pub(crate) struct ListContext {
     pub(crate) now: DateTime<Utc>,
-    pub(crate) repo_cache_path: PrettyPath,
+    pub(crate) repo_cache_path: PathBufPair,
 }
 
 #[derive(Debug)]
@@ -52,7 +52,7 @@ pub(crate) struct ListRootInput {
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum ListUsecaseError {
     #[error("root `{name}` does not exist: {}", path.display())]
-    RootNotExist { name: String, path: PrettyPath },
+    RootNotExist { name: String, path: PathBufPair },
     #[error("failed to get canonical path of root `{name}`")]
     CanonicalizeRoot {
         name: String,

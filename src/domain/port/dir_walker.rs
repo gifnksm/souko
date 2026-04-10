@@ -1,6 +1,6 @@
 use std::{fmt::Debug, path::Path};
 
-use crate::domain::model::{pretty_path::PrettyPath, root::CanonicalRoot};
+use crate::domain::model::{path_buf_pair::PathBufPair, root::CanonicalRoot};
 
 pub(crate) trait DirWalker: Debug {
     fn entries(
@@ -21,7 +21,7 @@ pub(crate) type FilterPredicate = Box<dyn FnMut(&dyn DirEntry) -> bool>;
 pub(crate) trait DirEntry: Debug {
     fn root(&self) -> &CanonicalRoot;
     fn relative_path(&self) -> &Path;
-    fn path(&self) -> &PrettyPath;
+    fn path(&self) -> &PathBufPair;
     fn is_hidden(&self) -> bool;
 }
 
@@ -34,7 +34,7 @@ impl DirEntry for &dyn DirEntry {
         DirEntry::relative_path(*self)
     }
 
-    fn path(&self) -> &PrettyPath {
+    fn path(&self) -> &PathBufPair {
         DirEntry::path(*self)
     }
 
@@ -52,7 +52,7 @@ impl DirEntry for Box<dyn DirEntry> {
         self.as_ref().relative_path()
     }
 
-    fn path(&self) -> &PrettyPath {
+    fn path(&self) -> &PathBufPair {
         self.as_ref().path()
     }
 

@@ -7,7 +7,7 @@ use crate::{
         context::{global::GlobalContext, list::ListContext},
         message, render,
     },
-    domain::model::pretty_path::PrettyPath,
+    domain::model::path_buf_pair::PathBufPair,
     util::error::FormatErrorChain as _,
 };
 
@@ -27,7 +27,7 @@ pub(in crate::cli) fn dispatch(global_ctx: &GlobalContext, list_ctx: &ListContex
 
     let context = ListUsecaseContext {
         now: Utc::now(),
-        repo_cache_path: PrettyPath::new(global_ctx.repo_cache_path()),
+        repo_cache_path: PathBufPair::new(global_ctx.repo_cache_path()),
     };
     let options = ListOptions::default();
 
