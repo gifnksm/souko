@@ -8,8 +8,8 @@ use serde::Deserialize;
 
 use crate::{
     app_dirs::AppDirs,
+    cli::input::app_param::AppParamSource,
     domain::model::{path_like::PathLike, pretty_path::PrettyPath},
-    presentation::model::app_param::AppParamSource,
 };
 
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -48,11 +48,11 @@ fn normalize_trailing_separator(path: &Path) -> PathBuf {
 }
 
 impl UnresolvedPath {
-    pub(in crate::presentation) fn new(path: PathBuf) -> Self {
+    pub(in crate::cli) fn new(path: PathBuf) -> Self {
         Self(path)
     }
 
-    pub(in crate::presentation) fn normalize(
+    pub(in crate::cli) fn normalize(
         &self,
         source: &AppParamSource,
         app_dirs: &AppDirs,

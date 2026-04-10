@@ -2,36 +2,36 @@ use std::{collections::HashMap, str::FromStr as _};
 
 use serde::Deserialize;
 
-use super::model::unresolved_path::UnresolvedPath;
+use super::input::unresolved_path::UnresolvedPath;
 use crate::domain::model::{scheme::Scheme, template::Template};
 
-pub(in crate::presentation) const DEFAULT_ROOT_NAME: &str = "default";
+pub(in crate::cli) const DEFAULT_ROOT_NAME: &str = "default";
 
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(in crate::presentation) struct Config {
+pub(in crate::cli) struct Config {
     #[serde(rename = "root", default)]
-    pub(in crate::presentation) roots: Vec<RootConfig>,
+    pub(in crate::cli) roots: Vec<RootConfig>,
     #[serde(default)]
-    pub(in crate::presentation) query: QueryConfig,
+    pub(in crate::cli) query: QueryConfig,
 }
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(in crate::presentation) struct RootConfig {
-    pub(in crate::presentation) name: String,
+pub(in crate::cli) struct RootConfig {
+    pub(in crate::cli) name: String,
     #[serde(default)]
-    pub(in crate::presentation) path: Option<UnresolvedPath>,
+    pub(in crate::cli) path: Option<UnresolvedPath>,
     #[serde(default)]
-    pub(in crate::presentation) visit_hidden_dirs: bool,
+    pub(in crate::cli) visit_hidden_dirs: bool,
     #[serde(default)]
-    pub(in crate::presentation) visit_repo_subdirs: bool,
+    pub(in crate::cli) visit_repo_subdirs: bool,
     #[serde(default)]
-    pub(in crate::presentation) include_bare_repo: bool,
+    pub(in crate::cli) include_bare_repo: bool,
 }
 
 impl RootConfig {
-    pub(in crate::presentation) fn default_root() -> Self {
+    pub(in crate::cli) fn default_root() -> Self {
         Self {
             name: DEFAULT_ROOT_NAME.to_owned(),
             path: None,
@@ -48,13 +48,13 @@ fn default_scheme() -> Scheme {
 
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
-pub(in crate::presentation) struct QueryConfig {
+pub(in crate::cli) struct QueryConfig {
     #[serde(default = "default_scheme")]
-    pub(in crate::presentation) default_scheme: Scheme,
+    pub(in crate::cli) default_scheme: Scheme,
     #[serde(default)]
-    pub(in crate::presentation) scheme_alias: HashMap<Scheme, Scheme>,
+    pub(in crate::cli) scheme_alias: HashMap<Scheme, Scheme>,
     #[serde(default)]
-    pub(in crate::presentation) custom_scheme: HashMap<Scheme, Template>,
+    pub(in crate::cli) custom_scheme: HashMap<Scheme, Template>,
 }
 
 impl Default for QueryConfig {

@@ -1,6 +1,6 @@
 use color_eyre::eyre::Result;
 
-use crate::presentation::{SubcommandContext, context::global::GlobalContext};
+use crate::cli::{SubcommandContext, context::global::GlobalContext};
 
 mod clone;
 mod list;

@@ -1,11 +1,11 @@
 use color_eyre::eyre::{Result, WrapErr as _, eyre};
 
 use crate::{
-    domain::model::path_like::PathLike as _,
-    presentation::{
+    cli::{
         context::{clone::CloneContext, global::GlobalContext},
         message,
     },
+    domain::model::path_like::PathLike as _,
 };
 
 pub(super) fn dispatch(global_ctx: &GlobalContext, clone_ctx: &CloneContext) -> Result<()> {

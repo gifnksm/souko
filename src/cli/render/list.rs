@@ -4,16 +4,16 @@ use color_eyre::eyre::Result;
 use serde::Serialize;
 
 use crate::{
+    cli::args::list::Format,
     domain::model::{
         path_like::PathLike as _,
         repo::CanonicalRepo,
         root::CanonicalRoot,
         template::{Template, TemplateContext},
     },
-    presentation::args::list::Format,
 };
 
-pub(in crate::presentation) fn render<W, Roots, Repos>(
+pub(in crate::cli) fn render<W, Roots, Repos>(
     mut out: W,
     format: &Format,
     roots: Roots,
@@ -85,7 +85,7 @@ where
 }
 
 #[derive(Debug, Clone, Default, Serialize)]
-pub(in crate::presentation) struct RepoListTemplateContext {
+pub(in crate::cli) struct RepoListTemplateContext {
     root_name: String,
     // Store paths as already-formatted strings.
     // This avoids serialization failures for non-UTF8 paths when converting
@@ -106,7 +106,7 @@ fn format_displayable_path(path: impl Display) -> String {
 }
 
 impl RepoListTemplateContext {
-    pub(in crate::presentation) fn new(root: &CanonicalRoot, repo: &CanonicalRepo) -> Self {
+    pub(in crate::cli) fn new(root: &CanonicalRoot, repo: &CanonicalRepo) -> Self {
         Self {
             root_name: root.name().to_owned(),
             root_display_path: format_displayable_path(root.path().as_display_path().display()),

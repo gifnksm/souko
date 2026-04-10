@@ -1,17 +1,17 @@
 use tracing::Level;
 
 use self::verbosity::Verbosity;
-use super::model::{app_param::AppParam, unresolved_path::UnresolvedPath};
+use super::input::{app_param::AppParam, unresolved_path::UnresolvedPath};
 use crate::{
     app_dirs::AppDirs,
-    presentation::{
+    cli::{
         args::{clone::CloneArgs, list::ListArgs},
-        model::app_param::AppParamSource,
+        input::app_param::AppParamSource,
     },
 };
 
-pub(in crate::presentation) mod clone;
-pub(in crate::presentation) mod list;
+pub(in crate::cli) mod clone;
+pub(in crate::cli) mod list;
 mod verbosity;
 
 #[derive(Debug, Clone, Default, clap::Parser)]
@@ -30,7 +30,7 @@ impl Args {
         &self.global_args
     }
 
-    pub(in crate::presentation) fn subcommand(&self) -> Option<&Subcommand> {
+    pub(in crate::cli) fn subcommand(&self) -> Option<&Subcommand> {
         self.subcommand.as_ref()
     }
 }
@@ -54,10 +54,7 @@ impl GlobalArgs {
         self.verbosity.verbosity()
     }
 
-    pub(in crate::presentation) fn config_path(
-        &self,
-        app_dirs: &AppDirs,
-    ) -> AppParam<UnresolvedPath> {
+    pub(in crate::cli) fn config_path(&self, app_dirs: &AppDirs) -> AppParam<UnresolvedPath> {
         let (source, value) = self
             .config_path
             .as_ref()
@@ -71,10 +68,7 @@ impl GlobalArgs {
         AppParam::new(source, value)
     }
 
-    pub(in crate::presentation) fn repo_cache_path(
-        &self,
-        app_dirs: &AppDirs,
-    ) -> AppParam<UnresolvedPath> {
+    pub(in crate::cli) fn repo_cache_path(&self, app_dirs: &AppDirs) -> AppParam<UnresolvedPath> {
         let (source, value) = self
             .repo_cache_path
             .as_ref()
@@ -90,7 +84,7 @@ impl GlobalArgs {
 }
 
 #[derive(Debug, Clone, clap::Subcommand)]
-pub(in crate::presentation) enum Subcommand {
+pub(in crate::cli) enum Subcommand {
     /// Clone remote repositories and put them into souko
     Clone(CloneArgs),
     /// List repositories in souko

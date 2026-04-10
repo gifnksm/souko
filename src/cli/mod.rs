@@ -7,7 +7,7 @@ use color_eyre::eyre::{Result, WrapErr as _, bail};
 use crate::{
     app_dirs::AppDirs,
     application::usecase::Usecases,
-    presentation::context::{SubcommandContext, global::GlobalContext},
+    cli::context::{SubcommandContext, global::GlobalContext},
 };
 
 use self::args::Args;
@@ -18,7 +18,7 @@ pub(crate) mod args;
 mod command;
 mod config;
 mod context;
-mod model;
+mod input;
 mod render;
 
 pub(crate) fn print_completion(bin_name: &str, shell: &str) -> Result<()> {

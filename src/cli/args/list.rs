@@ -3,7 +3,7 @@ use color_eyre::eyre::Result;
 use crate::domain::model::template::{Template, TemplateContext};
 
 #[derive(Debug, Clone, Default, clap::Args)]
-pub(in crate::presentation) struct ListArgs {
+pub(in crate::cli) struct ListArgs {
     /// List repositories only under the specified root (repeatable)
     #[arg(long = "root")]
     root_name: Option<Vec<String>>,
@@ -14,7 +14,7 @@ pub(in crate::presentation) struct ListArgs {
 
 #[derive(Debug, Clone, Default, clap::Args)]
 #[group(id = "format", multiple = false)]
-pub(in crate::presentation) struct FormatArgs {
+pub(in crate::cli) struct FormatArgs {
     /// Output repositories as JSON
     #[arg(long)]
     json: bool,
@@ -41,7 +41,7 @@ impl FormatArgs {
 }
 
 #[derive(Debug, Clone, Default)]
-pub(in crate::presentation) enum Format {
+pub(in crate::cli) enum Format {
     #[default]
     Default,
     Json,
@@ -49,11 +49,11 @@ pub(in crate::presentation) enum Format {
 }
 
 impl ListArgs {
-    pub(in crate::presentation) fn root_name(&self) -> Option<&[String]> {
+    pub(in crate::cli) fn root_name(&self) -> Option<&[String]> {
         self.root_name.as_deref()
     }
 
-    pub(in crate::presentation) fn format<C>(&self) -> Result<Format>
+    pub(in crate::cli) fn format<C>(&self) -> Result<Format>
     where
         C: TemplateContext,
     {
