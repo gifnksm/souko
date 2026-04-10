@@ -2,61 +2,45 @@ use std::{
     any,
     collections::HashMap,
     fmt::{self, Display, Write},
+    marker::PhantomData,
     str::FromStr,
-    sync::LazyLock,
 };
 
-use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use thiserror::Error;
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Deserialize)]
 #[serde(try_from = "String")]
-pub(crate) struct Template {
+#[serde(bound = "C: TemplateContext")]
+pub(crate) struct Template<C> {
     parts: Vec<Parts>,
+    _context: PhantomData<C>,
 }
 
-#[derive(Debug, Error)]
-pub(crate) enum TemplateValidateError {
-    #[error("unknown template variable: {0:?}")]
-    UnknownTemplateVariable(String),
-}
-
-impl Template {
-    pub(crate) fn validate_and_expand<C>(
-        &self,
-        context: &C,
-    ) -> Result<String, TemplateValidateError>
-    where
-        C: TemplateContext,
-    {
-        self.validate::<C>()?;
-        Ok(self.expand(context))
+impl<C> fmt::Debug for Template<C> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Template")
+            .field("parts", &self.parts)
+            .field("_context", &self._context)
+            .finish()
     }
+}
 
-    pub(crate) fn validate<C>(&self) -> Result<(), TemplateValidateError>
-    where
-        C: TemplateContext,
-    {
-        let valid_variables = C::default().to_hashmap();
-        for part in &self.parts {
-            match part {
-                Parts::Text(_) => {}
-                Parts::Variable(name) => {
-                    if !valid_variables.contains_key(name) {
-                        return Err(TemplateValidateError::UnknownTemplateVariable(name.clone()));
-                    }
-                }
-            }
+impl<C> Clone for Template<C> {
+    fn clone(&self) -> Self {
+        Self {
+            parts: self.parts.clone(),
+            _context: PhantomData,
         }
-        Ok(())
     }
+}
 
-    pub(crate) fn expand<C>(&self, context: &C) -> String
-    where
-        C: TemplateContext,
-    {
+impl<C> Template<C>
+where
+    C: TemplateContext,
+{
+    pub(crate) fn expand(&self, context: &C) -> String {
         let mut result = String::new();
         let variables = context.to_hashmap();
         for part in &self.parts {
@@ -112,19 +96,23 @@ impl Parts {
 }
 
 #[derive(Debug, Error)]
-pub(crate) enum ParseError {
+pub(crate) enum TemplateParseError {
     #[error("unexpected character: {0:?}")]
     UnexpectedChar(char),
     #[error("no closing brace '}}' found")]
     NoClosingBrace,
-    #[error("invalid variable: {0}")]
-    InvalidVariable(String),
+    #[error("unknown template variable: {0}")]
+    UnknownVariable(String),
 }
 
-impl FromStr for Template {
-    type Err = ParseError;
+impl<C> FromStr for Template<C>
+where
+    C: TemplateContext,
+{
+    type Err = TemplateParseError;
 
     fn from_str(mut s: &str) -> Result<Self, Self::Err> {
+        let valid_variables = C::default().to_hashmap();
         let mut parts = vec![];
 
         while let Some(idx) = s.find(['{', '}']) {
@@ -142,22 +130,25 @@ impl FromStr for Template {
                 continue;
             }
             if s.starts_with('}') {
-                return Err(ParseError::UnexpectedChar('}'));
+                return Err(TemplateParseError::UnexpectedChar('}'));
             }
             assert!(s.starts_with('{'));
             if let Some(end) = s.find('}') {
                 let variable = s[1..end].trim();
-                if !is_valid_variable(variable) {
-                    return Err(ParseError::InvalidVariable(variable.to_string()));
+                if !valid_variables.contains_key(variable) {
+                    return Err(TemplateParseError::UnknownVariable(variable.to_string()));
                 }
                 s = &s[end + 1..];
                 parts.push(Parts::variable(variable));
             } else {
-                return Err(ParseError::NoClosingBrace);
+                return Err(TemplateParseError::NoClosingBrace);
             }
         }
         push_str(&mut parts, s);
-        Ok(Self { parts })
+        Ok(Self {
+            parts,
+            _context: PhantomData,
+        })
     }
 }
 
@@ -180,22 +171,22 @@ fn push_str(parts: &mut Vec<Parts>, s: &str) {
     }
 }
 
-fn is_valid_variable(s: &str) -> bool {
-    static VARIABLE_RE: LazyLock<Regex> =
-        LazyLock::new(|| Regex::new(r"^[a-zA-Z_][a-zA-Z0-9_]*$").unwrap());
-    VARIABLE_RE.is_match(s)
-}
-
-impl TryFrom<String> for Template {
-    type Error = ParseError;
+impl<C> TryFrom<String> for Template<C>
+where
+    C: TemplateContext,
+{
+    type Error = TemplateParseError;
 
     fn try_from(s: String) -> Result<Self, Self::Error> {
         Self::from_str(s.as_str())
     }
 }
 
-impl TryFrom<&str> for Template {
-    type Error = ParseError;
+impl<C> TryFrom<&str> for Template<C>
+where
+    C: TemplateContext,
+{
+    type Error = TemplateParseError;
 
     fn try_from(s: &str) -> Result<Self, Self::Error> {
         Self::from_str(s)
@@ -225,20 +216,6 @@ mod tests {
 
     impl TemplateContext for TestTemplateContext {}
 
-    #[test]
-    fn test_is_valid_variable() {
-        assert!(is_valid_variable("foo123"));
-        assert!(is_valid_variable("foo_bar"));
-        assert!(is_valid_variable("foo_bar_baz"));
-        assert!(is_valid_variable("a"));
-        assert!(is_valid_variable("_"));
-        assert!(!is_valid_variable(""));
-        assert!(!is_valid_variable("foo bar"));
-        assert!(!is_valid_variable("foo-bar"));
-        assert!(!is_valid_variable("foo_bar-baz"));
-        assert!(!is_valid_variable("123foo"));
-    }
-
     fn t(s: impl Display) -> Parts {
         Parts::text(s)
     }
@@ -246,25 +223,43 @@ mod tests {
         Parts::variable(s)
     }
 
+    #[derive(Debug, Default, Serialize)]
+    struct Context {
+        var: String,
+        var2: String,
+    }
+
+    impl TemplateContext for Context {}
+
     #[test]
     fn test_from_str_ok() {
-        assert_eq!(Template::from_str("foo").unwrap().parts, vec![t("foo")]);
-        assert_eq!(Template::from_str("").unwrap().parts, vec![]);
-        assert_eq!(Template::from_str("{var}").unwrap().parts, vec![v("var")]);
         assert_eq!(
-            Template::from_str("{ var2 }").unwrap().parts,
+            Template::<Context>::from_str("foo").unwrap().parts,
+            vec![t("foo")]
+        );
+        assert_eq!(Template::<Context>::from_str("").unwrap().parts, vec![]);
+        assert_eq!(
+            Template::<Context>::from_str("{var}").unwrap().parts,
+            vec![v("var")]
+        );
+        assert_eq!(
+            Template::<Context>::from_str("{ var2 }").unwrap().parts,
             vec![v("var2")]
         );
         assert_eq!(
-            Template::from_str("xxx#$%%{{)*)_*}}").unwrap().parts,
+            Template::<Context>::from_str("xxx#$%%{{)*)_*}}")
+                .unwrap()
+                .parts,
             vec![t("xxx#$%%{)*)_*}")]
         );
         assert_eq!(
-            Template::from_str("{{{var}}}").unwrap().parts,
+            Template::<Context>::from_str("{{{var}}}").unwrap().parts,
             vec![t("{"), v("var"), t("}")]
         );
         assert_eq!(
-            Template::from_str("{{{var}}} }}{var}{{").unwrap().parts,
+            Template::<Context>::from_str("{{{var}}} }}{var}{{")
+                .unwrap()
+                .parts,
             vec![t("{"), v("var"), t("} }"), v("var"), t("{")]
         );
     }
@@ -272,39 +267,34 @@ mod tests {
     #[test]
     fn test_from_str_err() {
         assert!(matches!(
-            Template::from_str("{var").unwrap_err(),
-            ParseError::NoClosingBrace
+            Template::<Context>::from_str("{var").unwrap_err(),
+            TemplateParseError::NoClosingBrace
         ));
         assert!(matches!(
-            Template::from_str("{{var}").unwrap_err(),
-            ParseError::UnexpectedChar('}')
+            Template::<Context>::from_str("{{var}").unwrap_err(),
+            TemplateParseError::UnexpectedChar('}')
         ));
         assert!(matches!(
-            Template::from_str("{2var}").unwrap_err(),
-            ParseError::InvalidVariable(s) if s == "2var"
+            Template::<Context>::from_str("{2var}").unwrap_err(),
+            TemplateParseError::UnknownVariable(s) if s == "2var"
         ));
         assert!(matches!(
-            Template::from_str("{v ar}").unwrap_err(),
-            ParseError::InvalidVariable(s) if s == "v ar"
+            Template::<Context>::from_str("{v ar}").unwrap_err(),
+            TemplateParseError::UnknownVariable(s) if s == "v ar"
         ));
     }
 
     #[test]
     fn test_validate_ok() {
-        let temp = Template::from_str("I like {food} very much").unwrap();
-        assert!(temp.validate::<TestTemplateContext>().is_ok());
-
-        let temp = Template::from_str("{food} {frequency} {drink}").unwrap();
-        assert!(temp.validate::<TestTemplateContext>().is_ok());
+        Template::<TestTemplateContext>::from_str("I like {food} very much").unwrap();
+        Template::<TestTemplateContext>::from_str("{food} {frequency} {drink}").unwrap();
     }
 
     #[test]
     fn test_validate_err_unknown_template_variable() {
-        let temp = Template::from_str("I like {food} and {dessert}").unwrap();
-        let err = temp.validate::<TestTemplateContext>().unwrap_err();
         assert!(matches!(
-            err,
-            TemplateValidateError::UnknownTemplateVariable(s) if s == "dessert"
+            Template::<TestTemplateContext>::from_str("I like {food} and {dessert}").unwrap_err(),
+            TemplateParseError::UnknownVariable(s) if s == "dessert"
         ));
     }
 
@@ -312,8 +302,7 @@ mod tests {
     fn test_validate_and_expand() {
         let temp = Template::from_str("{food} {frequency}").unwrap();
         assert_eq!(
-            temp.validate_and_expand(&TestTemplateContext::new("sushi", "everyday", "tea"))
-                .unwrap(),
+            temp.expand(&TestTemplateContext::new("sushi", "everyday", "tea")),
             "sushi everyday"
         );
     }

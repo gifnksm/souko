@@ -3,7 +3,9 @@ use std::{collections::HashMap, str::FromStr as _};
 use serde::Deserialize;
 
 use super::input::unresolved_path::UnresolvedPath;
-use crate::domain::model::{scheme::Scheme, template::Template};
+use crate::domain::model::{
+    query::CustomSchemeTemplateContext, scheme::Scheme, template::Template,
+};
 
 pub(in crate::cli) const DEFAULT_ROOT_NAME: &str = "default";
 
@@ -54,7 +56,8 @@ pub(in crate::cli) struct QueryConfig {
     #[serde(default)]
     pub(in crate::cli) scheme_alias: HashMap<Scheme, Scheme>,
     #[serde(default)]
-    pub(in crate::cli) custom_scheme: HashMap<Scheme, Template>,
+    pub(in crate::cli) custom_scheme:
+        HashMap<Scheme, Template<CustomSchemeTemplateContext<'static>>>,
 }
 
 impl Default for QueryConfig {

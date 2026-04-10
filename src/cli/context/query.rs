@@ -2,7 +2,11 @@ use std::{collections::HashMap, str::FromStr as _};
 
 use crate::{
     cli::config::QueryConfig,
-    domain::model::{query::ParseOption, scheme::Scheme, template::Template},
+    domain::model::{
+        query::{CustomSchemeTemplateContext, ParseOption},
+        scheme::Scheme,
+        template::Template,
+    },
 };
 
 #[derive(Debug)]
@@ -21,7 +25,7 @@ fn predefined_aliases() -> HashMap<Scheme, Scheme> {
         .collect()
 }
 
-fn predefined_custom_schemes() -> HashMap<Scheme, Template> {
+fn predefined_custom_schemes() -> HashMap<Scheme, Template<CustomSchemeTemplateContext<'static>>> {
     [
         ("github", "https://github.com/{path}.git"),
         ("gitlab", "https://gitlab.com/{path}.git"),

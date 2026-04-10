@@ -1,6 +1,6 @@
 use color_eyre::eyre::Result;
 
-use crate::domain::model::template::{Template, TemplateContext};
+use crate::{cli::render::list::RepoListTemplateContext, domain::model::template::Template};
 
 #[derive(Debug, Clone, Default, clap::Args)]
 pub(in crate::cli) struct ListArgs {
@@ -20,19 +20,15 @@ pub(in crate::cli) struct FormatArgs {
     json: bool,
     /// Output each repository using a template string
     #[arg(long)]
-    template: Option<Template>,
+    template: Option<Template<RepoListTemplateContext>>,
 }
 
 impl FormatArgs {
-    fn validate<C>(&self) -> Result<Format>
-    where
-        C: TemplateContext,
-    {
+    fn validate(&self) -> Result<Format> {
         let FormatArgs { json, template } = self;
         if *json {
             Ok(Format::Json)
         } else if let Some(template) = template {
-            template.validate::<C>()?;
             Ok(Format::Template(template.clone()))
         } else {
             Ok(Format::Default)
@@ -45,7 +41,7 @@ pub(in crate::cli) enum Format {
     #[default]
     Default,
     Json,
-    Template(Template),
+    Template(Template<RepoListTemplateContext>),
 }
 
 impl ListArgs {
@@ -53,10 +49,7 @@ impl ListArgs {
         self.root_name.as_deref()
     }
 
-    pub(in crate::cli) fn format<C>(&self) -> Result<Format>
-    where
-        C: TemplateContext,
-    {
-        self.format.validate::<C>()
+    pub(in crate::cli) fn format(&self) -> Result<Format> {
+        self.format.validate()
     }
 }
