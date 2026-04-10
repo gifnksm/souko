@@ -9,7 +9,7 @@ use serde::Deserialize;
 use crate::{
     app_dirs::AppDirs,
     cli::input::app_param::AppParamSource,
-    domain::model::{path_like::PathLike, pretty_path::PrettyPath},
+    domain::model::{path_buf_pair::PathBufPair, path_like::PathLike},
 };
 
 #[derive(Debug, Default, Clone, Deserialize)]
@@ -56,7 +56,7 @@ impl UnresolvedPath {
         &self,
         source: &AppParamSource,
         app_dirs: &AppDirs,
-    ) -> PrettyPath {
+    ) -> PathBufPair {
         let home_dir = app_dirs.home_dir();
         let mut resolved_path = match self.0.strip_prefix("~") {
             Ok(rest) => home_dir.join(rest),
@@ -87,7 +87,7 @@ impl UnresolvedPath {
             Ok(rest) => Path::new("~").join(rest),
             Err(_) => resolved_path.clone(),
         };
-        PrettyPath::from_pair(
+        PathBufPair::from_pair(
             normalize_trailing_separator(&resolved_path),
             normalize_trailing_separator(&display_path),
         )
@@ -115,7 +115,7 @@ mod tests {
         let home_dir = app_dirs.home_dir();
         let config_dir = UnresolvedPath::new(app_dirs.config_dir().to_owned())
             .normalize(&AppParamSource::ImplicitDefault, &app_dirs);
-        let config_path = PrettyPath::from_pair(
+        let config_path = PathBufPair::from_pair(
             config_dir.as_real_path().join("config.toml"),
             config_dir.as_display_path().join("config.toml"),
         );
@@ -181,7 +181,7 @@ mod tests {
         let app_dirs = AppDirs::new_for_test(env!("CARGO_BIN_NAME"), "/home/foo", "/work").unwrap();
         let config_dir = UnresolvedPath::new(app_dirs.config_dir().join("nested"))
             .normalize(&AppParamSource::ImplicitDefault, &app_dirs);
-        let config_path = PrettyPath::from_pair(
+        let config_path = PathBufPair::from_pair(
             config_dir.as_real_path().join("config.toml"),
             config_dir.as_display_path().join("config.toml"),
         );

@@ -5,7 +5,7 @@ use std::{
 
 use crate::domain::{
     model::{
-        pretty_path::PrettyPath,
+        path_buf_pair::PathBufPair,
         repo::{CanonicalRepo, Repo},
         root::CanonicalRoot,
     },
@@ -119,7 +119,7 @@ where
         self.port.relative_path()
     }
 
-    pub(crate) fn path(&self) -> &PrettyPath {
+    pub(crate) fn path(&self) -> &PathBufPair {
         self.port.path()
     }
 

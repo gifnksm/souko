@@ -11,7 +11,7 @@ use crate::{
             unresolved_path::UnresolvedPath,
         },
     },
-    domain::model::{pretty_path::PrettyPath, root::Root},
+    domain::model::{path_buf_pair::PathBufPair, root::Root},
 };
 
 #[derive(Debug)]
@@ -21,7 +21,7 @@ pub(in crate::cli) struct RootContextMap {
 
 impl RootContextMap {
     pub(in crate::cli) fn new(
-        config_path: &PrettyPath,
+        config_path: &PathBufPair,
         config: &[RootConfig],
         app_dirs: &AppDirs,
     ) -> Self {
@@ -70,7 +70,7 @@ impl RootContextMap {
     }
 }
 
-fn default_path(app_dirs: &AppDirs) -> PrettyPath {
+fn default_path(app_dirs: &AppDirs) -> PathBufPair {
     UnresolvedPath::new(app_dirs.data_local_dir().join("root"))
         .normalize(&AppParamSource::ImplicitDefault, app_dirs)
 }
@@ -107,7 +107,7 @@ impl RootContext {
         self.root.name()
     }
 
-    pub(in crate::cli) fn path(&self) -> &PrettyPath {
+    pub(in crate::cli) fn path(&self) -> &PathBufPair {
         self.root.path()
     }
 
@@ -139,7 +139,7 @@ mod tests {
         let home = TempDir::new().unwrap();
         let app_dirs =
             AppDirs::new_for_test(env!("CARGO_BIN_NAME"), home.path(), home.path()).unwrap();
-        let config_path = PrettyPath::from_pair(
+        let config_path = PathBufPair::from_pair(
             home.path().join("config.toml"),
             PathBuf::from("~/config.toml"),
         );
@@ -160,7 +160,7 @@ mod tests {
         let home = TempDir::new().unwrap();
         let app_dirs =
             AppDirs::new_for_test(env!("CARGO_BIN_NAME"), home.path(), home.path()).unwrap();
-        let config_path = PrettyPath::from_pair(
+        let config_path = PathBufPair::from_pair(
             home.path().join("config.toml"),
             PathBuf::from("~/config.toml"),
         );
@@ -191,7 +191,7 @@ mod tests {
         let home = TempDir::new().unwrap();
         let app_dirs =
             AppDirs::new_for_test(env!("CARGO_BIN_NAME"), home.path(), home.path()).unwrap();
-        let config_path = PrettyPath::from_pair(
+        let config_path = PathBufPair::from_pair(
             home.path().join("config.toml"),
             PathBuf::from("~/config.toml"),
         );

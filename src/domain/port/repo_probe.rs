@@ -1,11 +1,11 @@
 use std::fmt::Debug;
 
-use crate::domain::model::{path_like::PathLike, pretty_path::PrettyPath};
+use crate::domain::model::{path_buf_pair::PathBufPair, path_like::PathLike};
 
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum RepoProbeError {
     #[error("not a git repository: {}", path.display())]
-    NotARepo { path: PrettyPath },
+    NotARepo { path: PathBufPair },
     #[error(transparent)]
     Backend(#[from] Box<dyn std::error::Error>),
 }

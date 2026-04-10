@@ -4,7 +4,7 @@ use std::{
 };
 
 use crate::domain::{
-    model::{path_like::PathLike, pretty_path::PrettyPath, root::CanonicalRoot},
+    model::{path_buf_pair::PathBufPair, path_like::PathLike, root::CanonicalRoot},
     port::dir_walker::{DirEntries, DirEntry, DirWalker, FilterPredicate},
 };
 
@@ -103,7 +103,7 @@ impl Iterator for FsDirEntries {
 struct FsDirEntry {
     root: Arc<CanonicalRoot>,
     relative_path: PathBuf,
-    path: PrettyPath,
+    path: PathBufPair,
 }
 
 impl FsDirEntry {
@@ -132,7 +132,7 @@ impl DirEntry for FsDirEntry {
         &self.relative_path
     }
 
-    fn path(&self) -> &PrettyPath {
+    fn path(&self) -> &PathBufPair {
         &self.path
     }
 

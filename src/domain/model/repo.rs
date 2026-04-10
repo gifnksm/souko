@@ -1,11 +1,11 @@
 use std::path::{Path, PathBuf};
 
-use super::{pretty_path::PrettyPath, query::Query, root::Root};
+use super::{path_buf_pair::PathBufPair, query::Query, root::Root};
 
 #[derive(Debug, Clone)]
 pub(crate) struct Repo {
     relative_path: PathBuf,
-    path: PrettyPath,
+    path: PathBufPair,
     bare: bool,
 }
 
@@ -49,7 +49,7 @@ impl Repo {
         &self.relative_path
     }
 
-    pub(crate) fn path(&self) -> &PrettyPath {
+    pub(crate) fn path(&self) -> &PathBufPair {
         &self.path
     }
 
@@ -76,7 +76,7 @@ impl CanonicalRepo {
         self.inner.relative_path()
     }
 
-    pub(crate) fn path(&self) -> &PrettyPath {
+    pub(crate) fn path(&self) -> &PathBufPair {
         self.inner.path()
     }
 
@@ -102,7 +102,7 @@ mod tests {
         let root_display_path = PathBuf::from("~/test");
         let root = Root::new(
             "test".into(),
-            PrettyPath::from_pair(root_path, root_display_path),
+            PathBufPair::from_pair(root_path, root_display_path),
         );
 
         let parse_option = query::ParseOption::default();

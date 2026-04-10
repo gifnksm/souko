@@ -9,7 +9,7 @@ use crate::{
         context::{query::QueryContext, root::RootContextMap},
         input::app_param::AppParam,
     },
-    domain::model::{path_like::PathLike as _, pretty_path::PrettyPath},
+    domain::model::{path_buf_pair::PathBufPair, path_like::PathLike as _},
     util::file,
 };
 
@@ -18,7 +18,7 @@ pub(in crate::cli) struct GlobalContext {
     usecases: Usecases,
     root_map: RootContextMap,
     query: QueryContext,
-    repo_cache_path: PrettyPath,
+    repo_cache_path: PathBufPair,
 }
 
 impl GlobalContext {
@@ -46,7 +46,7 @@ impl GlobalContext {
         &self.usecases
     }
 
-    pub(in crate::cli) fn repo_cache_path(&self) -> &PrettyPath {
+    pub(in crate::cli) fn repo_cache_path(&self) -> &PathBufPair {
         &self.repo_cache_path
     }
 
@@ -59,7 +59,7 @@ impl GlobalContext {
     }
 }
 
-fn load_config(path: &AppParam<PrettyPath>) -> Result<Config> {
+fn load_config(path: &AppParam<PathBufPair>) -> Result<Config> {
     match file::load_toml("configuration file", path.value())? {
         Some(config) => Ok(config),
         None if path.source().is_implicit_default() => Ok(Config::default()),
