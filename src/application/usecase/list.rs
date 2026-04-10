@@ -1,4 +1,4 @@
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use chrono::{DateTime, Duration, TimeDelta, Utc};
 use color_eyre::eyre::eyre;
@@ -66,7 +66,7 @@ pub(crate) enum ListUsecaseError {
 #[derive(Debug)]
 pub(crate) struct ListUsecase {
     path_canonicalizer: Arc<dyn PathCanonicalizer>,
-    repo_cache: Arc<Mutex<dyn RepoCache>>,
+    repo_cache: Arc<dyn RepoCache>,
     repo_scan_service: RepoScanService,
 }
 
@@ -100,8 +100,7 @@ impl ListUsecase {
     }
 
     fn load_repo_cache(&self, context: &ListContext, options: &ListOptions) {
-        let mut repo_cache = self.repo_cache.lock().unwrap();
-        if let Err(err) = repo_cache.load(
+        if let Err(err) = self.repo_cache.load(
             &context.repo_cache_path,
             context.now,
             options.cache_expire_duration,
@@ -111,13 +110,12 @@ impl ListUsecase {
                 context.repo_cache_path.display()
             ));
             tracing::warn!("{}", err.format_error_chain());
-            repo_cache.clear(context.now);
+            self.repo_cache.clear();
         }
     }
 
-    fn store_repo_cache(&self, context: &ListContext) {
-        let mut repo_cache = self.repo_cache.lock().unwrap();
-        if let Err(err) = repo_cache.store(&context.repo_cache_path) {
+    fn persist_repo_cache(&self, context: &ListContext) {
+        if let Err(err) = self.repo_cache.persist(&context.repo_cache_path) {
             let err = eyre!(err).wrap_err(format!(
                 "failed to store repo cache ({})",
                 context.repo_cache_path.display()
@@ -131,7 +129,7 @@ impl ListUsecase {
 pub(crate) struct ListRoots<'a, I> {
     usecase: &'a ListUsecase,
     path_canonicalizer: Arc<dyn PathCanonicalizer>,
-    repo_cache: Arc<Mutex<dyn RepoCache>>,
+    repo_cache: Arc<dyn RepoCache>,
     repo_scan_service: RepoScanService,
     context: ListContext,
     roots: I,
@@ -139,7 +137,7 @@ pub(crate) struct ListRoots<'a, I> {
 
 impl<I> Drop for ListRoots<'_, I> {
     fn drop(&mut self) {
-        self.usecase.store_repo_cache(&self.context);
+        self.usecase.persist_repo_cache(&self.context);
     }
 }
 
@@ -193,7 +191,7 @@ where
 #[derive(Debug)]
 pub(crate) struct ListRoot {
     repo_scan: RepoScanService,
-    repo_cache: Arc<Mutex<dyn RepoCache>>,
+    repo_cache: Arc<dyn RepoCache>,
     visit_hidden_dirs: bool,
     visit_repo_subdirs: bool,
     include_bare_repo: bool,
@@ -221,7 +219,7 @@ impl ListRoot {
 
 #[derive(Debug)]
 pub(crate) struct ListRepos {
-    repo_cache: Arc<Mutex<dyn RepoCache>>,
+    repo_cache: Arc<dyn RepoCache>,
     visit_repo_subdirs: bool,
     include_bare_repo: bool,
     repos: Repos,
@@ -229,22 +227,19 @@ pub(crate) struct ListRepos {
 
 impl ListRepos {
     fn entry_to_repo(&self, entry: &OwnedEntry) -> Result<Option<CanonicalRepo>, ListUsecaseError> {
-        {
-            let mut cache_service = self.repo_cache.lock().unwrap();
-            if let Some(repo) = cache_service.get(entry.root(), entry.relative_path()) {
-                return Ok(Some(repo));
-            }
+        let cache_entry = self.repo_cache.entry(entry.root(), entry.relative_path());
+        if let Some(repo) = cache_entry.get() {
+            // TODO: check if the repo is still valid (e.g. by checking the mtime of the .git directory)
+            return Ok(Some(repo));
         }
 
-        let repo = entry.to_repo()?;
-        if let Some(repo) = &repo {
-            let mut cache_service = self.repo_cache.lock().unwrap();
-            if let Some(cached_repo) = cache_service.get(entry.root(), entry.relative_path()) {
-                return Ok(Some(cached_repo));
+        match entry.to_repo()? {
+            Some(repo) => {
+                cache_entry.publish(repo.clone());
+                Ok(Some(repo))
             }
-            cache_service.insert(entry.root(), repo);
+            None => Ok(None),
         }
-        Ok(repo)
     }
 }
 
