@@ -1577,7 +1577,6 @@ dependencies = [
  "dunce",
  "git2",
  "git2_credentials",
- "once_cell",
  "predicates",
  "regex",
  "remove_dir_all",

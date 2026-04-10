@@ -2,9 +2,9 @@ use std::{
     borrow::Borrow,
     fmt::{self, Display},
     str::FromStr,
+    sync::LazyLock,
 };
 
-use once_cell::sync::Lazy;
 use regex::Regex;
 use serde::Deserialize;
 use thiserror::Error;
@@ -35,8 +35,8 @@ impl FromStr for Scheme {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        static SCHEME_RE: Lazy<Regex> =
-            Lazy::new(|| Regex::new(r"^[a-zA-Z][a-zA-Z0-9+.-]+$").unwrap());
+        static SCHEME_RE: LazyLock<Regex> =
+            LazyLock::new(|| Regex::new(r"^[a-zA-Z][a-zA-Z0-9+.-]+$").unwrap());
         if !SCHEME_RE.is_match(s) {
             return Err(ParseError::InvalidScheme {
                 scheme: s.to_string(),
