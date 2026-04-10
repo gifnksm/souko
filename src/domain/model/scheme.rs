@@ -35,8 +35,10 @@ impl FromStr for Scheme {
     type Err = ParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        // RFC 3986: scheme = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
+        // The repetition is `*`, so a single alphabetic character like `g` is valid.
         static SCHEME_RE: LazyLock<Regex> =
-            LazyLock::new(|| Regex::new(r"^[a-zA-Z][a-zA-Z0-9+.-]+$").unwrap());
+            LazyLock::new(|| Regex::new(r"^[a-zA-Z][a-zA-Z0-9+.-]*$").unwrap());
         if !SCHEME_RE.is_match(s) {
             return Err(ParseError::InvalidScheme {
                 scheme: s.to_string(),
@@ -68,6 +70,7 @@ mod tests {
 
     #[test]
     fn test_parse() {
+        assert!(Scheme::from_str("g").is_ok());
         assert!(Scheme::from_str("foo123").is_ok());
         assert!(Scheme::from_str("foo").is_ok());
         assert!(Scheme::from_str("foo+.-").is_ok());
