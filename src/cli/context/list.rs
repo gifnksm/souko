@@ -4,7 +4,6 @@ use crate::cli::{
     args::list::{Format, ListArgs},
     context::{global::GlobalContext, root::RootContext},
     input::app_param::AppParam,
-    render::list::RepoListTemplateContext,
 };
 
 #[derive(Debug)]
@@ -23,7 +22,7 @@ impl ListContext {
                 .collect::<Result<Vec<_>>>()?,
             None => root_map.all_roots().cloned().collect(),
         };
-        let format = args.format::<RepoListTemplateContext>()?;
+        let format = args.format()?;
         Ok(Self { roots, format })
     }
 

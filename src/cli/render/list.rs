@@ -45,7 +45,11 @@ where
     Ok(())
 }
 
-fn render_template<W, Roots, Repos>(mut out: W, roots: Roots, template: &Template) -> Result<()>
+fn render_template<W, Roots, Repos>(
+    mut out: W,
+    roots: Roots,
+    template: &Template<RepoListTemplateContext>,
+) -> Result<()>
 where
     W: io::Write,
     Roots: Iterator<Item = (CanonicalRoot, Repos)>,
