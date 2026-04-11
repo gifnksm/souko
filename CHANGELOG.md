@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - ReleaseDate
 
+### Added
+
+* Per-root `souko list` traversal options can now be configured in `[[root]]` entries ([#672](https://github.com/gifnksm/souko/pull/672))
+  * `visit_hidden_dirs`
+  * `visit_repo_subdirs`
+  * `include_bare_repo`
+
+### Fixed
+
+* Relative `[[root]].path` values in `config.toml` are now resolved relative to the directory containing the configuration file ([#684](https://github.com/gifnksm/souko/pull/684))
+* Single-character URL schemes are now accepted in query configuration and parsing, matching RFC 3986 ([#689](https://github.com/gifnksm/souko/pull/689))
+
 ## [0.3.2] - 2026-04-03
 
 ### Changed
