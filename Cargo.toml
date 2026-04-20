@@ -29,8 +29,8 @@ pkg-fmt = "tgz"
 
 [dependencies]
 chrono = { version = "0.4.44", features = ["clock", "serde"], default-features = false }
-clap = { version = "4.6.0", features = ["derive", "env"] }
-clap_complete = { version = "4.6.1" }
+clap = { version = "4.6.1", features = ["derive", "env"] }
+clap_complete = { version = "4.6.2" }
 clap_complete_nushell = "4.6.0"
 clap_mangen = "0.3.0"
 color-eyre = "0.6.5"
@@ -53,7 +53,7 @@ url = "2.5.8"
 walkdir = "2.5.0"
 
 [dev-dependencies]
-assert_cmd = "2.2.0"
+assert_cmd = "2.2.1"
 assert_fs = "1.1.3"
 predicates = "3.1.4"
 
