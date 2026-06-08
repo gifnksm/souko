@@ -28,7 +28,7 @@ bin-dir = "{ bin }{ binary-ext }"
 pkg-fmt = "tgz"
 
 [dependencies]
-chrono = { version = "0.4.44", features = ["clock", "serde"], default-features = false }
+chrono = { version = "0.4.45", features = ["clock", "serde"], default-features = false }
 clap = { version = "4.6.1", features = ["derive", "env"] }
 clap_complete = { version = "4.6.5" }
 clap_complete_nushell = "4.6.0"
