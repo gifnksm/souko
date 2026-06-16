@@ -38,8 +38,8 @@ custom_debug_derive = "0.6.2"
 derive_more = { version = "2.1.1", features = ["is_variant"] }
 directories = "6.0.0"
 dunce = "1.0.5"
-git2 = { version = "0.20.4" }
-git2_credentials = "0.15.0"
+git2 = { version = "0.21.0", features = ["ssh", "https"] }
+git2_credentials = "0.16.0"
 regex = "1.12.4"
 remove_dir_all = "1.0.0"
 serde = { version = "1.0.228", features = ["derive", "rc"] }
