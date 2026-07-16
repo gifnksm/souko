@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Relative `[[root]].path` values in `config.toml` are now resolved relative to the directory containing the configuration file ([#684](https://github.com/gifnksm/souko/pull/684))
 * Single-character URL schemes are now accepted in query configuration and parsing, matching RFC 3986 ([#689](https://github.com/gifnksm/souko/pull/689))
 
+### Changed
+
+* **(Breaking)** `souko` is now a binary-only crate and no longer exposes a library target, so it can no longer be used as a dependency from other Rust crates ([#664](https://github.com/gifnksm/souko/pull/664))
+
 ## [0.3.2] - 2026-04-03
 
 ### Changed
