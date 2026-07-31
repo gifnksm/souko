@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - ReleaseDate
 
+### Changed
+
+* Distribute Windows release archives as `.zip` instead of `.tar.gz`
+
 ## [0.4.0] - 2026-07-16
 
 ### Added
