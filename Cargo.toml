@@ -34,8 +34,8 @@ pkg-fmt = "zip"
 chrono = { version = "0.4.45", features = ["clock", "serde"], default-features = false }
 clap = { version = "4.6.6", features = ["derive", "env"] }
 clap_complete = { version = "4.6.9" }
-clap_complete_nushell = "4.6.1"
-clap_mangen = "0.3.2"
+clap_complete_nushell = "4.6.2"
+clap_mangen = "0.3.3"
 color-eyre = "0.6.5"
 custom_debug_derive = "0.6.2"
 derive_more = { version = "2.1.1", features = ["is_variant"] }
