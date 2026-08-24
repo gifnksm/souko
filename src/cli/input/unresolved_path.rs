@@ -104,9 +104,6 @@ impl FromStr for UnresolvedPath {
 
 #[cfg(test)]
 mod tests {
-
-    use crate::domain::model::path_like::PathLike as _;
-
     use super::*;
 
     #[test]
