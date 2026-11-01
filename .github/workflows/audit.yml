@@ -1,72 +1,93 @@
-name: Security Audit
+name: Audit
 
 on:
   schedule:
     # Runs at 00:00 UTC everyday
     - cron: "0 0 * * *"
-  push:
-    branches:
-      - main
-  pull_request:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: audit-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.ref_name != github.event.repository.default_branch }}
+
+permissions:
+  contents: read
 
 env:
   CARGO_TERM_COLOR: always
-
-permissions: {}
+  CARGO_INCREMENTAL: 0
+  MISE_CARGO_BINSTALL_ONLY: true
+  MISE_LOCKED: true
 
 jobs:
-  security-audit:
-    name: cargo-audit / issue reporting
-    runs-on: ubuntu-latest
-    permissions:
-      issues: write
-    steps:
-      - uses: actions/checkout@v7.0.1
-      - uses: Swatinem/rust-cache@v2.9.3
-      - uses: actions-rust-lang/audit@v1.2.7
+  default-branch:
+    name: Audit Default Branch
+    uses: $/.github/workflows/reusable-audit.yml
+    with:
+      rust-toolchain: stable
 
-  cargo-deny-advisories:
-    name: cargo-deny / advisories
-    runs-on: ubuntu-latest
+  get-metadata:
+    name: Get Cargo metadata
+    outputs:
+      package-name: ${{ steps.get-metadata.outputs.package-name }}
+      released-version: ${{ steps.get-released-version.outputs.released-version }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v7.0.1
-      - uses: Swatinem/rust-cache@v2.9.3
-      - uses: EmbarkStudios/cargo-deny-action@v2.1.1
         with:
-          command: check advisories
-
-  cargo-deny-policy:
-    name: cargo-deny / bans licenses sources
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7.0.1
-      - uses: Swatinem/rust-cache@v2.9.3
-      - uses: EmbarkStudios/cargo-deny-action@v2.1.1
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@v1
         with:
-          command: check bans licenses sources
-
-  audit-complete:
-    # Wait for cargo-audit and cargo-deny advisories to finish so issue reporting
-    # and advisory results are visible, but intentionally exclude them from the
-    # required status check so newly disclosed advisories do not suddenly fail CI.
-    needs:
-      - security-audit
-      - cargo-deny-advisories
-      - cargo-deny-policy
-    runs-on: ubuntu-latest
-    if: ${{ always() }}
-    steps:
-      - name: Audit complete
+          toolchain: stable
+      - name: Get Cargo metadata
+        id: get-metadata
         run: |
-          if [[ "${{ needs['cargo-deny-policy'].result }}" == "success" ]]; then
-            echo "Audit succeeded"
+          name="$(./scripts/print-metadata name)"
+          echo "package-name=$name" >> "$GITHUB_OUTPUT"
+        shell: bash
+      - name: Get latest released version
+        id: get-released-version
+        env:
+          PACKAGE_NAME: ${{ steps.get-metadata.outputs.package-name }}
+        run: |
+          if released_version="$(./scripts/print-latest-version "${PACKAGE_NAME}")"; then
+            echo "released-version=${released_version}" >> "$GITHUB_OUTPUT"
           else
-            echo "Audit failed"
-            exit 1
+            status=$?
+            if [[ "$status" -ne 2 ]]; then
+              exit "$status"
+            fi
+            echo "No stable release found for ${PACKAGE_NAME}" >&2
           fi
+        shell: bash
+
+  released-crates:
+    name: Audit Released Crates
+    if: ${{ needs.get-metadata.outputs.released-version != '' }}
+    needs: get-metadata
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [locked, updated]
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+      - uses: jdx/mise-action@v5.2.4
+        with:
+          github_token: ${{ github.token }}
+          persist_github_token: true
+      - name: Audit released crate
+        env:
+          PACKAGE_NAME: ${{ needs.get-metadata.outputs.package-name }}
+          RELEASED_VERSION: ${{ needs.get-metadata.outputs.released-version }}
+          MODE: ${{ matrix.mode }}
+        run: |
+          mise run audit:release -- "${PACKAGE_NAME}" "${RELEASED_VERSION}" "${MODE}"
         shell: bash

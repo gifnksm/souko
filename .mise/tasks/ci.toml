@@ -1,0 +1,7 @@
+["ci"]
+description = "Run all CI checks, lints, and tests"
+depends = [
+  "check:*",
+  "lint:*",
+  "test:*",
+]

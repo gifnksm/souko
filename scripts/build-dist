@@ -7,8 +7,9 @@ BUILD_DIR="target/dist-build"
 
 ROOT_PACKAGE="souko"
 DIST_PACKAGES=("souko")
+DIST_FEATURES="vendored-libgit2,vendored-openssl"
 declare -A PACKAGE_BUILD_OPTIONS=(
-    ["souko"]="--features vendored-libgit2,vendored-openssl"
+    ["souko"]="--features ${DIST_FEATURES}"
 )
 
 TEMPORARY_FILES=()
@@ -76,7 +77,7 @@ require_package() {
     local package_exists
 
     if ! package_exists="$(
-        jq -r 'any(.packages[]; .name == $pkg)' --arg pkg "${pkg}" "${metadata_json}"
+        jq -rb 'any(.packages[]; .name == $pkg)' --arg pkg "${pkg}" "${metadata_json}"
     )"; then
         die "failed to query cargo metadata for ${role} package '${pkg}'"
     fi
@@ -119,7 +120,7 @@ main() {
     metadata_json="$(mktemp)"
     TEMPORARY_FILES+=("${metadata_json}")
 
-    cargo metadata --format-version 1 --no-deps | tr -d '\r' >"${metadata_json}"
+    cargo metadata --locked --format-version 1 --no-deps | tr -d '\r' >"${metadata_json}"
 
     require_package "${metadata_json}" "${ROOT_PACKAGE}" "root"
     require_known_build_option_keys
@@ -150,11 +151,6 @@ main() {
         esac
     done
 
-    local cargo_build=(cargo build)
-    if [[ "${host_triple}" != "${target_triple}" ]]; then
-        cargo_build=(cross build)
-    fi
-
     local bin_suffix=""
     local archive_extension="tar.gz"
     if [[ "${target_triple}" == *-windows-* ]]; then
@@ -167,12 +163,13 @@ main() {
     cp souko.plugin.zsh "${BUILD_DIR}"
     mkdir -p "${BUILD_DIR}/shell"
     cp shell/key-bindings.zsh "${BUILD_DIR}/shell/"
+    cargo about generate about.hbs --fail --locked --output-file "${BUILD_DIR}/THIRD_PARTY_LICENSES.html" --target "${target_triple}" --features "${DIST_FEATURES}"
 
     for pkg in "${DIST_PACKAGES[@]}"; do
         local -a bin_names=()
         local bin_names_output
         if ! bin_names_output="$(
-            jq -r '.packages[] | select(.name == $pkg) | .targets[] | select(.kind[] == "bin") | .name' --arg pkg "${pkg}" "${metadata_json}" | tr -d '\r'
+            jq -rb '.packages[] | select(.name == $pkg) | .targets[] | select(.kind[] == "bin") | .name' --arg pkg "${pkg}" "${metadata_json}"
         )"; then
             die "failed to resolve binary targets for distribution package '${pkg}'"
         fi
@@ -189,7 +186,7 @@ main() {
             if [[ -n "${PACKAGE_BUILD_OPTIONS["${pkg}"]}" ]]; then
                 read -ra build_options <<<"${PACKAGE_BUILD_OPTIONS["${pkg}"]}"
             fi
-            "${cargo_build[@]}" --release -p "${pkg}" --bin "${bin_name}" "${target_option[@]}" "${build_options[@]}"
+            cargo auditable build --locked --release -p "${pkg}" --bin "${bin_name}" "${target_option[@]}" "${build_options[@]}"
             local bin_file="${bin_name}${bin_suffix}"
             if [[ ! -f "${release_bin_dir}/${bin_file}" ]]; then
                 die "built binary '${release_bin_dir}/${bin_file}' was not found"
@@ -199,7 +196,7 @@ main() {
             local env_prefix="${bin_name^^}"
             env_prefix="${env_prefix//-/_}"
 
-            local cargo_run=(cargo run -p "${pkg}" --bin "${bin_name}" "${build_options[@]}")
+            local cargo_run=(cargo run --locked -p "${pkg}" --bin "${bin_name}" "${build_options[@]}")
 
             mkdir -p "${BUILD_DIR}/completion"
             env "${env_prefix}_COMPLETE=bash" "${cargo_run[@]}" >"${BUILD_DIR}/completion/${bin_name}.bash"
@@ -223,7 +220,7 @@ main() {
 
     local version
     if ! version="$(
-        jq -r '.packages[] | select(.name == $pkg) | .version' --arg pkg "${ROOT_PACKAGE}" "${metadata_json}" | tr -d '\r'
+        jq -rb '.packages[] | select(.name == $pkg) | .version' --arg pkg "${ROOT_PACKAGE}" "${metadata_json}"
     )"; then
         die "failed to query cargo metadata for root package '${ROOT_PACKAGE}' version"
     fi

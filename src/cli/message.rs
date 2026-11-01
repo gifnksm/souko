@@ -8,7 +8,7 @@ macro_rules! _message_info {
 
 macro_rules! _message_warn {
     ($($arg:tt)*) => {
-       $crate::cli::message::_warn(::std::format_args!($($arg)*))
+        $crate::cli::message::_warn(::std::format_args!($($arg)*))
     };
 }
 

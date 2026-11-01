@@ -14,13 +14,13 @@ pub(crate) enum EnsureDirExistError {
 pub(crate) trait DirEditor: Debug {
     /// Creates a directory if it does not exist.
     ///
-    /// Returns `true` if the directory was created by this function call, or
-    /// `false` if the directory already exists.
+    /// Returns `true` if the directory was created by this function call, or `false` if
+    /// the directory already exists.
     ///
     /// # Errors
     ///
-    /// This function returns an error in the following situations, but is not
-    /// limited to just these cases:
+    /// This function returns an error in the following situations, but is not limited
+    /// to just these cases:
     ///
     /// * A non-directory file already exists at the `path`.
     /// * The parent of the given `path` does not exist.
@@ -29,13 +29,13 @@ pub(crate) trait DirEditor: Debug {
 
     /// Removes the empty directory if it exists.
     ///
-    /// Returns `true` if the directory was removed by this function call, or
-    /// `false` if the directory does not already exist.
+    /// Returns `true` if the directory was removed by this function call, or `false` if
+    /// the directory does not already exist.
     ///
     /// # Errors
     ///
-    /// This function returns an error in the following situations, but is not
-    /// limited to just these cases:
+    /// This function returns an error in the following situations, but is not limited
+    /// to just these cases:
     ///
     /// * The directory is not empty.
     /// * The given `path` is not a directory.
@@ -53,12 +53,12 @@ pub(crate) trait DirEditor: Debug {
     ///
     /// # Errors
     ///
-    /// This function returns an error in the following situations, but is not
-    /// limited to just these cases:
+    /// This function returns an error in the following situations, but is not limited
+    /// to just these cases:
     ///
     /// * The given `path` is not a directory or does not exist.
-    /// * The user does not have permission to remove the contents of the directory at the
-    ///   given `path`.
+    /// * The user does not have permission to remove the contents of the directory at
+    ///   the given `path`.
     fn ensure_dir_empty(
         &self,
         path: &Path,

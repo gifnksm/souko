@@ -1,0 +1,10 @@
+["format:shell"]
+description = "Format shell script files"
+run = "shfmt -w scripts/*"
+
+["lint:shell"]
+description = "Lint shell script files"
+run = [
+  "shfmt -d scripts/*",
+  "shellcheck scripts/*",
+]

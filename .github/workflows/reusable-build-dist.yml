@@ -1,0 +1,70 @@
+name: "[Reusable] Build (dist)"
+
+on:
+  workflow_call:
+    inputs:
+      rust-toolchain:
+        description: "Rust version to use"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  MISE_CARGO_BINSTALL_ONLY: true
+  MISE_LOCKED: true
+
+jobs:
+  build-dist:
+    name: Build
+    runs-on: ${{ matrix.job.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: true
+      matrix:
+        job:
+          - os: ubuntu-26.04
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-26.04-arm
+            target: aarch64-unknown-linux-gnu
+          - os: macos-26
+            target: aarch64-apple-darwin
+          - os: windows-2025
+            target: x86_64-pc-windows-msvc
+          - os: windows-11-arm
+            target: aarch64-pc-windows-msvc
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ inputs.rust-toolchain }}
+          targets: ${{ matrix.job.target }}
+      - uses: jdx/mise-action@v5.2.4
+        with:
+          github_token: ${{ github.token }}
+          persist_github_token: true
+      - uses: Swatinem/rust-cache@v2.9.3
+        with:
+          key: ${{ matrix.job.target }}
+      - name: Install modern bash on macOS
+        if: ${{ startsWith(matrix.job.os, 'macos') }}
+        run: |
+          brew install bash
+          echo "/opt/homebrew/bin" >> "$GITHUB_PATH"
+        shell: bash
+      - name: Build
+        run: mise run build:dist --target "${TARGET}"
+        env:
+          TARGET: ${{ matrix.job.target }}
+        shell: bash
+      - name: Upload binaries as artifacts
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: artifact-${{ matrix.job.target }}
+          path: target/dist/*
+          if-no-files-found: error

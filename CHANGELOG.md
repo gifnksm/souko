@@ -2,19 +2,55 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog], and this project adheres to
+[Semantic Versioning].
+
+[Keep a Changelog]: https://keepachangelog.com/en/1.1.0/
+[Semantic Versioning]: https://semver.org/spec/v2.0.0.html
 
 <!-- next-header -->
 
 ## [Unreleased] - ReleaseDate
+
+### Added
+
+* Embed dependency information in binaries published on GitHub Releases using
+  [`cargo auditable`], enabling dependency inspection and vulnerability
+  scanning.
+* Generate signed build provenance attestations for release assets using GitHub
+  artifact attestations.
+
+[`cargo auditable`]: https://github.com/rust-secure-code/cargo-auditable
+
+### Changed
+
+* Linux binaries published on GitHub Releases are now built on Ubuntu 26.04
+  instead of Ubuntu 24.04.
+* Adopt [Trusted Publishing](https://crates.io/docs/trusted-publishing) for
+  releases on crates.io.
+* Minimum Supported Rust Version (MSRV) bumped to 1.94.0 (was 1.88.0)
+
+### Removed
+
+* Stop publishing prebuilt binaries for `i686-unknown-linux-gnu`.
+
+### Security
+
+* Update the transitive dependency `libz-sys` from 1.1.29 to 1.1.31 to address
+  [RUSTSEC-2026-0418] (build-time environment variable disclosure). When built
+  with `cc` 1.6.0 or later on Unix, affected versions can write environment
+  variables, including secrets, to Cargo build output stored under `target/` and
+  included in CI caches.
+
+[RUSTSEC-2026-0418]: https://rustsec.org/advisories/RUSTSEC-2026-0418
 
 ## [0.4.2] - 2026-07-31
 
 ### Fixed
 
 * Use `zip` release assets for `cargo binstall` on Windows
-* Statically link the C runtime for Windows MSVC builds so the `souko` executable does not depend on Visual C++ runtime DLLs
+* Statically link the C runtime for Windows MSVC builds so the `souko`
+  executable does not depend on Visual C++ runtime DLLs
 
 ## [0.4.1] - 2026-07-31
 
@@ -26,58 +62,87 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* Per-root `souko list` traversal options can now be configured in `[[root]]` entries ([#672](https://github.com/gifnksm/souko/pull/672))
+* Per-root `souko list` traversal options can now be configured in `[[root]]`
+  entries ([#672](https://github.com/gifnksm/souko/pull/672))
   * `visit_hidden_dirs`
   * `visit_repo_subdirs`
   * `include_bare_repo`
 
 ### Fixed
 
-* Relative `[[root]].path` values in `config.toml` are now resolved relative to the directory containing the configuration file ([#684](https://github.com/gifnksm/souko/pull/684))
-* Single-character URL schemes are now accepted in query configuration and parsing, matching RFC 3986 ([#689](https://github.com/gifnksm/souko/pull/689))
+* Relative `[[root]].path` values in `config.toml` are now resolved relative to
+  the directory containing the configuration file
+  ([#684](https://github.com/gifnksm/souko/pull/684))
+* Single-character URL schemes are now accepted in query configuration and
+  parsing, matching RFC 3986 ([#689](https://github.com/gifnksm/souko/pull/689))
 
 ### Changed
 
-* **(Breaking)** `souko` is now a binary-only crate and no longer exposes a library target, so it can no longer be used as a dependency from other Rust crates ([#664](https://github.com/gifnksm/souko/pull/664))
+* **(Breaking)** `souko` is now a binary-only crate and no longer exposes a
+  library target, so it can no longer be used as a dependency from other Rust
+  crates ([#664](https://github.com/gifnksm/souko/pull/664))
 
 ## [0.3.2] - 2026-04-03
 
 ### Changed
 
-* The zsh `souko-cd-widget` now uses a path-first tab-separated selector format so labels can contain tabs without breaking path extraction ([#660](https://github.com/gifnksm/souko/pull/660))
-  * Default `SOUKO_LIST_TEMPLATE` changed from `label<TAB>path` to `path<TAB>label`
-  * `sk`/`fzf` integration now displays and searches all label fields after the first tab while extracting the destination path from the first field
-  * If you customized `SOUKO_LIST_TEMPLATE`, update it to the new `path<TAB>label` contract
-  * README shell integration examples were updated to match the new selector contract
+* The zsh `souko-cd-widget` now uses a path-first tab-separated selector format
+  so labels can contain tabs without breaking path extraction
+  ([#660](https://github.com/gifnksm/souko/pull/660))
+  * Default `SOUKO_LIST_TEMPLATE` changed from `label<TAB>path` to
+    `path<TAB>label`
+  * `sk`/`fzf` integration now displays and searches all label fields after the
+    first tab while extracting the destination path from the first field
+  * If you customized `SOUKO_LIST_TEMPLATE`, update it to the new
+    `path<TAB>label` contract
+  * README shell integration examples were updated to match the new selector
+    contract
 
 ## [0.3.1] - 2026-04-03
 
 ### Fixed
 
-* Fix sheldon commands in README ([#659](https://github.com/gifnksm/souko/pull/659))
+* Fix sheldon commands in README
+  ([#659](https://github.com/gifnksm/souko/pull/659))
 
 ## [0.3.0] - 2026-04-03
 
 ### Added
 
-* `souko list --template <FORMAT>`: new template-based output format for customizing list output ([#643](https://github.com/gifnksm/souko/pull/643), [#644](https://github.com/gifnksm/souko/pull/644))
+* `souko list --template <FORMAT>`: new template-based output format for
+  customizing list output ([#643](https://github.com/gifnksm/souko/pull/643),
+  [#644](https://github.com/gifnksm/souko/pull/644))
   * Useful for integrating with picker tools such as fzf and skim
-  * Available template variables include `root_name`, `repo_relative_path`, `repo_canonical_path`, etc.
-  * Unknown variable names in templates are detected and reported as errors when running `souko list` (during `--template` argument validation)
-* Added shell integration documentation and a zsh plugin for selecting a repository with `sk` or `fzf` and changing to it from the current shell ([#658](https://github.com/gifnksm/souko/pull/658))
+  * Available template variables include `root_name`, `repo_relative_path`,
+    `repo_canonical_path`, etc.
+  * Unknown variable names in templates are detected and reported as errors when
+    running `souko list` (during `--template` argument validation)
+* Added shell integration documentation and a zsh plugin for selecting a
+  repository with `sk` or `fzf` and changing to it from the current shell
+  ([#658](https://github.com/gifnksm/souko/pull/658))
   * Documented fuzzy-finder-based repository navigation in the README
-  * Added `souko.plugin.zsh` and `souko-cd-widget` with configurable selector and key binding options
+  * Added `souko.plugin.zsh` and `souko-cd-widget` with configurable selector
+    and key binding options
 
 ### Fixed
 
-* `query.scheme_alias` and `query.custom_scheme` fields in `config.toml` can now be omitted without causing a parse error ([#645](https://github.com/gifnksm/souko/pull/645))
+* `query.scheme_alias` and `query.custom_scheme` fields in `config.toml` can now
+  be omitted without causing a parse error
+  ([#645](https://github.com/gifnksm/souko/pull/645))
 
 ### Changed
 
-* Rust edition bumped to 2024 ([#650](https://github.com/gifnksm/souko/pull/650))
-* Error message wording and contribution guidelines were updated to clarify the project's error display policy ([#651](https://github.com/gifnksm/souko/pull/651))
-* **(Breaking)** Migrate from xtask to just-based task runner ([#632](https://github.com/gifnksm/souko/pull/632), [#633](https://github.com/gifnksm/souko/pull/633))
-* **(Breaking)** Replace xtask dist flow with dedicated build-dist script ([#634](https://github.com/gifnksm/souko/pull/634), [#652](https://github.com/gifnksm/souko/pull/652))
+* Rust edition bumped to 2024
+  ([#650](https://github.com/gifnksm/souko/pull/650))
+* Error message wording and contribution guidelines were updated to clarify the
+  project's error display policy
+  ([#651](https://github.com/gifnksm/souko/pull/651))
+* **(Breaking)** Migrate from xtask to just-based task runner
+  ([#632](https://github.com/gifnksm/souko/pull/632),
+  [#633](https://github.com/gifnksm/souko/pull/633))
+* **(Breaking)** Replace xtask dist flow with dedicated build-dist script
+  ([#634](https://github.com/gifnksm/souko/pull/634),
+  [#652](https://github.com/gifnksm/souko/pull/652))
 * Minimum Supported Rust Version (MSRV) bumped to 1.88.0 (was 1.78.0)
 * Updated dependencies
 
@@ -85,30 +150,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-* Minimum Supported Rust Version (MSRV) bumped to 1.78.0 (was 1.74.0) ([#491](https://github.com/gifnksm/souko/pull/491))
+* Minimum Supported Rust Version (MSRV) bumped to 1.78.0 (was 1.74.0)
+  ([#491](https://github.com/gifnksm/souko/pull/491))
 * Updated dependencies
 
 ## [0.2.1] - 2024-09-11
 
 ### Fixed
 
-* Output paths on Windows no longer include the UNC prefix (`\\?\`) ([#462](https://github.com/gifnksm/souko/pull/462))
+* Output paths on Windows no longer include the UNC prefix (`\\?\`)
+  ([#462](https://github.com/gifnksm/souko/pull/462))
 
 ### Changed
 
-* Minimum Supported Rust Version (MSRV) bumped to 1.74.0 (was 1.70.0) ([#463](https://github.com/gifnksm/souko/pull/463))
+* Minimum Supported Rust Version (MSRV) bumped to 1.74.0 (was 1.70.0)
+  ([#463](https://github.com/gifnksm/souko/pull/463))
 * Updated dependencies
 
 ## [0.2.0] - 2023-09-17
 
 ### Added
 
-* `vendored-libgit2` and `vendored-openssl` feature flags, which allow building without system libraries ([#297](https://github.com/gifnksm/souko/pull/297))
+* `vendored-libgit2` and `vendored-openssl` feature flags, which allow building
+  without system libraries ([#297](https://github.com/gifnksm/souko/pull/297))
 
 ### Changed
 
-* **(Breaking)** System `libgit2` and `openssl` are now used by default instead of vendored copies ([#308](https://github.com/gifnksm/souko/pull/308))
-  * To build without system dependencies, pass `--features vendored-libgit2,vendored-openssl`
+* **(Breaking)** System `libgit2` and `openssl` are now used by default instead
+  of vendored copies ([#308](https://github.com/gifnksm/souko/pull/308))
+  * To build without system dependencies, pass
+    `--features vendored-libgit2,vendored-openssl`
 
 ## [0.1.2] - 2023-09-03
 
@@ -120,7 +191,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-* `query` and `root` sections in `config.toml` are now optional ([#293](https://github.com/gifnksm/souko/pull/293))
+* `query` and `root` sections in `config.toml` are now optional
+  ([#293](https://github.com/gifnksm/souko/pull/293))
 
 ## [0.1.0] - 2023-09-02
 

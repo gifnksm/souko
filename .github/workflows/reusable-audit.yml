@@ -1,0 +1,53 @@
+name: "[Reusable] Audit"
+
+on:
+  workflow_call:
+    inputs:
+      rust-toolchain:
+        description: "Rust version to use"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  MISE_CARGO_BINSTALL_ONLY: true
+  MISE_LOCKED: true
+
+jobs:
+  rustsec:
+    name: RustSec Advisory
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ inputs.rust-toolchain }}
+      - uses: jdx/mise-action@v5.2.4
+        with:
+          github_token: ${{ github.token }}
+          persist_github_token: true
+      - uses: Swatinem/rust-cache@v2.9.3
+      - run: mise run audit:rustsec
+        shell: bash
+
+  osv:
+    name: OSV Advisory
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: jdx/mise-action@v5.2.4
+        with:
+          github_token: ${{ github.token }}
+          persist_github_token: true
+      - run: mise run audit:osv
+        shell: bash

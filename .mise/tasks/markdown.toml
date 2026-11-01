@@ -1,0 +1,39 @@
+["install-toolchains-for-sync-markdown"]
+description = "Install Rust toolchain for synchronizing markdown"
+depends = ["install-nightly-toolchain"]
+
+["sync:markdown"]
+description = "Synchronize Markdown files with Rust doc comments"
+usage = '''
+flag "--check" help="Run cargo-sync-rdme in check mode"
+flag "--allow-dirty" help="Sync Markdown files even if the target file is dirty"
+flag "--allow-no-vcs" help="Sync Markdown files even if no VCS found"
+'''
+depends = ["install-toolchains-for-sync-markdown"]
+raw_args = true
+quiet = true
+run = '''
+#!/usr/bin/env bash
+set -euxo pipefail
+cargo sync-rdme --workspace --locked "$@"
+'''
+
+["install-toolchains-for-check-markdown"]
+description = "Install Rust toolchain for checking markdown"
+depends = ["install-nightly-toolchain"]
+
+["check:markdown"]
+description = "Check Markdown files are in sync with Rust doc comments"
+depends = ["install-toolchains-for-check-markdown"]
+run = "cargo sync-rdme --workspace --locked --check"
+
+["format:markdown"]
+description = "Format Markdown files"
+run = "rumdl fmt"
+
+["lint:markdown"]
+description = "Lint Markdown files"
+run = [
+  "rumdl fmt --check",
+  "rumdl check",
+]

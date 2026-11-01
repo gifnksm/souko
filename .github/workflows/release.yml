@@ -1,0 +1,202 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+# Metadata checks and jobs that build or publish release artifacts must not
+# restore caches: poisoned tools or dependencies could alter releases or steal
+# publishing credentials.
+cache-mode: none
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  MISE_CARGO_BINSTALL_ONLY: true
+  MISE_LOCKED: true
+
+jobs:
+  get-metadata:
+    name: Get Cargo metadata
+    outputs:
+      package-name: ${{ steps.get-metadata.outputs.package-name }}
+      package-version: ${{ steps.get-metadata.outputs.package-version }}
+      msrv: ${{ steps.get-metadata.outputs.msrv }}
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: stable
+      - name: Get Cargo metadata
+        id: get-metadata
+        run: |
+          name="$(./scripts/print-metadata name)"
+          version="$(./scripts/print-metadata version)"
+          msrv="$(./scripts/print-metadata msrv)"
+          {
+            echo "package-name=$name"
+            echo "package-version=$version"
+            echo "msrv=$msrv"
+          } >> "$GITHUB_OUTPUT"
+        shell: bash
+      - name: Check Cargo package version
+        env:
+          PACKAGE_VERSION: ${{ steps.get-metadata.outputs.package-version }}
+        run: |
+          expected_tag="v$PACKAGE_VERSION"
+          if [[ "$GITHUB_REF_NAME" != "$expected_tag" ]]; then
+            echo "Error: Git tag '$GITHUB_REF_NAME' does not match Cargo package version '$PACKAGE_VERSION'."
+            exit 1
+          fi
+        shell: bash
+
+  build-dist:
+    name: Build (dist)
+    uses: $/.github/workflows/reusable-build-dist.yml
+    with:
+      rust-toolchain: stable
+
+  check-rust:
+    name: Check (rust)
+    needs: get-metadata
+    strategy:
+      fail-fast: true
+      matrix:
+        rust:
+          - stable
+          - ${{ needs.get-metadata.outputs.msrv }}
+    uses: $/.github/workflows/reusable-check-rust.yml
+    with:
+      rust-toolchain: ${{ matrix.rust }}
+      run-doc-checks: ${{ matrix.rust == 'stable' }}
+
+  check-misc:
+    name: Check (misc)
+    uses: $/.github/workflows/reusable-check-misc.yml
+    with:
+      rust-toolchain: stable
+
+  lint-rust:
+    name: Lint (rust)
+    uses: $/.github/workflows/reusable-lint-rust.yml
+    with:
+      rust-toolchain: stable
+
+  lint-misc:
+    name: Lint (misc)
+    uses: $/.github/workflows/reusable-lint-misc.yml
+    with:
+      rust-toolchain: stable
+
+  test-rust:
+    name: Test (rust)
+    needs: get-metadata
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: true
+      matrix:
+        rust:
+          - stable
+          - ${{ needs.get-metadata.outputs.msrv }}
+    uses: $/.github/workflows/reusable-test-rust.yml
+    with:
+      rust-toolchain: ${{ matrix.rust }}
+
+  audit:
+    name: Audit
+    uses: $/.github/workflows/reusable-audit.yml
+    with:
+      rust-toolchain: stable
+
+  prepare-release:
+    name: Prepare GitHub Release
+    needs:
+      - build-dist
+      - check-rust
+      - check-misc
+      - lint-rust
+      - lint-misc
+      - test-rust
+      - audit
+    permissions:
+      contents: write # Allow creating releases and uploading release assets
+      id-token: write # Allow generating OIDC tokens for signing release assets
+      attestations: write # Allow creating attestations for release assets
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    steps:
+      - name: Download built artifacts
+        uses: actions/download-artifact@v8.0.2
+        with:
+          pattern: artifact-*
+          path: target/dist
+          merge-multiple: true
+      - name: Attest release assets
+        uses: actions/attest@v4.2.2
+        with:
+          subject-path: target/dist/*
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            target/dist/* \
+            --generate-notes \
+            --verify-tag \
+            --draft
+        shell: bash
+
+  publish-crate:
+    name: Publish crate to crates.io
+    needs:
+      - get-metadata
+      - prepare-release
+    environment:
+      name: crates-io
+      url: https://crates.io/crates/${{ needs.get-metadata.outputs.package-name }}/${{ needs.get-metadata.outputs.package-version }}
+    permissions:
+      contents: read
+      id-token: write # Allow generating OIDC tokens for authenticating with crates.io
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: rust-lang/crates-io-auth-action@v1.0.6
+        id: auth
+      - run: cargo publish --locked
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+        shell: bash
+
+  publish-release:
+    name: Publish GitHub Release
+    needs:
+      - publish-crate
+    permissions:
+      contents: write # Allow publishing the GitHub Release
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    steps:
+      - name: Publish draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release edit "$GITHUB_REF_NAME" --draft=false
+        shell: bash

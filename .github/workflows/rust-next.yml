@@ -1,0 +1,40 @@
+name: Rust Next
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Run every Sunday at 00:00 UTC
+    - cron: "0 0 * * 0"
+
+concurrency:
+  group: rust-next-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.ref_name != github.event.repository.default_branch }}
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  MISE_CARGO_BINSTALL_ONLY: true
+  MISE_LOCKED: true
+
+jobs:
+  check-rust:
+    name: Check (rust)
+    uses: $/.github/workflows/reusable-check-rust.yml
+    with:
+      rust-toolchain: beta
+      run-doc-checks: true
+
+  lint-rust:
+    name: Lint (rust)
+    uses: $/.github/workflows/reusable-lint-rust.yml
+    with:
+      rust-toolchain: beta
+
+  test-rust:
+    name: Test (rust)
+    uses: $/.github/workflows/reusable-test-rust.yml
+    with:
+      rust-toolchain: beta
