@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog], and this project adheres to
 
 ## [Unreleased] - ReleaseDate
 
+## [0.4.3] - 2026-11-01
+
 ### Added
 
 * Embed dependency information in binaries published on GitHub Releases using
@@ -199,7 +201,8 @@ The format is based on [Keep a Changelog], and this project adheres to
 * First release
 
 <!-- next-url -->
-[Unreleased]: https://github.com/gifnksm/souko/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/gifnksm/souko/compare/v0.4.3...HEAD
+[0.4.3]: https://github.com/gifnksm/souko/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/gifnksm/souko/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/gifnksm/souko/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/gifnksm/souko/compare/v0.3.2...v0.4.0
