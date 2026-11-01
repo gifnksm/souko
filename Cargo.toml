@@ -2,25 +2,37 @@
 name = "souko"
 version = "0.4.2"
 edition = "2024"
-rust-version = "1.88.0"
+rust-version = "1.94.0"
 description = "A simple command line utility that provides an easy way to organize clones of remote git repositories"
 readme = "README.md"
 repository = "https://github.com/gifnksm/souko"
 license = "MIT OR Apache-2.0"
-authors = ["gifnksm <makoto.nksm+github@gmail.com>"]
-keywords = ["git", "vcs", "cli", "utility"]
+keywords = ["cli", "git", "utility", "vcs"]
 categories = ["command-line-utilities"]
 
 [package.metadata.cargo-sync-rdme.badge]
 style = "flat-square"
+badges = {
+  maintenance = true,
+  license = { link = "#license" },
+  crates-io = true,
+  rust-version = true,
+  github-actions = { workflows = "ci.yml" },
+  codecov = true,
+}
 
-[package.metadata.cargo-sync-rdme.badge.badges]
-maintenance = true
-license = { link = "#license" }
-crates-io = true
-rust-version = true
-github-actions = { workflows = ["ci.yml"] }
-codecov = true
+[package.metadata.cargo-sync-rdme.rustdoc]
+toolchain = "nightly"
+# `mise run ci` runs sync-rdme and `cargo doc` / `cargo docs-rs` tasks in parallel.
+# sync-rdme reads rustdoc JSON after Cargo exits and releases its lock. Another
+# task may clear target/doc before that read, so store the JSON separately.
+# Share intermediate build artifacts through the usual target directory.
+cargo-args = [
+  "--config",
+  'build.target-dir="target/cargo-sync-rdme"',
+  "--config",
+  'build.build-dir="target"',
+]
 
 [package.metadata.binstall]
 pkg-url = "{ repo }/releases/download/v{ version }/{ name }-v{ version }-{ target }.{ archive-format }"
@@ -31,7 +43,7 @@ pkg-fmt = "tgz"
 pkg-fmt = "zip"
 
 [dependencies]
-chrono = { version = "0.4.45", features = ["clock", "serde"], default-features = false }
+chrono = { version = "0.4.45", default-features = false, features = ["clock", "serde"] }
 clap = { version = "4.6.7", features = ["derive", "env"] }
 clap_complete = { version = "4.6.11" }
 clap_complete_nushell = "4.6.2"
@@ -41,7 +53,7 @@ custom_debug_derive = "0.6.2"
 derive_more = { version = "2.1.1", features = ["is_variant"] }
 directories = "6.0.0"
 dunce = "1.0.5"
-git2 = { version = "0.21.0", features = ["ssh", "https"] }
+git2 = { version = "0.21.0", features = ["https", "ssh"] }
 git2_credentials = "0.16.0"
 regex = "1.13.1"
 remove_dir_all = "1.0.0"
@@ -60,15 +72,17 @@ assert_cmd = "2.2.2"
 assert_fs = "1.1.4"
 predicates = "3.1.4"
 
-[build-dependencies]
+[badges]
+maintenance = { status = "actively-developed" }
 
 [features]
 default = []
 vendored-libgit2 = ["git2/vendored-libgit2"]
 vendored-openssl = ["git2/vendored-openssl"]
 
+[profile.dev]
+# for faster development iterations
+debug = "line-tables-only"
+
 [profile.release]
 strip = true
-
-[badges]
-maintenance = { status = "actively-developed" }

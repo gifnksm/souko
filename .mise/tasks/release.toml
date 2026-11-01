@@ -1,0 +1,19 @@
+[pre-release]
+description = "cargo release pre-release hook: update the repository and run CI checks"
+run = [
+  { task = "sync:markdown --allow-dirty" },
+  '''
+  {% if env.RELEASE_SKIP_CHECK != 'true' %}
+  MISE_TASK_SKIP=check:release mise run ci
+  {% else %}
+  # pre-release checks skipped
+  {% endif %}
+  '''
+]
+
+["check:release"]
+description = "Check release readiness"
+wait_for = ["check:*", "lint:*", "test:*"]
+run = '''
+RELEASE_SKIP_CHECK="true" cargo release patch --allow-branch '*'
+'''

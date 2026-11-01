@@ -1,0 +1,102 @@
+name: "[Reusable] Check (rust)"
+
+on:
+  workflow_call:
+    inputs:
+      rust-toolchain:
+        description: "Rust version to use"
+        required: true
+        type: string
+      run-doc-checks:
+        description: "Whether to run the documentation check"
+        required: true
+        type: boolean
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  MISE_CARGO_BINSTALL_ONLY: true
+  MISE_LOCKED: true
+
+jobs:
+  compile:
+    name: Compile
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-26.04, macos-26, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ inputs.rust-toolchain }}
+      - uses: jdx/mise-action@v5.2.4
+        with:
+          github_token: ${{ github.token }}
+          persist_github_token: true
+      - uses: Swatinem/rust-cache@v2.9.3
+      - run: mise run check:rust:compile
+        shell: bash
+
+  rustdoc:
+    name: Rustdoc
+    if: ${{ inputs.run-doc-checks }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-26.04, macos-26, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ inputs.rust-toolchain }}
+      - uses: jdx/mise-action@v5.2.4
+        with:
+          github_token: ${{ github.token }}
+          persist_github_token: true
+      - uses: Swatinem/rust-cache@v2.9.3
+      - run: mise run check:rust:rustdoc
+        shell: bash
+
+  docs-rs:
+    name: Docs.rs
+    if: ${{ inputs.run-doc-checks }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-26.04, macos-26, windows-2025]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ inputs.rust-toolchain }}
+      - uses: jdx/mise-action@v5.2.4
+        with:
+          github_token: ${{ github.token }}
+          persist_github_token: true
+      - run: mise run install-toolchains-for-check-docs-rs
+        shell: bash
+      - uses: Swatinem/rust-cache@v2.9.3
+      - name: Install modern bash on macOS
+        if: ${{ startsWith(matrix.os, 'macos') }}
+        run: |
+          brew install bash
+          echo "/opt/homebrew/bin" >> "$GITHUB_PATH"
+        shell: bash
+      - run: mise run check:rust:docs-rs
+        shell: bash

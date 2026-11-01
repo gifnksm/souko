@@ -5,8 +5,8 @@ use crate::domain::model::path_buf_pair::PathBufPair;
 pub(in crate::cli) enum AppParamSource {
     /// Value provided through a clap argument source.
     ///
-    /// This includes values supplied either by the command-line option itself
-    /// or by the environment variable bound to that option via clap `env`.
+    /// This includes values supplied either by the command-line option itself or by the
+    /// environment variable bound to that option via clap `env`.
     CommandLineArgument,
     /// Value loaded from a configuration file.
     ConfigurationFile { path: PathBufPair },

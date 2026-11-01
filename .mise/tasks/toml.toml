@@ -1,0 +1,10 @@
+["format:toml"]
+description = "Format TOML files"
+run = "tombi format"
+
+["lint:toml"]
+description = "Lint TOML files"
+run = [
+  "tombi format --check",
+  "tombi lint --error-on-warnings",
+]
