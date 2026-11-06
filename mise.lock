@@ -269,38 +269,38 @@ url = "https://github.com/bnjbvr/cargo-machete/releases/download/v0.9.2/cargo-ma
 url_api = "https://api.github.com/repos/bnjbvr/cargo-machete/releases/assets/397131414"
 
 [[tools."github:gifnksm/cargo-sync-rdme"]]
-version = "0.8.5"
+version = "0.8.6"
 backend = "github:gifnksm/cargo-sync-rdme"
-specifiers = ["0.8.5"]
+specifiers = ["v0.8.6"]
 
 [tools."github:gifnksm/cargo-sync-rdme"."platforms.linux-arm64"]
-checksum = "sha256:62ac1ea9138fc257e7922d468d9cf00ba7d8379c7e5ef01fc05cfb20fa673bad"
-url = "https://github.com/gifnksm/cargo-sync-rdme/releases/download/v0.8.5/cargo-sync-rdme-v0.8.5-aarch64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/gifnksm/cargo-sync-rdme/releases/assets/671655807"
+checksum = "sha256:7b84ffd21f75cd4a858a4907af472a73adbe6583925dd8f5aa2870351b588a32"
+url = "https://github.com/gifnksm/cargo-sync-rdme/releases/download/v0.8.6/cargo-sync-rdme-v0.8.6-aarch64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/gifnksm/cargo-sync-rdme/releases/assets/704506035"
 provenance = "github-attestations"
 
 [tools."github:gifnksm/cargo-sync-rdme"."platforms.linux-x64"]
-checksum = "sha256:ba5e5bcd3b6c203efb8d57b5b2c4d40fe3dc5099c4ede991ead759aab1826201"
-url = "https://github.com/gifnksm/cargo-sync-rdme/releases/download/v0.8.5/cargo-sync-rdme-v0.8.5-x86_64-unknown-linux-gnu.tar.gz"
-url_api = "https://api.github.com/repos/gifnksm/cargo-sync-rdme/releases/assets/671655863"
+checksum = "sha256:098d88f1fd6f8b1ca4e96803fba5e21b13bb70a9ecd5d0840126f59157369e45"
+url = "https://github.com/gifnksm/cargo-sync-rdme/releases/download/v0.8.6/cargo-sync-rdme-v0.8.6-x86_64-unknown-linux-gnu.tar.gz"
+url_api = "https://api.github.com/repos/gifnksm/cargo-sync-rdme/releases/assets/704506067"
 provenance = "github-attestations"
 
 [tools."github:gifnksm/cargo-sync-rdme"."platforms.macos-arm64"]
-checksum = "sha256:71e262fb343cd27994546cb805ca1186e9b41220e803723e0c708aa9f28a9a8e"
-url = "https://github.com/gifnksm/cargo-sync-rdme/releases/download/v0.8.5/cargo-sync-rdme-v0.8.5-aarch64-apple-darwin.tar.gz"
-url_api = "https://api.github.com/repos/gifnksm/cargo-sync-rdme/releases/assets/671655806"
+checksum = "sha256:f00e2229c6c84316a7835e91dbe06d73265df5d3ced039de301a5825faac04be"
+url = "https://github.com/gifnksm/cargo-sync-rdme/releases/download/v0.8.6/cargo-sync-rdme-v0.8.6-aarch64-apple-darwin.tar.gz"
+url_api = "https://api.github.com/repos/gifnksm/cargo-sync-rdme/releases/assets/704506034"
 provenance = "github-attestations"
 
 [tools."github:gifnksm/cargo-sync-rdme"."platforms.windows-arm64"]
-checksum = "sha256:21279d4cac123dfd6596d8de82e6615ce14a6cfb739f3b405f5b128c159cfbed"
-url = "https://github.com/gifnksm/cargo-sync-rdme/releases/download/v0.8.5/cargo-sync-rdme-v0.8.5-aarch64-pc-windows-msvc.zip"
-url_api = "https://api.github.com/repos/gifnksm/cargo-sync-rdme/releases/assets/671655808"
+checksum = "sha256:84bd3df05028ef4fdb7a9af7d989edbcece478348fbbf440d5697edd84d1e846"
+url = "https://github.com/gifnksm/cargo-sync-rdme/releases/download/v0.8.6/cargo-sync-rdme-v0.8.6-aarch64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/gifnksm/cargo-sync-rdme/releases/assets/704506037"
 provenance = "github-attestations"
 
 [tools."github:gifnksm/cargo-sync-rdme"."platforms.windows-x64"]
-checksum = "sha256:dceacd759c9c04d2a60f6cf31da2f12f2dce231e9472c30e4650d597debe2124"
-url = "https://github.com/gifnksm/cargo-sync-rdme/releases/download/v0.8.5/cargo-sync-rdme-v0.8.5-x86_64-pc-windows-msvc.zip"
-url_api = "https://api.github.com/repos/gifnksm/cargo-sync-rdme/releases/assets/671655809"
+checksum = "sha256:7d29801c9ac1434cb4c50397207db4489301e7b2b22fcd9842337e4fa61cedef"
+url = "https://github.com/gifnksm/cargo-sync-rdme/releases/download/v0.8.6/cargo-sync-rdme-v0.8.6-x86_64-pc-windows-msvc.zip"
+url_api = "https://api.github.com/repos/gifnksm/cargo-sync-rdme/releases/assets/704506036"
 provenance = "github-attestations"
 
 [[tools."github:rust-secure-code/cargo-auditable"]]
