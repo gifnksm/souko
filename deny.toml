@@ -106,6 +106,7 @@ exceptions = [
   # Each entry is the crate and version constraint, and its specific allow
   # list
   # { allow = ["Zlib"], crate = "adler32" },
+  { allow = ["Apache-2.0 WITH LLVM-exception"], crate = "ar_archive_writer" },
 ]
 
 # Some crates don't have (easily) machine readable licensing information,
