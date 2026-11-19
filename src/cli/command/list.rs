@@ -1,5 +1,5 @@
-use chrono::Utc;
 use color_eyre::eyre::Result;
+use jiff::Timestamp;
 
 use crate::{
     application::usecase::list::{ListContext as ListUsecaseContext, ListOptions, ListRootInput},
@@ -26,7 +26,7 @@ pub(in crate::cli) fn dispatch(global_ctx: &GlobalContext, list_ctx: &ListContex
     });
 
     let context = ListUsecaseContext {
-        now: Utc::now(),
+        now: Timestamp::now(),
         repo_cache_path: PathBufPair::new(global_ctx.repo_cache_path()),
     };
     let options = ListOptions::default();

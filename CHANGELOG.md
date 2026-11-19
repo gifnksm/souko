@@ -12,6 +12,13 @@ The format is based on [Keep a Changelog], and this project adheres to
 
 ## [Unreleased] - ReleaseDate
 
+### Security
+
+* Replace the unmaintained `chrono` dependency with `jiff` in response to
+  [RUSTSEC-2026-0543].
+
+[RUSTSEC-2026-0543]: https://osv.dev/vulnerability/RUSTSEC-2026-0543
+
 ## [0.4.3] - 2026-11-01
 
 ### Added

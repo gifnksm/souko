@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use chrono::{DateTime, Duration, TimeDelta, Utc};
 use color_eyre::eyre::eyre;
+use jiff::{SignedDuration, Timestamp};
 
 use crate::{
     domain::{
@@ -23,20 +23,20 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub(crate) struct ListOptions {
-    pub(crate) cache_expire_duration: TimeDelta,
+    pub(crate) cache_expire_duration: SignedDuration,
 }
 
 impl Default for ListOptions {
     fn default() -> Self {
         Self {
-            cache_expire_duration: Duration::try_days(3).unwrap(),
+            cache_expire_duration: SignedDuration::from_hours(3 * 24),
         }
     }
 }
 
 #[derive(Debug, Clone)]
 pub(crate) struct ListContext {
-    pub(crate) now: DateTime<Utc>,
+    pub(crate) now: Timestamp,
     pub(crate) repo_cache_path: PathBufPair,
 }
 
