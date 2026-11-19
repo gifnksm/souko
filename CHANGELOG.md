@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog], and this project adheres to
 
 ## [Unreleased] - ReleaseDate
 
+## [0.4.4] - 2026-11-19
+
 ### Security
 
 * Replace the unmaintained `chrono` dependency with `jiff` in response to
@@ -208,7 +210,8 @@ The format is based on [Keep a Changelog], and this project adheres to
 * First release
 
 <!-- next-url -->
-[Unreleased]: https://github.com/gifnksm/souko/compare/v0.4.3...HEAD
+[Unreleased]: https://github.com/gifnksm/souko/compare/v0.4.4...HEAD
+[0.4.4]: https://github.com/gifnksm/souko/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/gifnksm/souko/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/gifnksm/souko/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/gifnksm/souko/compare/v0.4.0...v0.4.1
