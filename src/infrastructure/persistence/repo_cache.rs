@@ -4,7 +4,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 
-use chrono::{DateTime, Duration, Utc};
+use jiff::{SignedDuration, Timestamp};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -34,8 +34,8 @@ impl JsonRepoCache {
 
 #[derive(Debug)]
 struct JsonRepoCacheInner {
-    now: Option<DateTime<Utc>>,
-    expire_duration: Option<Duration>,
+    now: Option<Timestamp>,
+    expire_duration: Option<SignedDuration>,
     cache: JsonCache,
 }
 
@@ -43,8 +43,8 @@ impl RepoCache for JsonRepoCache {
     fn load(
         &self,
         path: &dyn PathLike,
-        now: DateTime<Utc>,
-        expire_duration: Duration,
+        now: Timestamp,
+        expire_duration: SignedDuration,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>> {
         let mut this = self.0.lock().unwrap();
         this.now = Some(now);
@@ -76,7 +76,7 @@ impl RepoCache for JsonRepoCache {
         let root_cache = this.cache.entry(root);
         let entry = root_cache.entry(relative_path.to_owned());
         Box::new(RepoCacheEntryHandler {
-            now: this.now.unwrap_or_else(Utc::now),
+            now: this.now.unwrap_or_else(Timestamp::now),
             root: root.as_root().clone(),
             relative_path: relative_path.to_owned(),
             entry,
@@ -91,7 +91,7 @@ struct JsonCache {
 }
 
 impl JsonCache {
-    fn remove_invalid_repos(&mut self, now: &DateTime<Utc>, expire_duration: Duration) {
+    fn remove_invalid_repos(&mut self, now: &Timestamp, expire_duration: SignedDuration) {
         for root_cache in self.roots.values_mut() {
             root_cache.remove_invalid_repos(now, expire_duration);
         }
@@ -133,7 +133,7 @@ impl JsonRootEntry {
         self.canonical_path == root.canonical_path()
     }
 
-    fn remove_invalid_repos(&mut self, now: &DateTime<Utc>, expire_duration: Duration) {
+    fn remove_invalid_repos(&mut self, now: &Timestamp, expire_duration: SignedDuration) {
         self.repos.retain(|_, entry| {
             entry
                 .lock()
@@ -155,13 +155,13 @@ impl JsonRootEntry {
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct JsonRepoEntry {
-    timestamp: DateTime<Utc>,
+    timestamp: Timestamp,
     canonical_path: PathBuf,
     bare: bool,
 }
 
 impl JsonRepoEntry {
-    fn is_valid(&self, now: &DateTime<Utc>, expire_duration: Duration) -> bool {
+    fn is_valid(&self, now: &Timestamp, expire_duration: SignedDuration) -> bool {
         *now - self.timestamp <= expire_duration
     }
 
@@ -177,7 +177,7 @@ impl JsonRepoEntry {
 
 #[derive(Debug)]
 struct RepoCacheEntryHandler {
-    now: DateTime<Utc>,
+    now: Timestamp,
     root: Root,
     relative_path: PathBuf,
     entry: Arc<Mutex<Option<JsonRepoEntry>>>,

@@ -1,6 +1,6 @@
 use std::{fmt::Debug, path::Path};
 
-use chrono::{DateTime, Duration, Utc};
+use jiff::{SignedDuration, Timestamp};
 
 use crate::domain::model::{path_like::PathLike, repo::CanonicalRepo, root::CanonicalRoot};
 
@@ -9,8 +9,8 @@ pub(crate) trait RepoCache: Debug {
     fn load(
         &self,
         path: &dyn PathLike,
-        now: DateTime<Utc>,
-        expire_duration: Duration,
+        now: Timestamp,
+        expire_duration: SignedDuration,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync + 'static>>;
 
     /// Clears all cached entries.
