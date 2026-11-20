@@ -51,7 +51,7 @@ vendored-libgit2 = ["git2/vendored-libgit2"]
 vendored-openssl = ["git2/vendored-openssl"]
 
 [dependencies]
-clap = { version = "4.6.7", features = ["derive", "env"] }
+clap = { version = "4.6.8", features = ["derive", "env"] }
 clap_complete = { version = "4.6.11" }
 clap_complete_nushell = "4.6.2"
 clap_mangen = "0.3.3"
