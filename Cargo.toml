@@ -63,7 +63,7 @@ dunce = "1.0.5"
 git2 = { version = "0.21.0", features = ["https", "ssh"] }
 git2_credentials = "0.16.0"
 jiff = { version = "1.0.1", default-features = false, features = ["serde", "std"] }
-regex = "1.13.1"
+regex = "1.13.2"
 remove_dir_all = "1.0.0"
 serde = { version = "1.0.229", features = ["derive", "rc"] }
 serde_json = "1.0.154"
