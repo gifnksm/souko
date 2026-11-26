@@ -12,6 +12,14 @@ The format is based on [Keep a Changelog], and this project adheres to
 
 ## [Unreleased] - ReleaseDate
 
+### Security
+
+* Update `url` from 2.5.8 to 2.5.9 to address [RUSTSEC-2026-0592], a stack
+  overflow when computing the origin of deeply nested `blob:` URLs. `souko` does
+  not compute URL origins, so this vulnerability does not affect its operation.
+
+[RUSTSEC-2026-0592]: https://rustsec.org/advisories/RUSTSEC-2026-0592.html
+
 ## [0.4.4] - 2026-11-19
 
 ### Security
