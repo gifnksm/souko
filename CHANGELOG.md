@@ -12,6 +12,8 @@ The format is based on [Keep a Changelog], and this project adheres to
 
 ## [Unreleased] - ReleaseDate
 
+## [0.4.5] - 2026-11-26
+
 ### Security
 
 * Update `url` from 2.5.8 to 2.5.9 to address [RUSTSEC-2026-0592], a stack
@@ -218,7 +220,8 @@ The format is based on [Keep a Changelog], and this project adheres to
 * First release
 
 <!-- next-url -->
-[Unreleased]: https://github.com/gifnksm/souko/compare/v0.4.4...HEAD
+[Unreleased]: https://github.com/gifnksm/souko/compare/v0.4.5...HEAD
+[0.4.5]: https://github.com/gifnksm/souko/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/gifnksm/souko/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/gifnksm/souko/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/gifnksm/souko/compare/v0.4.1...v0.4.2

@@ -1411,7 +1411,7 @@ checksum = "3244542535d5de959d90ec55d1b5ff0fd2bb7b1310223907d5f11932847f7b59"
 
 [[package]]
 name = "souko"
-version = "0.4.4"
+version = "0.4.5"
 dependencies = [
  "assert_cmd",
  "assert_fs",
